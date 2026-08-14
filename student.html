@@ -1,0 +1,135 @@
+<!doctype html><html lang="bn"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body><div class="wrap">
+<section class="hero topbar"><div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div><button id="logout" class="secondary">Logout</button></section>
+<nav class="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="notes">📝 Notes</button><button data-tab="tests">🧪 Tests</button></nav>
+
+<section id="home" class="tab">
+<div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">ছোট একটা ছবি (150 KB এর কম) আপলোড করো, নিজের প্রোফাইলে দেখা যাবে।</p>
+<div class="row"><input id="avatarFile" type="file" accept="image/*"><button id="saveAvatar" class="secondary">Save Picture</button></div>
+<p id="avatarMsg" class="muted"></p></div>
+<div class="card"><h2>📚 My Subjects</h2><div id="subjects" class="grid"></div></div></section>
+<section id="notes" class="tab hidden"><div class="card"><h2>📝 Notes</h2><div id="notesList"></div></div></section>
+<section id="tests" class="tab hidden"><div class="card"><h2>🧪 Available Tests</h2><div id="testsList"></div></div></section>
+
+<section id="runner" class="card hidden">
+<div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
+<div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
+<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
+</section>
+<section id="resultBox" class="card hidden"></section>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,collection,getDocs,query,where,addDoc,updateDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {firebaseConfig} from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+let profile=null,subjects=[],tests=[],activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
+
+$("logout").onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{
+ if(!u){location.href="index.html";return;}
+ const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
+ profile=p.data();$("welcome").textContent=`Hi, ${profile.name} 👋`;$("who").textContent=`${profile.className} · ${profile.email}`;renderAvatar();await loadData();
+});
+
+function renderAvatar(){
+ const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
+ $("avatarBox").innerHTML=profile.avatarData
+   ?`<img class="avatar" src="${profile.avatarData}" alt="avatar">`
+   :`<span class="avatar-placeholder">${initial}</span>`;
+}
+function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+$("saveAvatar").onclick=async()=>{
+ try{
+   const f=$("avatarFile").files[0];
+   if(!f)throw new Error("প্রথমে একটা ছবি বেছে নাও।");
+   if(f.size>150*1024)throw new Error("ছবি 150 KB এর মধ্যে হতে হবে।");
+   const dataUrl=await fileToDataUrl(f);
+   await updateDoc(doc(db,"users",auth.currentUser.uid),{avatarData:dataUrl});
+   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";
+ }catch(e){$("avatarMsg").textContent=e.message;}
+};
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");
+});
+
+function subjectClass(name){const n=name.toLowerCase();if(n.includes("math"))return"math";if(n.includes("phys"))return"physics";if(n.includes("chem"))return"chemistry";if(n.includes("bio"))return"biology";return"default";}
+function subjectIcon(name){const n=name.toLowerCase();if(n.includes("math"))return"➗";if(n.includes("phys"))return"⚡";if(n.includes("chem"))return"🧪";if(n.includes("bio"))return"🧬";return"📘";}
+
+async function loadData(){
+ const ss=await getDocs(query(collection(db,"subjects"),where("classId","==",profile.classId)));subjects=ss.docs.map(d=>({id:d.id,...d.data()}));
+ $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${s.name}</h3><span class="pill">${profile.className}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
+ const ns=await getDocs(query(collection(db,"notes"),where("classId","==",profile.classId)));const notes=ns.docs.map(d=>({id:d.id,...d.data()}));
+ $("notesList").innerHTML=notes.map(n=>{
+   const sub=subjects.find(s=>s.id===n.subjectId)?.name||"Subject";
+   return `<div class="item"><span class="pill">${sub}</span><h3>${n.title}</h3><div>${(n.content||"").replaceAll("\n","<br>")}</div>${n.attachmentData?`<p><a class="btn secondary" download="${n.attachmentName||"note"}" href="${n.attachmentData}">📎 Open attachment</a></p>`:""}<button class="ai" data-title="${encodeURIComponent(n.title)}" data-content="${encodeURIComponent(n.content||"")}">✨ Explain with ChatGPT</button></div>`;
+ }).join("")||"<p>No notes yet.</p>";
+ document.querySelectorAll(".ai").forEach(b=>b.onclick=()=>aiHelp(decodeURIComponent(b.dataset.title),decodeURIComponent(b.dataset.content)));
+ const ts=await getDocs(query(collection(db,"tests"),where("classId","==",profile.classId)));tests=ts.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.published);
+ $("testsList").innerHTML=tests.map(t=>`<div class="item"><span class="pill">${subjects.find(s=>s.id===t.subjectId)?.name||"Subject"}</span><h3>${t.title}</h3><p class="muted">${t.chapter||""} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${t.id}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
+ document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
+}
+
+async function aiHelp(title,content){
+ const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
+
+Topic: ${title}
+Context/Notes: ${content}
+
+আমাকে এই sequence-এ শেখাও:
+1) খুব সহজ real-life example
+2) basic concept
+3) visual imagination/ছোট diagram
+4) step-by-step explanation
+5) important English terms-এর বাংলা মানে
+6) common mistakes
+7) 3টা practice question
+
+আমি মুখস্থ না করে concept বুঝতে চাই।`;
+ try{await navigator.clipboard.writeText(promptText);alert("Prompt copy হয়েছে। এখন ChatGPT খুলছে—paste করো।");window.open("https://chatgpt.com/","_blank");}
+ catch{window.prompt("এই prompt copy করো:",promptText);}
+}
+
+async function startTest(id){
+ activeTest=tests.find(t=>t.id===id);answers={};
+ $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
+ $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
+ const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
+ activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
+ $("testForm").onchange=async e=>{
+   if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
+   const n=Object.keys(answers).length;$("prog").style.width=(n/activeTest.questions.length*100)+"%";$("progText").textContent=`Answered ${n}/${activeTest.questions.length}`;
+   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:n,lastUpdated:serverTimestamp()});
+ };
+}
+function tick(){
+ const total=activeTest.durationMinutes*60,used=Math.floor((Date.now()-startMs)/1000),left=Math.max(0,total-used);
+ $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
+ if(left<=0){clearInterval(timerHandle);finishTest(true);}
+}
+$("submitTest").onclick=()=>{if(confirm("Final submit করতে নিশ্চিত?"))finishTest(false);};
+
+async function finishTest(auto){
+ clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
+ await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
+ $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
+   const d=s.data();if(d?.score!=null){
+     $("resultBox").classList.remove("hidden");
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     unsub();
+   }
+ });
+}
+</script></body></html>

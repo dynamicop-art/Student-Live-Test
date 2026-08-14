@@ -1,24 +1,63 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function isTeacher() {
-      return signedIn() && request.auth.token.email == "YOUR_TEACHER_EMAIL@gmail.com";
+    function signedIn(){ return request.auth != null; }
+    function isTeacher(){ return signedIn() && request.auth.token.email == "arpanalaps64@gmail.com"; }
+    function myProfile(){ return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function myClass(){ return myProfile().data.classId; }
+
+    match /invites/{email} {
+      allow read: if isTeacher() || (signedIn() && request.auth.token.email == email);
+      allow create, update, delete: if isTeacher();
     }
 
-    match /attempts/{attemptId} {
+    match /users/{uid} {
+      allow read: if isTeacher() || (signedIn() && uid == request.auth.uid);
+      allow create: if signedIn() && uid == request.auth.uid
+        && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "student";
+      allow update: if isTeacher() || (
+        signedIn() && uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatarData'])
+      );
+      allow delete: if isTeacher();
+    }
+
+    match /subjects/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow write: if isTeacher();
+    }
+
+    match /notes/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow write: if isTeacher();
+    }
+
+    match /tests/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass() && resource.data.published == true);
+      allow write: if isTeacher();
+    }
+
+    match /answerKeys/{id} {
+      allow read, write: if isTeacher();
+    }
+
+    match /attempts/{id} {
       allow create: if signedIn()
-                    && request.resource.data.studentUid == request.auth.uid
-                    && request.resource.data.testId == "chem_unit1_test1";
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.classId == myClass();
 
-      allow read: if isTeacher()
-                  || (signedIn() && resource.data.studentUid == request.auth.uid);
+      allow read: if isTeacher() || (signedIn() && resource.data.uid == request.auth.uid);
 
-      allow update: if isTeacher()
-                    || (signedIn()
-                        && resource.data.studentUid == request.auth.uid
-                        && request.resource.data.studentUid == resource.data.studentUid
-                        && request.resource.data.testId == resource.data.testId);
+      allow update: if isTeacher() || (
+        signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.testId == resource.data.testId
+        && request.resource.data.classId == resource.data.classId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt'])
+      );
 
       allow delete: if isTeacher();
     }

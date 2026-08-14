@@ -1,1 +1,62 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Live Tests</title><style>body{font-family:system-ui;background:#f6f8fb}.wrap{max-width:700px;margin:70px auto;padding:20px}.card{background:#fff;border:1px solid #dfe5ef;border-radius:18px;padding:24px}a{display:block;text-decoration:none;background:#3157d5;color:white;padding:14px;border-radius:11px;margin:12px 0;text-align:center;font-weight:700}.teacher{background:#24324a}</style></head><body><div class="wrap"><div class="card"><h1>Student Live Tests</h1><p>Class XII Chemistry — Unit 1</p><a href="student_test.html">🎓 Student Test</a><a class="teacher" href="teacher_dashboard.html">👩‍🏫 Teacher Dashboard</a></div></div></body></html>
+<!doctype html><html lang="bn"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Learning Hub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body><div class="wrap">
+<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
+<div class="grid">
+  <section class="card login-card"><div class="section-kicker">🔑 Student Access</div><h2>Welcome back</h2>
+    <input id="lemail" type="email" placeholder="Email">
+    <input id="lpass" type="password" placeholder="Password">
+    <button id="login">Enter Learning Hub</button><p id="lmsg" class="muted"></p>
+  </section>
+  <section class="card login-card"><div class="section-kicker">✨ First Time Setup</div><h2>Create Student Account</h2>
+    <p class="muted">Teacher আগে তোমার email allow করলে তবেই account তৈরি হবে।</p>
+    <input id="semail" type="email" placeholder="Teacher-approved email">
+    <input id="spass" type="password" placeholder="Create password (6+ characters)">
+    <button id="signup">Create Account</button><p id="smsg" class="muted"></p>
+  </section>
+  <section class="card login-card"><div class="section-kicker">🎓 Teacher Workspace</div><h2>Admin Console</h2>
+    <p class="muted">Students, subjects, notes, tests এবং live results manage করুন।</p>
+    <a class="btn" href="admin.html">Open Admin Panel</a>
+  </section>
+</div><div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);
+
+$("login").onclick=async()=>{
+ try{
+   const c=await signInWithEmailAndPassword(auth,$("lemail").value.trim(),$("lpass").value);
+   location.href=(c.user.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase()?"admin.html":"student.html";
+ }catch(e){$("lmsg").textContent="Login failed: "+e.message;}
+};
+
+$("signup").onclick=async()=>{
+ let cred=null;
+ try{
+   const email=$("semail").value.trim().toLowerCase();
+   if(!email||$("spass").value.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
+   cred=await createUserWithEmailAndPassword(auth,email,$("spass").value);
+   const inv=await getDoc(doc(db,"invites",email));
+   if(!inv.exists()||inv.data().active!==true){
+     await deleteUser(cred.user);
+     throw new Error("এই email teacher allow করেননি।");
+   }
+   const d=inv.data();
+   await setDoc(doc(db,"users",cred.user.uid),{
+     uid:cred.user.uid,email,name:d.name,classId:d.classId,className:d.className,
+     role:"student",createdAt:serverTimestamp()
+   });
+   location.href="student.html";
+ }catch(e){$("smsg").textContent=e.message;}
+};
+</script></body></html>

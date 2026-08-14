@@ -1,0 +1,230 @@
+<!doctype html><html lang="bn"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body><div class="wrap">
+<section class="hero topbar"><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Teacher Command Center</h1><p>Students, subjects, notes, assessments এবং live performance — সব এক clean workspace থেকে manage করুন।</p></div><button id="logout" class="secondary">Logout</button></section>
+
+<section id="loginCard" class="card"><span class="pill gold">🔐 Teacher only</span><h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Teacher email"><input id="pass" type="password" placeholder="Password">
+<button id="doLogin">Login</button><p id="msg" class="muted"></p></section>
+
+<div id="app" class="hidden">
+<nav class="nav">
+<button class="active" data-tab="dashboard">Dashboard</button>
+<button data-tab="students">Students</button><button data-tab="subjects">Subjects</button>
+<button data-tab="notes">Notes</button><button data-tab="tests">Tests</button>
+<button data-tab="importer">⚡ Import Test</button><button data-tab="results">Live Results</button>
+</nav>
+
+<section id="dashboard" class="tab">
+<div class="statgrid">
+<div class="stat"><b id="stStudents">0</b>Students</div><div class="stat"><b id="stSubjects">0</b>Subjects</div>
+<div class="stat"><b id="stTests">0</b>Tests</div><div class="stat"><b id="stLive">0</b>Live attempts</div>
+</div>
+<div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন।</p></div>
+</section>
+
+<section id="students" class="tab card hidden"><h2>👥 Allow Student</h2>
+<div class="row"><input id="invName" placeholder="Student name"><input id="invEmail" type="email" placeholder="Student email"></div>
+<div class="row"><input id="invClassId" placeholder="Class ID: class5 / class12"><input id="invClassName" placeholder="Display: Class V / Class XII"></div>
+<button id="addInvite">Add / Update Student</button><div id="inviteList"></div></section>
+
+<section id="subjects" class="tab card hidden"><h2>📘 Subjects</h2>
+<div class="row"><input id="subName" placeholder="Subject name"><input id="subClassId" placeholder="Class ID e.g. class12"></div>
+<button id="addSubject">Add Subject</button><div id="subjectList"></div></section>
+
+<section id="notes" class="tab card hidden"><h2>📝 Notes Publisher</h2>
+<div class="row"><input id="noteTitle" placeholder="Note title"><input id="noteClassId" placeholder="Class ID"><input id="noteSubjectId" placeholder="Subject ID"></div>
+<textarea id="noteContent" placeholder="বাংলায় short note / formula / explanation paste করুন..."></textarea>
+<label class="muted">Optional tiny PDF/image, maximum 80 KB</label><input id="noteFile" type="file" accept=".pdf,image/*">
+<button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p><div id="noteList"></div></section>
+
+<section id="tests" class="tab card hidden"><h2>🧪 Manual Test Creator</h2>
+<div class="row"><input id="testTitle" placeholder="Test title"><input id="testClassId" placeholder="Class ID"><input id="testSubjectId" placeholder="Subject ID"><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
+<div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p><div id="testList"></div></section>
+
+<section id="importer" class="tab card hidden">
+<span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
+<p class="muted">ChatGPT থেকে ready block নাও → এখানে paste করো → Preview → Publish.</p>
+<textarea id="importBox" style="min-height:360px" placeholder="Paste complete test block here..."></textarea>
+<div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
+<div id="importPreview"></div>
+<button id="publishImport" class="hidden">✅ Publish Imported Test</button><p id="importMsg" class="muted"></p>
+</section>
+
+<section id="results" class="tab card hidden"><h2>📊 Live Results</h2>
+<div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
+</div></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+
+$("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
+$("logout").onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,u=>{
+ const ok=!!u&&(u.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase();
+ $("loginCard").classList.toggle("hidden",ok);$("app").classList.toggle("hidden",!ok);
+ if(ok){loadAll();listenAttempts();}
+});
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");
+});
+
+$("addInvite").onclick=async()=>{
+ const email=$("invEmail").value.trim().toLowerCase(),name=$("invName").value.trim(),classId=$("invClassId").value.trim();
+ if(!email||!name||!classId)return alert("Name, email, class ID required.");
+ await setDoc(doc(db,"invites",email),{email,name,classId,className:$("invClassName").value.trim()||classId,active:true,updatedAt:serverTimestamp()},{merge:true});
+ await loadInvites();
+};
+
+$("addSubject").onclick=async()=>{
+ const name=$("subName").value.trim(),classId=$("subClassId").value.trim();if(!name||!classId)return;
+ await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});await loadSubjects();
+};
+
+async function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+$("addNote").onclick=async()=>{
+ try{
+  const title=$("noteTitle").value.trim(),classId=$("noteClassId").value.trim(),subjectId=$("noteSubjectId").value.trim();
+  if(!title||!classId||!subjectId)throw new Error("Title, Class ID, Subject ID required.");
+  let attachmentData="",attachmentName="",attachmentType="";
+  const f=$("noteFile").files[0];
+  if(f){if(f.size>80*1024)throw new Error("Attachment must be 80 KB or smaller.");attachmentData=await fileToDataUrl(f);attachmentName=f.name;attachmentType=f.type;}
+  await addDoc(collection(db,"notes"),{title,classId,subjectId,content:$("noteContent").value.trim(),attachmentData,attachmentName,attachmentType,createdAt:serverTimestamp()});
+  $("noteMsg").textContent="✅ Note published.";await loadNotes();
+ }catch(e){$("noteMsg").textContent=e.message;}
+};
+
+let qCount=0;
+function addQuestion(data={}){
+ const d=document.createElement("div");d.className="item qedit";
+ d.innerHTML=`<b>Question</b><input class="qq" placeholder="Question" value="${esc(data.q||"")}"><input class="topic" placeholder="Topic" value="${esc(data.topic||"")}"><div class="grid2">${[0,1,2,3].map(j=>`<input class="op${j}" placeholder="Option ${String.fromCharCode(65+j)}" value="${esc(data.o?.[j]||"")}">`).join("")}</div><label>Correct</label><select class="ans"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select><button type="button" class="danger rem">Remove</button>`;
+ d.querySelector(".ans").value=String(data.a??0);d.querySelector(".rem").onclick=()=>d.remove();$("questionEditor").appendChild(d);
+}
+function esc(s){return String(s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+$("addQ").onclick=()=>addQuestion();addQuestion();
+
+$("saveTest").onclick=async()=>{
+ try{
+  const publicQs=[],answers=[];
+  document.querySelectorAll(".qedit").forEach(d=>{
+   const q=d.querySelector(".qq").value.trim(),o=[0,1,2,3].map(j=>d.querySelector(".op"+j).value.trim()),topic=d.querySelector(".topic").value.trim();
+   if(q&&o.every(Boolean)){publicQs.push({q,o,topic});answers.push(Number(d.querySelector(".ans").value));}
+  });
+  if(!publicQs.length)throw new Error("At least one complete question required.");
+  await saveTestData({title:$("testTitle").value.trim(),classId:$("testClassId").value.trim(),subjectId:$("testSubjectId").value.trim(),durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
+  $("testMsg").textContent="✅ Test published.";await loadTests();
+ }catch(e){$("testMsg").textContent=e.message;}
+};
+
+async function saveTestData(t){
+ if(!t.title||!t.classId||!t.subjectId)throw new Error("Test title, Class ID and Subject ID required.");
+ const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter:t.chapter||"",durationMinutes:t.durationMinutes||30,published:true,questionCount:t.questions.length,questions:t.questions,createdAt:serverTimestamp()});
+ await setDoc(doc(db,"answerKeys",r.id),{answers:t.answers,createdAt:serverTimestamp()});
+ return r.id;
+}
+
+// ---------- SUPER EASY TEST IMPORT ----------
+const SAMPLE=`TEST: Chemistry Unit 1 - Test 2
+CLASS: class12
+SUBJECT_ID: paste-subject-id-here
+CHAPTER: Liquid State
+DURATION: 30
+
+---
+Q: Henry-এর সূত্র অনুযায়ী গ্যাসের দ্রাব্যতা কোনটির সঙ্গে সমানুপাতিক?
+A: গ্যাসের আংশিক চাপ
+B: তরলের আয়তন
+C: দ্রাবকের ভর
+D: পাত্রের আকার
+ANSWER: A
+TOPIC: Henry's Law
+
+---
+Q: অউদ্বায়ী দ্রব যোগ করলে দ্রাবকের বাষ্পচাপ কী হয়?
+A: বাড়ে
+B: কমে
+C: একই থাকে
+D: শূন্য হয়
+ANSWER: B
+TOPIC: Vapour Pressure`;
+
+$("loadSample").onclick=()=>{$("importBox").value=SAMPLE;};
+let parsedImport=null;
+
+function parseImport(raw){
+ const lines=raw.replace(/\r/g,"").split("\n");
+ const meta={};let firstSep=lines.findIndex(x=>x.trim()==="---");
+ const head=(firstSep<0?lines:lines.slice(0,firstSep));
+ head.forEach(line=>{const m=line.match(/^([A-Z_]+)\s*:\s*(.+)$/i);if(m)meta[m[1].toUpperCase()]=m[2].trim();});
+ const body=(firstSep<0?[]:lines.slice(firstSep).join("\n")).split(/\n---\s*\n/).map(x=>x.trim()).filter(Boolean);
+ const questions=[];const answers=[];const errors=[];
+ body.forEach((block,idx)=>{
+  const vals={};
+  block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
+  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans);
+  if(!vals.Q||opts.some(x=>!x)||ai<0)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER incomplete.`);
+  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC||""});answers.push(ai);}
+ });
+ const data={title:meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
+ if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");
+ return {data,errors};
+}
+
+$("previewImport").onclick=()=>{
+ const p=parseImport($("importBox").value);parsedImport=p.errors.length?null:p.data;
+ $("importPreview").innerHTML=p.errors.length
+ ?`<div class="item preview-bad"><h3>❌ Fix these</h3>${p.errors.map(e=>`<div>${e}</div>`).join("")}</div>`
+ :`<div class="item preview-ok"><h3>✅ Import ready</h3><p><b>${p.data.title}</b></p><p>Class: ${p.data.classId} · Chapter: ${p.data.chapter||"—"} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p>${p.data.questions.slice(0,3).map((q,i)=>`<div class="muted">${i+1}. ${q.q}</div>`).join("")}${p.data.questions.length>3?`<div class="muted">...and ${p.data.questions.length-3} more</div>`:""}</div>`;
+ $("publishImport").classList.toggle("hidden",!!p.errors.length);
+};
+$("publishImport").onclick=async()=>{
+ try{if(!parsedImport)throw new Error("Preview first.");await saveTestData(parsedImport);$("importMsg").textContent="✅ Imported test published successfully.";parsedImport=null;$("publishImport").classList.add("hidden");await loadTests();}
+ catch(e){$("importMsg").textContent=e.message;}
+};
+
+async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b> · ${d.id}<br><span class="muted">${d.data().className} (${d.data().classId})</span></div>`).join("");$("stStudents").textContent=s.size;}
+async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b><br><span class="muted">SUBJECT ID: ${d.id} · class: ${d.data().classId}</span></div>`).join("");$("stSubjects").textContent=s.size;}
+async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">${d.data().classId} · ${d.data().subjectId}</span></div>`).join("");}
+async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.data().questionCount} Q · ${d.data().durationMinutes} min</span></div>`).join("");$("stTests").textContent=s.size;}
+function loadAll(){loadInvites();loadSubjects();loadNotes();loadTests();}
+
+let latestAttempts=[],attemptUnsub=null;
+function listenAttempts(){
+ if(attemptUnsub)attemptUnsub();
+ attemptUnsub=onSnapshot(collection(db,"attempts"),async snap=>{
+  latestAttempts=snap.docs.map(d=>({id:d.id,...d.data()}));
+  $("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;
+  for(const a of latestAttempts){
+   if(a.status==="submitted"&&a.score==null){
+    const key=await getDoc(doc(db,"answerKeys",a.testId));
+    if(key.exists()){
+     const ans=key.data().answers;let score=0;
+     for(let i=0;i<ans.length;i++)if(Number(a.answers?.["q"+i])===Number(ans[i]))score++;
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),gradedAt:serverTimestamp()});
+    }
+   }
+  }
+  renderAttempts();
+ });
+}
+function renderAttempts(){
+ $("attemptList").innerHTML=latestAttempts.map(a=>`<div class="item"><div class="topbar"><div><b>${a.studentName||a.uid}</b><br><span class="muted">${a.testTitle||a.testId}</span></div><span class="pill">${a.status}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts yet.</p>";
+}
+$("purgeSubmitted").onclick=async()=>{
+ if(!confirm("Delete ALL submitted attempt/result data?"))return;
+ const s=await getDocs(query(collection(db,"attempts"),where("status","==","submitted")));for(const d of s.docs)await deleteDoc(d.ref);
+};
+</script></body></html>
