@@ -222,23 +222,31 @@ async function loadData(){
  $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${s.name}</h3><span class="pill">${profile.className}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
  $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
 
- const ns=await getDocs(query(collection(db,"notes"),where("classId","==",profile.classId)));notes=ns.docs.map(d=>({id:d.id,...d.data()}));
- const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
- $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
- renderNotes();
+ // Live: new notes/tests/notices/assignments the teacher publishes appear
+ // instantly, no logout/login or manual reload needed.
+ onSnapshot(query(collection(db,"notes"),where("classId","==",profile.classId)),snap=>{
+  notes=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
+  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
+  renderNotes();
+ });
 
- const ts=await getDocs(query(collection(db,"tests"),where("classId","==",profile.classId)));tests=ts.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.published);
- renderTests();
+ onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId)),snap=>{
+  tests=snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.published);
+  renderTests();
+ });
 
- const an=await getDocs(query(collection(db,"announcements"),where("classId","==",profile.classId)));
- const notices=an.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
- $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${n.title}</b><p class="muted">${n.content}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
+ onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
+  const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${n.title}</b><p class="muted">${n.content}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
+ });
 
- const asgS=await getDocs(query(collection(db,"assignments"),where("classId","==",profile.classId)));
- assignments=asgS.docs.map(d=>({id:d.id,...d.data()}));
- const statusS=await getDocs(query(collection(db,"assignmentStatus"),where("uid","==",auth.currentUser.uid)));
- doneAssignmentIds=new Set(statusS.docs.filter(d=>d.data().done).map(d=>d.data().assignmentId));
- renderAssignments();
+ onSnapshot(query(collection(db,"assignments"),where("classId","==",profile.classId)),async snap=>{
+  assignments=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const statusS=await getDocs(query(collection(db,"assignmentStatus"),where("uid","==",auth.currentUser.uid)));
+  doneAssignmentIds=new Set(statusS.docs.filter(d=>d.data().done).map(d=>d.data().assignmentId));
+  renderAssignments();
+ });
 
  await loadProgressAndLeaderboard();
  listenMyDoubts();

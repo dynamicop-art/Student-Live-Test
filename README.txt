@@ -11,6 +11,12 @@ WHAT'S NEW IN V2.1
   glass-style nav, nicer cards, buttons and subject tiles.
 - Student profile picture (under 150 KB), stored on the user doc.
 
+WHAT'S NEW IN V3.3
+- Fixed: a student who was already logged in did NOT see a test/note/notice/
+  assignment the teacher published afterward, until they logged out and back
+  in. Notes, Tests, Notices and Assignments now update LIVE on the student's
+  screen the moment the teacher publishes — no reload or re-login needed.
+
 WHAT'S NEW IN V3
 Student side (student.html):
 - 🏠 Home: Notice board, study streak with badges (3/7/14/30-day), a Pomodoro
