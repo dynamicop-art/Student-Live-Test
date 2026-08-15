@@ -33,30 +33,79 @@ import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);
 
+// Friendly Bengali messages for the most common Firebase Auth error codes,
+// so a failure is actually understandable instead of raw "Firebase: Error (...)" text.
+function friendlyAuthError(e){
+ const code=e&&e.code||"";
+ const map={
+  "auth/invalid-email":"Email ঠিকভাবে লেখা হয়নি।",
+  "auth/user-not-found":"এই email দিয়ে কোনো account নেই। প্রথমবার হলে ডানপাশের 'First Time Setup' ব্যবহার করো।",
+  "auth/wrong-password":"Password ভুল হয়েছে।",
+  "auth/invalid-credential":"Email অথবা Password ভুল। আগে account তৈরি না করে থাকলে 'First Time Setup' ব্যবহার করো।",
+  "auth/too-many-requests":"অনেকবার ভুল try হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করো।",
+  "auth/weak-password":"Password অন্তত 6 character হতে হবে।",
+  "auth/network-request-failed":"Internet সংযোগ চেক করো।"
+ };
+ return map[code]||e.message;
+}
+
 $("login").onclick=async()=>{
+ $("lmsg").textContent="";
  try{
-   const c=await signInWithEmailAndPassword(auth,$("lemail").value.trim(),$("lpass").value);
+   const email=$("lemail").value.trim().toLowerCase();
+   const pass=$("lpass").value;
+   if(!email||!pass)throw new Error("Email এবং Password দুটোই দাও।");
+   const c=await signInWithEmailAndPassword(auth,email,pass);
    location.href=(c.user.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase()?"admin.html":"student.html";
- }catch(e){$("lmsg").textContent="Login failed: "+e.message;}
+ }catch(e){$("lmsg").textContent=friendlyAuthError(e);}
 };
 
+// Creates the Firebase Auth account, then verifies a teacher invite exists
+// for that exact email before creating the student's profile document.
+// If a previous attempt already created the Auth account (e.g. the page was
+// closed right after "Create Account" before the profile finished saving),
+// this now recovers instead of getting stuck on "email already in use".
 $("signup").onclick=async()=>{
- let cred=null;
+ $("smsg").textContent="";
+ const email=$("semail").value.trim().toLowerCase();
+ const pass=$("spass").value;
  try{
-   const email=$("semail").value.trim().toLowerCase();
-   if(!email||$("spass").value.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
-   cred=await createUserWithEmailAndPassword(auth,email,$("spass").value);
+   if(!email||pass.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
+
+   let user=null;
+   try{
+     const cred=await createUserWithEmailAndPassword(auth,email,pass);
+     user=cred.user;
+   }catch(createErr){
+     if(createErr.code==="auth/email-already-in-use"){
+       // Account already exists in Firebase Auth (maybe from an earlier
+       // interrupted attempt) — sign in with the given password instead of failing.
+       const cred=await signInWithEmailAndPassword(auth,email,pass);
+       user=cred.user;
+     }else{
+       throw createErr;
+     }
+   }
+
    const inv=await getDoc(doc(db,"invites",email));
    if(!inv.exists()||inv.data().active!==true){
-     await deleteUser(cred.user);
-     throw new Error("এই email teacher allow করেননি।");
+     // Only delete the just-created Auth account if it has no profile yet —
+     // never delete an account that already has student data attached.
+     const existingProfile=await getDoc(doc(db,"users",user.uid));
+     if(!existingProfile.exists())await deleteUser(user);
+     await signOut(auth);
+     throw new Error("এই email teacher allow করেননি। Teacher-কে Admin Panel থেকে তোমার email add করতে বলো, তারপর আবার চেষ্টা করো।");
    }
-   const d=inv.data();
-   await setDoc(doc(db,"users",cred.user.uid),{
-     uid:cred.user.uid,email,name:d.name,classId:d.classId,className:d.className,
-     role:"student",createdAt:serverTimestamp()
-   });
+
+   const existingProfile=await getDoc(doc(db,"users",user.uid));
+   if(!existingProfile.exists()){
+     const d=inv.data();
+     await setDoc(doc(db,"users",user.uid),{
+       uid:user.uid,email,name:d.name,classId:d.classId,className:d.className,
+       role:"student",createdAt:serverTimestamp()
+     });
+   }
    location.href="student.html";
- }catch(e){$("smsg").textContent=e.message;}
+ }catch(e){$("smsg").textContent=friendlyAuthError(e);}
 };
 </script></body></html>

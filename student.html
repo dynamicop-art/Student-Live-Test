@@ -32,9 +32,24 @@ import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/fireba
 import {getFirestore,doc,getDoc,collection,getDocs,query,where,addDoc,updateDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-let profile=null,subjects=[],tests=[],activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
+let profile=null,subjects=[],tests=[],activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,resultUnsub=null;
 
-$("logout").onclick=()=>signOut(auth);
+// Logout is hardened: it stops any live listeners/timers first (so they can't
+// throw permission-denied errors after sign-out), always signs out, and always
+// forces navigation back to the login page even if signOut() itself errors —
+// so the button can never look like it "did nothing".
+$("logout").onclick=async()=>{
+ try{
+   if(resultUnsub){resultUnsub();resultUnsub=null;}
+   if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
+   await signOut(auth);
+ }catch(e){
+   console.error("Sign-out error:",e);
+ }finally{
+   location.href="index.html";
+ }
+};
+
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
  const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
@@ -76,27 +91,78 @@ async function loadData(){
    return `<div class="item"><span class="pill">${sub}</span><h3>${n.title}</h3><div>${(n.content||"").replaceAll("\n","<br>")}</div>${n.attachmentData?`<p><a class="btn secondary" download="${n.attachmentName||"note"}" href="${n.attachmentData}">📎 Open attachment</a></p>`:""}<button class="ai" data-title="${encodeURIComponent(n.title)}" data-content="${encodeURIComponent(n.content||"")}">✨ Explain with ChatGPT</button></div>`;
  }).join("")||"<p>No notes yet.</p>";
  document.querySelectorAll(".ai").forEach(b=>b.onclick=()=>aiHelp(decodeURIComponent(b.dataset.title),decodeURIComponent(b.dataset.content)));
- const ts=await getDocs(query(collection(db,"tests"),where("classId","==",profile.classId)));tests=ts.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.published);
+
+ // IMPORTANT: this query now includes where("published","==",true) so it
+ // exactly matches the Firestore security rule for /tests/{id}. Firestore
+ // rejects an entire list query if the rule needs a field the query doesn't
+ // already filter on — that mismatch (query only filtered by classId, while
+ // the rule also required published==true) is why "Available Tests" was
+ // showing nothing before, even though notes worked fine.
+ const ts=await getDocs(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)));
+ tests=ts.docs.map(d=>({id:d.id,...d.data()}));
  $("testsList").innerHTML=tests.map(t=>`<div class="item"><span class="pill">${subjects.find(s=>s.id===t.subjectId)?.name||"Subject"}</span><h3>${t.title}</h3><p class="muted">${t.chapter||""} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${t.id}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
  document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
 }
 
-async function aiHelp(title,content){
- const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
+// Two AI-tutor prompt styles: a simpler, plain-English one for younger
+// students (Class 7 and below), and a more detailed Bengali-medium one
+// (with English technical terms kept) for older students. The class level
+// is read from the student's own classId (e.g. "class5", "class12").
+function gradeNumber(classId){
+ const m=String(classId||"").match(/\d+/);
+ return m?Number(m[0]):null;
+}
+function juniorPrompt(title,content){
+ return `You are a friendly and patient teacher for a Class ${profile.className||""} student.
+
+The student needs help with this topic:
 
 Topic: ${title}
-Context/Notes: ${content}
 
-আমাকে এই sequence-এ শেখাও:
-1) খুব সহজ real-life example
-2) basic concept
-3) visual imagination/ছোট diagram
-4) step-by-step explanation
-5) important English terms-এর বাংলা মানে
-6) common mistakes
-7) 3টা practice question
+Question or Doubt: ${content}
 
-আমি মুখস্থ না করে concept বুঝতে চাই।`;
+Teach the student in simple English.
+
+Follow this method:
+1. Start with a very easy real-life example.
+2. Explain the basic idea using simple words.
+3. Break the concept into small steps.
+4. Give one example and solve it step by step.
+5. Do not make the explanation unnecessarily complicated.
+6. Ask the student one small question to check whether they understood.
+7. If the student gives a wrong answer, explain the mistake gently and give a hint before revealing the answer.
+8. Finish with one short practice question.
+
+The goal is to make the student understand the concept, not just memorize the answer.`;
+}
+function seniorPrompt(title,content){
+ return `তুমি একজন অভিজ্ঞ ${profile.className||"Class 12"} teacher এবং personal tutor।
+
+Student-এর Topic:
+Topic: ${title}
+
+Student-এর প্রশ্ন/সমস্যা:
+Doubt: ${content}
+
+Student-কে মূলত বাংলায় বোঝাবে, তবে গুরুত্বপূর্ণ scientific, mathematical বা technical terms English-এ রাখবে যাতে exam-এ চিনতে সুবিধা হয়।
+
+এই পদ্ধতিতে শেখাও:
+1. প্রথমে খুব সহজ ভাষায় concept-এর মূল idea বোঝাও।
+2. একটি real-life analogy বা পরিচিত example দাও।
+3. তারপর concept-টা step by step ভেঙে বোঝাও।
+4. প্রয়োজন হলে formula, diagram বা logical flow ব্যবহার করো।
+5. Student কোথায় confuse হতে পারে সেটা আলাদা করে ধরো।
+6. শুধু final answer দিও না—answer কেন হচ্ছে সেটা বোঝাও।
+7. একটি solved example দাও।
+8. তারপর student-কে একটি ছোট question করো এবং তার উত্তর দেওয়ার সুযোগ দাও।
+9. ভুল করলে সরাসরি answer না বলে আগে hint দাও।
+10. শেষে একটি exam-oriented English definition/answer দাও, যেখানে প্রযোজ্য।
+
+Student যদি বলে সে এখনও বুঝতে পারেনি, আগের explanation repeat না করে আরও সহজ example দিয়ে অন্যভাবে বোঝাও।`;
+}
+async function aiHelp(title,content){
+ const g=gradeNumber(profile.classId);
+ const promptText=(g!==null&&g<=7)?juniorPrompt(title,content):seniorPrompt(title,content);
  try{await navigator.clipboard.writeText(promptText);alert("Prompt copy হয়েছে। এখন ChatGPT খুলছে—paste করো।");window.open("https://chatgpt.com/","_blank");}
  catch{window.prompt("এই prompt copy করো:",promptText);}
 }
@@ -124,11 +190,12 @@ async function finishTest(auto){
  clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
  await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
  $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
- const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
+ if(resultUnsub)resultUnsub();
+ resultUnsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
-     unsub();
+     if(resultUnsub){resultUnsub();resultUnsub=null;}
    }
  });
 }
