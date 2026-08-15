@@ -144,7 +144,13 @@ $("themeBtn").onclick=()=>{
  applyThemeBtn();
 };
 
-$("logout").onclick=()=>signOut(auth);
+$("logout").onclick=async()=>{
+ const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
+ const forceRedirect=setTimeout(()=>{location.href="index.html";},4000);
+ try{await signOut(auth);}
+ catch(e){console.error("logout error:",e);}
+ finally{clearTimeout(forceRedirect);location.href="index.html";}
+};
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
  const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
@@ -229,12 +235,12 @@ async function loadData(){
   const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
   $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
   renderNotes();
- });
+ },err=>console.error("notes listener error:",err));
 
- onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId)),snap=>{
-  tests=snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.published);
+ onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
+  tests=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderTests();
- });
+ },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
   const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
