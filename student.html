@@ -7,10 +7,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
-<body><div class="wrap">
+<body>
+<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="wrap">
 <section class="hero topbar">
   <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
-  <div class="row" style="flex:0 0 auto;gap:8px"><button id="themeBtn" class="theme-toggle" type="button">🌙 Dark</button><button id="logout" class="secondary">Logout</button></div>
+  <button id="logout" class="secondary">Logout</button>
 </section>
 <nav class="nav">
   <button class="active" data-tab="home">🏠 Home</button>
@@ -133,7 +135,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
 
 /* ---------- THEME ---------- */
-function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️ Light":"🌙 Dark";}
+function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
 applyThemeBtn();
 $("themeBtn").onclick=()=>{
  const dark=document.documentElement.getAttribute("data-theme")==="dark";

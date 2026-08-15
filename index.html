@@ -7,8 +7,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
-<body><div class="wrap">
-<section class="hero topbar"><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></div><button id="themeBtn" class="theme-toggle" type="button">🌙 Dark</button></section>
+<body>
+<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="wrap">
+<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
 <div class="grid">
   <section class="card login-card"><div class="section-kicker">🔑 Student Access</div><h2>Welcome back</h2>
     <input id="lemail" type="email" placeholder="Email">
@@ -34,7 +36,7 @@ import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);
 
-function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️ Light":"🌙 Dark";}
+function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
 applyThemeBtn();
 $("themeBtn").onclick=()=>{
  const dark=document.documentElement.getAttribute("data-theme")==="dark";
