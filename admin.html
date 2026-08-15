@@ -1,4 +1,5 @@
 <!doctype html><html lang="bn"><head>
+<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teacher Admin</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
@@ -7,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body><div class="wrap">
-<section class="hero topbar"><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Teacher Command Center</h1><p>Students, subjects, notes, assessments এবং live performance — সব এক clean workspace থেকে manage করুন।</p></div><button id="logout" class="secondary">Logout</button></section>
+<section class="hero topbar"><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Teacher Command Center</h1><p>Students, subjects, notes, assessments এবং live performance — সব এক clean workspace থেকে manage করুন।</p></div><div class="row" style="flex:0 0 auto;gap:8px"><button id="themeBtn" class="theme-toggle" type="button">🌙 Dark</button><button id="logout" class="secondary">Logout</button></div></section>
 
 <section id="loginCard" class="card"><span class="pill gold">🔐 Teacher only</span><h2>Admin Login</h2>
 <input id="email" type="email" placeholder="Teacher email"><input id="pass" type="password" placeholder="Password">
@@ -19,28 +20,31 @@
 <button data-tab="students">Students</button><button data-tab="subjects">Subjects</button>
 <button data-tab="notes">Notes</button><button data-tab="tests">Tests</button>
 <button data-tab="importer">⚡ Import Test</button><button data-tab="results">Live Results</button>
+<button data-tab="announcements">📣 Notices</button><button data-tab="assignments">📌 Assignments</button>
+<button data-tab="doubts">💬 Doubts</button>
 </nav>
 
 <section id="dashboard" class="tab">
 <div class="statgrid">
 <div class="stat"><b id="stStudents">0</b>Students</div><div class="stat"><b id="stSubjects">0</b>Subjects</div>
 <div class="stat"><b id="stTests">0</b>Tests</div><div class="stat"><b id="stLive">0</b>Live attempts</div>
+<div class="stat"><b id="stDoubts">0</b>Open doubts</div><div class="stat"><b id="stAssign">0</b>Assignments</div>
 </div>
-<div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন।</p></div>
+<div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন। Notice/Assignment/Doubts যেকোনো সময় manage করা যাবে।</p></div>
 </section>
 
 <section id="students" class="tab card hidden"><h2>👥 Allow Student</h2>
 <div class="row"><input id="invName" placeholder="Student name"><input id="invEmail" type="email" placeholder="Student email"></div>
 <div class="row"><input id="invClassId" placeholder="Class ID: class5 / class12"><input id="invClassName" placeholder="Display: Class V / Class XII"></div>
-<button id="addInvite">Add / Update Student</button><p id="inviteMsg" class="muted"></p><div id="inviteList"></div></section>
+<button id="addInvite">Add / Update Student</button><div id="inviteList"></div></section>
 
 <section id="subjects" class="tab card hidden"><h2>📘 Subjects</h2>
 <div class="row"><input id="subName" placeholder="Subject name"><input id="subClassId" placeholder="Class ID e.g. class12"></div>
-<button id="addSubject">Add Subject</button><p id="subjectMsg" class="muted"></p><div id="subjectList"></div></section>
+<button id="addSubject">Add Subject</button><div id="subjectList"></div></section>
 
 <section id="notes" class="tab card hidden"><h2>📝 Notes Publisher</h2>
-<div class="row"><input id="noteTitle" placeholder="Note title"><input id="noteClassId" placeholder="Class ID"><input id="noteSubjectId" placeholder="Subject ID"></div>
-<textarea id="noteContent" placeholder="বাংলায় বা English-এ short note / formula / explanation paste করুন..."></textarea>
+<div class="row"><input id="noteTitle" placeholder="Note title"><input id="noteClassId" placeholder="Class ID"><input id="noteSubjectId" placeholder="Subject ID"><input id="noteChapter" placeholder="Chapter (optional)"></div>
+<textarea id="noteContent" placeholder="বাংলায় short note / formula / explanation paste করুন..."></textarea>
 <label class="muted">Optional tiny PDF/image, maximum 80 KB</label><input id="noteFile" type="file" accept=".pdf,image/*">
 <button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p><div id="noteList"></div></section>
 
@@ -50,16 +54,30 @@
 
 <section id="importer" class="tab card hidden">
 <span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
-<p class="muted">ChatGPT থেকে ready block নাও (বাংলা বা English, দুটোই চলবে) → এখানে paste করো → Preview → Publish. Separator লাইনে ৩ বা তার বেশি ড্যাশ (---) থাকলেই চলবে, blank line বা extra space নিয়ে চিন্তা করতে হবে না।</p>
+<p class="muted">ChatGPT থেকে ready block নাও → এখানে paste করো → Preview → Publish.</p>
 <textarea id="importBox" style="min-height:360px" placeholder="Paste complete test block here..."></textarea>
-<p id="importCount" class="muted">0 questions detected</p>
-<div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button><button id="clearImport" class="secondary">Clear</button></div>
+<div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
 <div id="importPreview"></div>
 <button id="publishImport" class="hidden">✅ Publish Imported Test</button><p id="importMsg" class="muted"></p>
 </section>
 
 <section id="results" class="tab card hidden"><h2>📊 Live Results</h2>
 <div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
+
+<section id="announcements" class="tab card hidden"><h2>📣 Notice Board</h2>
+<p class="muted">এখানে যা পাবলিশ করবে সেটা সেই Class-এর সব ছাত্রছাত্রীর Home tab-এ দেখা যাবে।</p>
+<div class="row"><input id="annTitle" placeholder="Notice title"><input id="annClassId" placeholder="Class ID: class5 / class12"></div>
+<textarea id="annContent" placeholder="Notice টেক্সট লিখুন..."></textarea>
+<button id="addAnn">Publish Notice</button><p id="annMsg" class="muted"></p><div id="annList"></div></section>
+
+<section id="assignments" class="tab card hidden"><h2>📌 Homework / Assignments</h2>
+<div class="row"><input id="asgTitle" placeholder="Assignment title"><input id="asgClassId" placeholder="Class ID"><input id="asgSubjectId" placeholder="Subject ID"><input id="asgDue" type="date"></div>
+<textarea id="asgDesc" placeholder="কী করতে হবে তার বিবরণ..."></textarea>
+<button id="addAsg">Publish Assignment</button><p id="asgMsg" class="muted"></p><div id="asgList"></div></section>
+
+<section id="doubts" class="tab card hidden"><h2>💬 Doubt Box</h2>
+<p class="muted">ছাত্রছাত্রীরা যেসব প্রশ্ন পাঠিয়েছে, এখান থেকে reply দিন।</p>
+<div id="doubtList"></div></section>
 </div></div>
 
 <script type="module">
@@ -69,22 +87,17 @@ import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onS
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 
-$("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim().toLowerCase(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
-
-// Hardened logout: stop the live results listener first (so it can't throw
-// permission-denied after sign-out), always sign out, and always force a
-// re-render even if signOut() itself throws — so the button never silently
-// does nothing on screen.
-$("logout").onclick=async()=>{
- try{
-   if(attemptUnsub){attemptUnsub();attemptUnsub=null;}
-   await signOut(auth);
- }catch(e){
-   console.error("Sign-out error:",e);
- }finally{
-   $("loginCard").classList.remove("hidden");$("app").classList.add("hidden");
- }
+function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️ Light":"🌙 Dark";}
+applyThemeBtn();
+$("themeBtn").onclick=()=>{
+ const dark=document.documentElement.getAttribute("data-theme")==="dark";
+ if(dark){document.documentElement.removeAttribute("data-theme");localStorage.setItem("theme","light");}
+ else{document.documentElement.setAttribute("data-theme","dark");localStorage.setItem("theme","dark");}
+ applyThemeBtn();
 };
+
+$("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
+$("logout").onclick=()=>signOut(auth);
 
 onAuthStateChanged(auth,u=>{
  const ok=!!u&&(u.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase();
@@ -98,39 +111,28 @@ document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
 });
 
 $("addInvite").onclick=async()=>{
- $("inviteMsg").textContent="";
- try{
-  const email=$("invEmail").value.trim().toLowerCase(),name=$("invName").value.trim(),classId=$("invClassId").value.trim();
-  if(!email||!name||!classId)throw new Error("Name, email, class ID — সব দিতে হবে।");
-  await setDoc(doc(db,"invites",email),{email,name,classId,className:$("invClassName").value.trim()||classId,active:true,updatedAt:serverTimestamp()},{merge:true});
-  $("inviteMsg").textContent=`✅ ${email} allow করা হয়েছে। এখন সে "First Time Setup" দিয়ে account তৈরি করতে পারবে।`;
-  $("invName").value="";$("invEmail").value="";$("invClassId").value="";$("invClassName").value="";
-  await loadInvites();
- }catch(e){$("inviteMsg").textContent="❌ "+e.message;}
+ const email=$("invEmail").value.trim().toLowerCase(),name=$("invName").value.trim(),classId=$("invClassId").value.trim();
+ if(!email||!name||!classId)return alert("Name, email, class ID required.");
+ await setDoc(doc(db,"invites",email),{email,name,classId,className:$("invClassName").value.trim()||classId,active:true,updatedAt:serverTimestamp()},{merge:true});
+ await loadInvites();
 };
 
 $("addSubject").onclick=async()=>{
- $("subjectMsg").textContent="";
- try{
-  const name=$("subName").value.trim(),classId=$("subClassId").value.trim();
-  if(!name||!classId)throw new Error("Subject name এবং Class ID দিতে হবে।");
-  await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});
-  $("subjectMsg").textContent="✅ Subject added.";$("subName").value="";$("subClassId").value="";
-  await loadSubjects();
- }catch(e){$("subjectMsg").textContent="❌ "+e.message;}
+ const name=$("subName").value.trim(),classId=$("subClassId").value.trim();if(!name||!classId)return;
+ await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});await loadSubjects();
 };
 
 async function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("addNote").onclick=async()=>{
  try{
-  const title=$("noteTitle").value.trim(),classId=$("noteClassId").value.trim(),subjectId=$("noteSubjectId").value.trim();
+  const title=$("noteTitle").value.trim(),classId=$("noteClassId").value.trim(),subjectId=$("noteSubjectId").value.trim(),chapter=$("noteChapter").value.trim();
   if(!title||!classId||!subjectId)throw new Error("Title, Class ID, Subject ID required.");
   let attachmentData="",attachmentName="",attachmentType="";
   const f=$("noteFile").files[0];
   if(f){if(f.size>80*1024)throw new Error("Attachment must be 80 KB or smaller.");attachmentData=await fileToDataUrl(f);attachmentName=f.name;attachmentType=f.type;}
-  await addDoc(collection(db,"notes"),{title,classId,subjectId,content:$("noteContent").value.trim(),attachmentData,attachmentName,attachmentType,createdAt:serverTimestamp()});
+  await addDoc(collection(db,"notes"),{title,classId,subjectId,chapter,content:$("noteContent").value.trim(),attachmentData,attachmentName,attachmentType,createdAt:serverTimestamp()});
   $("noteMsg").textContent="✅ Note published.";await loadNotes();
- }catch(e){$("noteMsg").textContent="❌ "+e.message;}
+ }catch(e){$("noteMsg").textContent=e.message;}
 };
 
 let qCount=0;
@@ -152,7 +154,7 @@ $("saveTest").onclick=async()=>{
   if(!publicQs.length)throw new Error("At least one complete question required.");
   await saveTestData({title:$("testTitle").value.trim(),classId:$("testClassId").value.trim(),subjectId:$("testSubjectId").value.trim(),durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
   $("testMsg").textContent="✅ Test published.";await loadTests();
- }catch(e){$("testMsg").textContent="❌ "+e.message;}
+ }catch(e){$("testMsg").textContent=e.message;}
 };
 
 async function saveTestData(t){
@@ -172,7 +174,7 @@ DURATION: 30
 ---
 Q: Henry-এর সূত্র অনুযায়ী গ্যাসের দ্রাব্যতা কোনটির সঙ্গে সমানুপাতিক?
 A: গ্যাসের আংশিক চাপ
-B: তরলের আয়তন
+B: তরলের আয়তন
 C: দ্রাবকের ভর
 D: পাত্রের আকার
 ANSWER: A
@@ -187,133 +189,77 @@ D: শূন্য হয়
 ANSWER: B
 TOPIC: Vapour Pressure`;
 
-$("loadSample").onclick=()=>{$("importBox").value=SAMPLE;updateCount();};
-$("clearImport").onclick=()=>{$("importBox").value="";$("importPreview").innerHTML="";$("publishImport").classList.add("hidden");parsedImport=null;updateCount();};
+$("loadSample").onclick=()=>{$("importBox").value=SAMPLE;};
 let parsedImport=null;
 
-// Field aliases so slightly different ChatGPT phrasing (e.g. "Question:",
-// "Ans:", "Correct Answer:") still parses instead of silently failing.
-const FIELD_ALIASES={
- Q:["Q","QUESTION"],
- A:["A"],B:["B"],C:["C"],D:["D"],
- ANSWER:["ANSWER","ANS","CORRECT","CORRECT ANSWER","CORRECTANSWER"],
- TOPIC:["TOPIC"]
-};
-function matchField(line){
- const m=line.match(/^\s*([A-Za-z][A-Za-z _]*?)\s*:\s*(.*)$/);
- if(!m)return null;
- const rawKey=m[1].trim().toUpperCase();
- for(const canon in FIELD_ALIASES){
-  if(FIELD_ALIASES[canon].includes(rawKey))return {key:canon,value:m[2].trim()};
- }
- return null;
-}
-
-// Line-based parser (instead of one big regex over the whole text) so it
-// tolerates blank lines, extra dashes, and stray spacing around separators —
-// pasting 30 ChatGPT-generated questions in slightly inconsistent formatting
-// no longer breaks the whole import.
 function parseImport(raw){
  const lines=raw.replace(/\r/g,"").split("\n");
- const isSep=line=>/^-{3,}\s*$/.test(line.trim());
-
- let firstSepIdx=lines.findIndex(isSep);
- const headLines=firstSepIdx<0?lines:lines.slice(0,firstSepIdx);
- const bodyLines=firstSepIdx<0?[]:lines.slice(firstSepIdx+1);
-
- const meta={};
- headLines.forEach(line=>{const f=matchField(line);if(f)meta[f.key]=f.value;});
-
- // Split remaining lines into blocks wherever a separator line appears.
- const blocks=[];let cur=[];
- bodyLines.forEach(line=>{
-  if(isSep(line)){
-   if(cur.some(l=>l.trim()))blocks.push(cur);
-   cur=[];
-  }else{
-   cur.push(line);
-  }
- });
- if(cur.some(l=>l.trim()))blocks.push(cur);
-
+ const meta={};let firstSep=lines.findIndex(x=>x.trim()==="---");
+ const head=(firstSep<0?lines:lines.slice(0,firstSep));
+ head.forEach(line=>{const m=line.match(/^([A-Z_]+)\s*:\s*(.+)$/i);if(m)meta[m[1].toUpperCase()]=m[2].trim();});
+ const body=(firstSep<0?[]:lines.slice(firstSep).join("\n")).split(/\n---\s*\n/).map(x=>x.trim()).filter(Boolean);
  const questions=[];const answers=[];const errors=[];
- blocks.forEach((blockLines,idx)=>{
+ body.forEach((block,idx)=>{
   const vals={};
-  blockLines.forEach(line=>{const f=matchField(line);if(f)vals[f.key]=f.value;});
-  const opts=[vals.A,vals.B,vals.C,vals.D];
-  const ans=(vals.ANSWER||"").toUpperCase().trim();
-  const ai="ABCD".indexOf(ans);
-  const missing=[];
-  if(!vals.Q)missing.push("Q");
-  ["A","B","C","D"].forEach((k,j)=>{if(!opts[j])missing.push(k);});
-  if(ai<0)missing.push("ANSWER (A/B/C/D)");
-  if(missing.length){
-   errors.push(`Question ${idx+1}: missing/invalid — ${missing.join(", ")}.`);
-  }else{
-   questions.push({q:vals.Q,o:opts,topic:vals.TOPIC||""});
-   answers.push(ai);
-  }
+  block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
+  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans);
+  if(!vals.Q||opts.some(x=>!x)||ai<0)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER incomplete.`);
+  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC||""});answers.push(ai);}
  });
-
- const data={title:meta.Q_TITLE||meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||meta["SUBJECT ID"]||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
- // TEST / CLASS / SUBJECT_ID aren't in FIELD_ALIASES (that map is for question
- // fields), so read them directly off the raw header lines too, case-insensitively.
- headLines.forEach(line=>{
-  const m=line.match(/^\s*([A-Za-z_]+)\s*:\s*(.*)$/);
-  if(!m)return;
-  const key=m[1].trim().toUpperCase();
-  const val=m[2].trim();
-  if(key==="TEST")data.title=data.title||val;
-  if(key==="CLASS")data.classId=data.classId||val;
-  if(key==="SUBJECT_ID")data.subjectId=data.subjectId||val;
-  if(key==="CHAPTER")data.chapter=data.chapter||val;
-  if(key==="DURATION")data.durationMinutes=Number(val)||data.durationMinutes;
- });
-
- if(!data.title)errors.push("TEST (title) missing from header.");
- if(!data.classId)errors.push("CLASS missing from header.");
- if(!data.subjectId)errors.push("SUBJECT_ID missing from header.");
- if(!questions.length && !errors.some(e=>e.startsWith("Question")))errors.push("No question blocks found — check that questions are separated by a line of --- (3+ dashes).");
+ const data={title:meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
+ if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");
  return {data,errors};
 }
-
-function updateCount(){
- const p=parseImport($("importBox").value);
- const n=p.data.questions.length;
- $("importCount").textContent=`${n} question${n===1?"":"s"} detected`+(p.errors.some(e=>e.startsWith("Question"))?" (some blocks have errors — click Preview for details)":"");
-}
-$("importBox").addEventListener("input",()=>{
- clearTimeout(window.__importCountTimer);
- window.__importCountTimer=setTimeout(updateCount,300);
-});
 
 $("previewImport").onclick=()=>{
  const p=parseImport($("importBox").value);parsedImport=p.errors.length?null:p.data;
  $("importPreview").innerHTML=p.errors.length
  ?`<div class="item preview-bad"><h3>❌ Fix these</h3>${p.errors.map(e=>`<div>${e}</div>`).join("")}</div>`
- :`<div class="item preview-ok"><h3>✅ Import ready</h3><p><b>${p.data.title}</b></p><p>Class: ${p.data.classId} · Subject ID: ${p.data.subjectId} · Chapter: ${p.data.chapter||"—"} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p>${p.data.questions.slice(0,5).map((q,i)=>`<div class="muted">${i+1}. ${q.q}</div>`).join("")}${p.data.questions.length>5?`<div class="muted">...and ${p.data.questions.length-5} more</div>`:""}</div>`;
+ :`<div class="item preview-ok"><h3>✅ Import ready</h3><p><b>${p.data.title}</b></p><p>Class: ${p.data.classId} · Chapter: ${p.data.chapter||"—"} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p>${p.data.questions.slice(0,3).map((q,i)=>`<div class="muted">${i+1}. ${q.q}</div>`).join("")}${p.data.questions.length>3?`<div class="muted">...and ${p.data.questions.length-3} more</div>`:""}</div>`;
  $("publishImport").classList.toggle("hidden",!!p.errors.length);
- updateCount();
 };
 $("publishImport").onclick=async()=>{
- try{
-  if(!parsedImport)throw new Error("Preview first.");
-  await saveTestData(parsedImport);
-  $("importMsg").textContent="✅ Imported test published successfully.";
-  parsedImport=null;
-  $("publishImport").classList.add("hidden");
-  $("importBox").value="";
-  $("importPreview").innerHTML="";
-  updateCount();
-  await loadTests();
- }catch(e){$("importMsg").textContent="❌ "+e.message;}
+ try{if(!parsedImport)throw new Error("Preview first.");await saveTestData(parsedImport);$("importMsg").textContent="✅ Imported test published successfully.";parsedImport=null;$("publishImport").classList.add("hidden");await loadTests();}
+ catch(e){$("importMsg").textContent=e.message;}
 };
 
 async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b> · ${d.id}<br><span class="muted">${d.data().className} (${d.data().classId})</span></div>`).join("");$("stStudents").textContent=s.size;}
 async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b><br><span class="muted">SUBJECT ID: ${d.id} · class: ${d.data().classId}</span></div>`).join("");$("stSubjects").textContent=s.size;}
-async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">${d.data().classId} · ${d.data().subjectId}</span></div>`).join("");}
+async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b>${d.data().chapter?` <span class="pill teal">${d.data().chapter}</span>`:""}<br><span class="muted">${d.data().classId} · ${d.data().subjectId}</span></div>`).join("");}
 async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.data().questionCount} Q · ${d.data().durationMinutes} min</span></div>`).join("");$("stTests").textContent=s.size;}
-function loadAll(){loadInvites();loadSubjects();loadNotes();loadTests();}
+
+$("addAnn").onclick=async()=>{
+ const title=$("annTitle").value.trim(),classId=$("annClassId").value.trim(),content=$("annContent").value.trim();
+ if(!title||!classId||!content)return $("annMsg").textContent="Title, Class ID ও notice text দিন।";
+ await addDoc(collection(db,"announcements"),{title,classId,content,createdAt:serverTimestamp()});
+ $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";await loadAnnouncements();
+};
+async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">${d.data().content}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
+
+$("addAsg").onclick=async()=>{
+ const title=$("asgTitle").value.trim(),classId=$("asgClassId").value.trim(),subjectId=$("asgSubjectId").value.trim(),dueDate=$("asgDue").value,description=$("asgDesc").value.trim();
+ if(!title||!classId||!subjectId)return $("asgMsg").textContent="Title, Class ID, Subject ID দিন।";
+ await addDoc(collection(db,"assignments"),{title,classId,subjectId,dueDate,description,createdAt:serverTimestamp()});
+ $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";await loadAssignments();
+};
+async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">Due: ${d.data().dueDate||"—"} · ${d.data().description||""}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
+
+let doubtUnsub=null;
+function listenDoubts(){
+ if(doubtUnsub)doubtUnsub();
+ doubtUnsub=onSnapshot(collection(db,"doubts"),snap=>{
+  const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("stDoubts").textContent=items.filter(x=>x.status==="open").length;
+  $("doubtList").innerHTML=items.map(x=>`<div class="item"><div class="topbar"><div><b>${x.studentName||"Student"}</b> <span class="muted">(${x.classId})</span></div><span class="pill ${x.status==='open'?'gold':''}">${x.status}</span></div><p>${x.question}</p>${x.answer?`<div class="notice">Reply: ${x.answer}</div>`:`<textarea class="replyBox" data-id="${x.id}" placeholder="Reply লিখুন..."></textarea><button class="secondary sendReply" data-id="${x.id}">Send Reply</button>`}</div>`).join("")||"<p class='muted'>No doubts yet.</p>";
+  document.querySelectorAll(".sendReply").forEach(b=>b.onclick=async()=>{
+   const id=b.dataset.id,box=document.querySelector(`.replyBox[data-id="${id}"]`),answer=box.value.trim();
+   if(!answer)return;
+   await updateDoc(doc(db,"doubts",id),{answer,status:"answered",answeredAt:serverTimestamp()});
+  });
+ });
+}
+
+function loadAll(){loadInvites();loadSubjects();loadNotes();loadTests();loadAnnouncements();loadAssignments();listenDoubts();}
 
 let latestAttempts=[],attemptUnsub=null;
 function listenAttempts(){
@@ -324,10 +270,18 @@ function listenAttempts(){
   for(const a of latestAttempts){
    if(a.status==="submitted"&&a.score==null){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
+    const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;
-     for(let i=0;i<ans.length;i++)if(Number(a.answers?.["q"+i])===Number(ans[i]))score++;
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),gradedAt:serverTimestamp()});
+     const ans=key.data().answers;let score=0;const topicStats={};
+     const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
+     for(let i=0;i<ans.length;i++){
+      const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
+      if(correct)score++;
+      const topic=(qs[i]&&qs[i].topic)||"General";
+      if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
+      topicStats[topic].total++;if(correct)topicStats[topic].correct++;
+     }
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,gradedAt:serverTimestamp()});
     }
    }
   }

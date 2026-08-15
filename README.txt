@@ -1,54 +1,61 @@
-STUDENT LEARNING HUB V2.2 (BUGFIX UPDATE) — SETUP
+STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
-WHAT'S FIXED IN THIS UPDATE
-1) Tests weren't showing up for students ("Available Tests" was empty).
-   Cause: the student page asked Firestore for tests by class only, but
-   the security rule also requires published==true — Firestore rejects
-   a whole list query if it isn't explicitly filtered to match every
-   condition the rule checks, not just the ones that happen to be true.
-   Fix: the student query now also filters by published==true, exactly
-   matching the rule. Notes worked before because that query already
-   matched its rule; tests didn't, because it didn't.
+⚠️ IMPORTANT: RE-PUBLISH firestore.rules AGAIN
+This update adds new collections (announcements, assignments, assignmentStatus,
+doubts) and changes attempt/user permissions. Go to
+Firebase Console -> Firestore Database -> Rules -> paste the new firestore.rules
+-> Publish, or NONE of the new features below will work.
 
-2) Logout wasn't working (both for students and for you as admin).
-   Fix: the Logout button now stops any live listeners first, signs out,
-   and ALWAYS sends the browser back to the login page even if something
-   goes wrong — so it can no longer look like it "did nothing." This
-   should also fix the "other students can't log in" reports if those
-   happened on a shared computer: if the previous student's session
-   couldn't be signed out, the next student would still see the first
-   student's account instead of a fresh login screen.
+WHAT'S NEW IN V2.1
+- Full visual redesign: richer violet/gold theme, Poppins + Hind Siliguri fonts,
+  glass-style nav, nicer cards, buttons and subject tiles.
+- Student profile picture (under 150 KB), stored on the user doc.
 
-3) Create Account / Login error messages were raw Firebase text.
-   Fix: they now show plain Bengali explanations (wrong password, email
-   already registered, no account yet, etc.), and if an account was
-   half-created by an earlier attempt (Auth account exists but the
-   profile document doesn't), signing up again now repairs it instead
-   of getting stuck on "email already in use."
+WHAT'S NEW IN V3
+Student side (student.html):
+- 🏠 Home: Notice board, study streak with badges (3/7/14/30-day), a Pomodoro
+  study timer (25/5/15 min presets).
+- 📝 Notes: search box, chapter filter dropdown, bookmark (star) any note,
+  "Bookmarked only" filter, and a Flashcard revision mode (front = title,
+  tap to flip to the note content, shuffle/prev/next).
+- 🧪 Tests: search box added on top of the existing live-test flow.
+- 📌 Assignments (new tab): homework list with due-date tags (Due soon /
+  Overdue), tick-box to mark done — saved per student.
+- 📊 Progress (new tab): subject-wise accuracy bars, topic-wise weak-area
+  bars (built from each test's per-question "TOPIC"), a class leaderboard
+  (average % per student, own row highlighted), and a Test History list
+  with a "Print / Save as PDF" button per result (uses the browser's print
+  dialog — choose "Save as PDF" there, no extra library needed).
+- 💬 Doubts (new tab): ask the teacher a subject-tagged question, see your
+  own question list with "Waiting" / "Answered" status and the reply.
+- 🌙 Dark mode toggle (top-right on every page), remembered per device.
 
-4) Admin actions (Add Student, Add Subject) gave no feedback and had no
-   error handling, so a failed save looked identical to a successful one.
-   Fix: both now show a clear ✅ success or ❌ error message, and the
-   input fields clear themselves after a successful add.
+Teacher side (admin.html):
+- 📣 Notices tab: publish a notice to a class; shows on students' Home tab.
+- 📌 Assignments tab: publish homework with title/description/due date;
+  Dashboard shows an assignment count.
+- 💬 Doubts tab: see every student's question live, type a reply once —
+  it's saved and marked "answered" automatically. Dashboard shows an open-
+  doubts count.
+- Notes now have an optional Chapter field (used for the student chapter
+  filter above).
+- Grading now also computes per-topic correctness (topicStats) on each
+  attempt, which powers the student's "weak areas" chart — this happens
+  automatically, no extra step needed.
 
-5) Test Import (Copy-Paste) was fragile: ChatGPT output with slightly
-   different dashes, blank lines, or field wording (e.g. "Ans:" instead
-   of "ANSWER:") would fail the whole preview with no useful detail, and
-   the pasted text was never cleared after publishing.
-   Fix: the parser now accepts any 3+ dash separator line with blank
-   lines around it, accepts a few common field-name variants, reports
-   exactly which field is missing per question instead of a generic
-   error, shows a live "N questions detected" counter as you paste, and
-   clears the box automatically after a successful publish.
-
-6) AI Help ("Explain with ChatGPT") now generates a different tutoring
-   prompt depending on the student's class: a simple plain-English
-   style for Class 7 and below, and the detailed Bengali-medium style
-   (with English technical terms kept) for Class 8 and above.
-
-NO FIRESTORE RULES CHANGE THIS TIME
-firestore.rules is unchanged from your working V2.1 setup — you do NOT
-need to republish it. Only the HTML/JS files changed.
+DATA MODEL ADDITIONS (for your reference, no action needed)
+- announcements/{id}: title, content, classId
+- assignments/{id}: title, description, classId, subjectId, dueDate
+- assignmentStatus/{assignmentId_uid}: uid, assignmentId, classId, done
+- doubts/{id}: uid, studentName, classId, subjectId, question, status,
+  answer, answeredAt
+- users/{uid} gained: avatarData, bookmarks (array of note IDs),
+  streak {count, lastDate} — students may ONLY self-update these 3 fields,
+  enforced by firestore.rules.
+- attempts/{id} gained: topicStats — and classmates can now read each
+  other's SUBMITTED attempts (name + score only) so the leaderboard works.
+  If you'd rather NOT expose scores to classmates, tell me and I'll remove
+  the leaderboard + restrict that read rule back to owner-only.
 
 
 FILES TO UPLOAD TO YOUR GITHUB PAGES REPOSITORY ROOT
@@ -59,29 +66,36 @@ FILES TO UPLOAD TO YOUR GITHUB PAGES REPOSITORY ROOT
 - config.js
 
 OTHER FILES (do NOT need to be public for website operation)
-- firestore.rules   (unchanged — already published, no action needed)
+- firestore.rules
 - TEST_IMPORT_TEMPLATE.txt
 - README.txt
 
-FIRST, KEEP A BACKUP OF YOUR WORKING V2.1.
+FIRST, KEEP A BACKUP OF YOUR WORKING V1.
 
-DEPLOY STEPS
-1) Upload index.html, admin.html, student.html, style.css and config.js
-   to the ROOT of your GitHub Pages repository (overwrite the existing
-   files with the same names).
-2) Commit changes. GitHub Pages updates automatically within a minute
-   or two.
-3) That's it — Firestore rules and your Teacher email are unchanged.
+ONE-TIME SETUP
+1) Teacher email is already configured as:
+   arpanalaps64@gmail.com
+
+2) Firestore Rules:
+   Firebase Console -> Firestore Database -> Rules -> replace all with firestore.rules -> Publish.
+
+3) Firebase Authentication:
+   Email/Password must be enabled.
+   (Anonymous is no longer needed for this V2, but it can remain enabled.)
+
+4) Upload index.html, admin.html, student.html, style.css and config.js to the ROOT of the same GitHub repository.
+   Commit changes.
+   GitHub Pages updates automatically.
 
 HOW TO START
 Teacher:
-- Open /admin.html, log in.
-- Students tab: add student name, email, Class ID and display class.
+- Open /admin.html
+- Login
+- Students tab: add student name, email, Class ID and display class
   Recommended IDs:
     class5 / Class V
     class12 / Class XII
-- Student uses that exact email on the home page -> First-time Student
-  Setup -> creates password.
+- Student uses that exact email on the home page -> First-time Student Setup -> creates password.
 
 Subjects:
 - Add subject + Class ID.
@@ -89,36 +103,44 @@ Subjects:
 - Use that ID when publishing notes/tests.
 
 FAST TEST CREATION (RECOMMENDED)
-- Ask ChatGPT for a test in your website import format (see
-  TEST_IMPORT_TEMPLATE.txt for the exact fields — Bengali or English
-  content both work).
+- Ask ChatGPT for a test in your website import format.
 - Admin -> Import Test
 - Paste the whole block
-- Preview Import (now tells you exactly which question/field is wrong,
-  if anything)
-- Publish Imported Test (the box clears itself when done)
+- Preview Import
+- Publish Imported Test
+
+Required format:
+TEST: ...
+CLASS: class12
+SUBJECT_ID: ...
+CHAPTER: ...
+DURATION: 30
+
+---
+Q: ...
+A: ...
+B: ...
+C: ...
+D: ...
+ANSWER: B
+TOPIC: ...
 
 NOTES
 - Text notes are easiest and safest.
-- Optional PDF/image attachment is limited in this app to 80 KB because
-  it is stored inside a Firestore document.
+- Optional PDF/image attachment is limited in this app to 80 KB because it is stored inside a Firestore document.
 - For larger files, do not use this method.
 
 DATA MINIMIZATION
-- Student profile, subjects, notes and tests remain because the site
-  needs them.
-- Submitted test attempts/results can be removed from Admin -> Live
-  Results -> Delete all submitted attempt data.
+- Student profile, subjects, notes and tests remain because the site needs them.
+- Submitted test attempts/results can be removed from Admin -> Live Results -> Delete all submitted attempt data.
 
 AI HELP
 - No OpenAI API key is stored in the website.
-- Student notes have "Explain with ChatGPT" — the prompt style adapts
-  automatically to the student's class (simple English for Class 7 and
-  below, detailed Bengali-medium for Class 8 and above).
-- It creates and copies a learning prompt and opens ChatGPT.
+- Student notes have “Explain with ChatGPT”.
+- It creates and copies a Bengali learning prompt and opens ChatGPT.
 - AI Help is not placed inside the active test screen.
 
-IMPORTANT FREE-TIER DESIGN
+IMPORTANT V2 FREE-TIER DESIGN
 - GitHub Pages for hosting
 - Firebase Authentication
 - Cloud Firestore
@@ -127,14 +149,11 @@ IMPORTANT FREE-TIER DESIGN
 - No paid OpenAI API integration
 
 LIMITATION
-Grading happens when the teacher Admin dashboard is open, because
-answer keys are teacher-only and this free static architecture has no
-server-side grading function.
+Grading happens when the teacher Admin dashboard is open, because answer keys are teacher-only and this free static architecture has no server-side grading function.
 
 ABOUT MORE FREE STORAGE (Google Drive etc.)
-Linking Google Drive for bigger note attachments is possible, but it
-needs Google Cloud OAuth setup (Drive API, consent screen, picker)
-which is a separate, more involved integration than a simple file swap
-— happy to build it as a next step if you want it. For now, small text
-notes plus attachments under 80 KB keep everything on Firebase's free
-tier with zero extra setup.
+Linking Google Drive for bigger note attachments is possible, but it needs
+Google Cloud OAuth setup (Drive API, consent screen, picker) which is a
+separate, more involved integration than a simple file swap — happy to build
+it as a next step if you want it. For now, small text notes plus attachments
+under 80 KB keep everything on Firebase's free tier with zero extra setup.

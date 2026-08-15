@@ -7,7 +7,7 @@ DURATION: 30
 ---
 Q: Henry-এর সূত্র অনুযায়ী নির্দিষ্ট তাপমাত্রায় তরলে গ্যাসের দ্রাব্যতা কোনটির সঙ্গে সমানুপাতিক?
 A: গ্যাসের আংশিক চাপ
-B: তরলের আয়তন
+B: তরলের আয়তন
 C: দ্রাবকের ভর
 D: পাত্রের আকৃতি
 ANSWER: A
@@ -21,22 +21,3 @@ C: অপরিবর্তিত থাকে
 D: শূন্য হয়
 ANSWER: B
 TOPIC: Vapour Pressure
-
------------------------------------------------------------
-NOTES ON THIS FORMAT (V2.2)
------------------------------------------------------------
-- Language: questions/options can be written fully in Bengali,
-  fully in English, or mixed — the importer doesn't care about
-  language, only about the field labels below.
-- Separator between questions: any line made of 3 or more dashes
-  (---, ----, -----) works, and blank lines around it are fine.
-- Field labels accepted (not case sensitive):
-    Q:        also accepts "Question:"
-    A: B: C: D:
-    ANSWER:   also accepts "Ans:", "Correct:", "Correct Answer:"
-    TOPIC:
-- If a question block is missing a field, the Preview step will
-  tell you exactly which one (e.g. "Question 5: missing — C, D.")
-  instead of failing silently.
-- After a successful Publish, the paste box clears itself
-  automatically so you can paste the next test right away.
