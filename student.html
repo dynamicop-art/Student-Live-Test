@@ -199,6 +199,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$
 mountBlobs();
 mountHeroSparkle();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
+let answerSavePromise=Promise.resolve();
 let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
 
 /* ---------- THEME ---------- */
@@ -618,20 +619,35 @@ function renderTests(){
 $("testSearch").oninput=renderTests;
 
 async function startTest(id){
- activeTest=tests.find(t=>t.id===id);answers={};
+ activeTest=tests.find(t=>t.id===id);answers={};activeAttempt=null;
+ if(!activeTest){alert("Testটি পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।");return;}
  if(timerHandle)clearInterval(timerHandle);
- $("submitTest").disabled=false;
- $("submitTest").textContent="Final Submit";
- $("testStatus").textContent="";
+ $("submitTest").disabled=true;
+ $("submitTest").textContent="Starting...";
+ $("testStatus").textContent="⏳ Test session তৈরি হচ্ছে...";
  $("printPaperBtn").classList.add("hidden");
  $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
  $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
- const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
- activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
+ try{
+   if(!auth.currentUser||!profile?.classId)throw new Error("Student profile/session is not ready");
+   const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
+   activeAttempt=r.id;startMs=Date.now();answerSavePromise=Promise.resolve();timerHandle=setInterval(tick,1000);
+   $("submitTest").disabled=false;$("submitTest").textContent="Final Submit";$("testStatus").textContent="";
+   $("runner").scrollIntoView({behavior:"smooth"});
+ }catch(err){
+   console.error("Test session creation failed:",err);
+   activeAttempt=null;activeTest=null;$("runner").classList.add("hidden");
+   const denied=err?.code==="permission-denied";
+   alert(denied?"Test শুরু করা যায়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Test শুরু করা যায়নি। Internet/Firebase connection check করে আবার চেষ্টা করো।");
+   return;
+ }
  $("testForm").onchange=async e=>{
    if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
    const n=Object.keys(answers).length;$("prog").style.width=(n/activeTest.questions.length*100)+"%";$("progText").textContent=`Answered ${n}/${activeTest.questions.length}`;
-   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:n,lastUpdated:serverTimestamp()});
+   const attemptId=activeAttempt;
+   answerSavePromise=updateDoc(doc(db,"attempts",attemptId),{answers:{...answers},progress:n,lastUpdated:serverTimestamp()})
+     .catch(err=>{console.error("Answer autosave failed:",err);});
+   await answerSavePromise;
  };
 }
 function tick(){
@@ -660,6 +676,7 @@ async function finishTest(auto){
  $("testStatus").textContent="⏳ Answer submit হচ্ছে...";
  try{
    if(!activeAttempt)throw new Error("Missing active attempt");
+   await answerSavePromise;
    await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
    submitBtn.textContent="✅ Submitted";
    $("testStatus").textContent="✅ Successfully submitted. Progress update হচ্ছে...";
@@ -670,8 +687,9 @@ async function finishTest(auto){
    submitBtn.disabled=false;
    submitBtn.textContent="Final Submit";
    $("testForm").querySelectorAll("input").forEach(x=>x.disabled=false);
-   $("testStatus").textContent="❌ Submit হয়নি। Internet/Firebase connection check করে আবার Final Submit চাপো।";
-   if(!auto)alert("Submit হয়নি। আবার চেষ্টা করো।");
+   const denied=err?.code==="permission-denied";
+   $("testStatus").textContent=denied?"❌ Firebase permission denied — firestore.rules deploy করতে হবে।":"❌ Submit হয়নি। Internet/Firebase connection check করে আবার Final Submit চাপো।";
+   if(!auto)alert(denied?"Submit হয়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Submit হয়নি। আবার চেষ্টা করো।");
    return;
  }
  submittingTest=false;
