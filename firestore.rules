@@ -63,7 +63,7 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.testId == resource.data.testId
         && request.resource.data.classId == resource.data.classId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats','review'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats'])
       );
 
       allow delete: if isTeacher();

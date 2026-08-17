@@ -166,31 +166,14 @@
     <textarea id="aiPromptText" class="ai-modal-textarea" readonly></textarea>
     <div class="ai-modal-actions">
       <button id="aiPromptCopyBtn" type="button">📋 Prompt Copy করো</button>
-      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_system" rel="noopener noreferrer">🚀 ChatGPT খোলো</a>
+      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">🚀 ChatGPT খোলো</a>
     </div>
     <p id="aiPromptHint" class="muted ai-modal-hint"></p>
   </div>
 </div>
 
-<!-- ================= ANSWER REVIEW MODAL (correct vs wrong) ================= -->
-<div id="reviewOverlay" class="ai-modal-overlay hidden">
-  <div class="ai-modal review-modal">
-    <div class="ai-modal-head">
-      <h3 id="reviewTitle">📝 Answer Review</h3>
-      <button id="reviewClose" class="ai-modal-x" type="button" title="Close">✖</button>
-    </div>
-    <p class="muted ai-modal-sub">সবুজ = তোমার সঠিক উত্তর। লাল = তোমার ভুল উত্তর (পাশে সঠিক উত্তরও দেখানো আছে)।</p>
-    <div id="reviewBody" class="review-body"></div>
-  </div>
-</div>
-</div><!-- /wrap -->
-
 <script type="module">
-let mountBlobs=()=>{},mountHeroSparkle=()=>{},confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>true,setSoundOn=()=>{};
-try{
- const fx=await import("./effects.js");
- ({mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn}=fx);
-}catch(e){console.warn("effects.js load failed — continuing without decorative effects (sound/confetti/sparkle):",e);}
+import {mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -199,7 +182,6 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$
 mountBlobs();
 mountHeroSparkle();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
-let answerSavePromise=Promise.resolve();
 let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
 
 /* ---------- THEME ---------- */
@@ -238,20 +220,11 @@ function renderQuote(){
 renderQuote();
 
 $("logout").onclick=async()=>{
- const btn=$("logout");
- if(btn.disabled)return;
- btn.disabled=true;
- btn.textContent="Logging out...";
- try{
-  await Promise.race([
-   signOut(auth),
-   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
-  ]);
- }catch(e){
-  console.warn("logout fallback:",e);
- }finally{
-  location.replace("index.html");
- }
+ const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
+ const forceRedirect=setTimeout(()=>{location.href="index.html";},4000);
+ try{await signOut(auth);}
+ catch(e){console.error("logout error:",e);}
+ finally{clearTimeout(forceRedirect);location.href="index.html";}
 };
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
@@ -434,26 +407,19 @@ async function tryCopy(text){
 }
 
 function copyPromptAndOpenChatGPT(promptText,bengali){
- try{
-  // Always show the prompt in-app first — this guarantees the student can see/copy
-  // it manually even if clipboard access or pop-up tabs are blocked by the
-  // surrounding browser/webview. Auto-copy is then attempted on top.
-  $("aiPromptText").value=promptText;
-  $("aiPromptHint").textContent="";
-  $("aiPromptOverlay").classList.remove("hidden");
-  tryCopy(promptText).then(ok=>{
-   toast(ok
-    ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
-    :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
-    ok?"🤖":"⚠️");
-   if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
-  });
- }catch(err){
-  // Defensive: guarantee the student always gets *some* feedback instead of the
-  // button silently doing nothing, which is impossible to debug from their end.
-  console.error("copyPromptAndOpenChatGPT failed",err);
-  toast(bengali?"কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করো":"Something went wrong — please try again","⚠️");
- }
+ // Always show the prompt in-app first — this guarantees the student can see/copy
+ // it manually even if clipboard access or pop-up tabs are blocked by the
+ // surrounding browser/webview. Auto-copy and auto-open are then attempted on top.
+ $("aiPromptText").value=promptText;
+ $("aiPromptHint").textContent="";
+ $("aiPromptOverlay").classList.remove("hidden");
+ tryCopy(promptText).then(ok=>{
+  toast(ok
+   ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
+   :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
+   ok?"🤖":"⚠️");
+  if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
+ });
 }
 
 $("aiPromptClose").onclick=()=>$("aiPromptOverlay").classList.add("hidden");
@@ -462,66 +428,19 @@ $("aiPromptCopyBtn").onclick=async()=>{
  const ok=await tryCopy($("aiPromptText").value);
  toast(ok?"Prompt copy হয়েছে":"Copy করা যায়নি — নিজে select করে copy করো",ok?"📋":"⚠️");
 };
-const CHATGPT_URL="https://chatgpt.com/";
-$("aiPromptOpenLink").addEventListener("click",(e)=>{
- // Never let the raw <a> navigation run: in many WebView "app wrapper" builders
- // (GoNative, Median, Appilix, etc.) a plain anchor click can navigate the SAME
- // webview away to chatgpt.com, wiping this app with no way back. Always route
- // through window.open() instead — "_system" is the convention those wrappers
- // watch for to hand the link to the phone's real browser/app, leaving this app
- // untouched underneath so the student can always switch back to it.
- e.preventDefault();
- let opened=null;
- try{opened=window.open(CHATGPT_URL,"_system");}catch(err){}
- if(!opened){try{opened=window.open(CHATGPT_URL,"_blank","noopener");}catch(err){}}
- if(opened){
-  setTimeout(()=>{toast("ChatGPT খোলা হয়েছে — prompt paste করে দাও","🤖");},400);
- }else{
-  toast("ChatGPT automatic খোলা যায়নি — নিজে ChatGPT app/browser খুলে prompt-টা paste করো","⚠️");
-  $("aiPromptHint").textContent="👆 উপরের বক্স থেকে prompt copy করে নিজে ChatGPT app-এ গিয়ে paste করো।";
- }
+$("aiPromptOpenLink").addEventListener("click",()=>{
+ // The <a target="_blank"> handles the actual navigation natively (works in more
+ // webview setups than window.open()); this just gives a heads-up if it silently
+ // no-ops, since some embedded webviews block new tabs entirely.
+ setTimeout(()=>{toast("ChatGPT না খুললে, ChatGPT app/browser নিজে খুলে prompt-টা paste করো","💡");},900);
 });
-
-/* ---------- SHARED: correct-vs-wrong answer review modal ---------- */
-function renderReviewModal(title,review){
- $("reviewTitle").textContent=`📝 ${title} — Answer Review`;
- if(!review||!review.length){
-  $("reviewBody").innerHTML="<p class='muted'>এই test-এর জন্য review data পাওয়া যায়নি।</p>";
- }else{
-  const correctCount=review.filter(r=>r.isCorrect).length;
-  $("reviewBody").innerHTML=
-   `<p class="review-summary">✅ ঠিক: <b>${correctCount}</b> &nbsp; ❌ ভুল: <b>${review.length-correctCount}</b> &nbsp; মোট: <b>${review.length}</b></p>`
-   +review.map((r,i)=>{
-    const optsHtml=(r.o||[]).map((o,j)=>{
-     let cls="rv-opt";
-     if(j===r.correctIdx)cls+=" rv-correct";
-     if(j===r.chosenIdx&&!r.isCorrect)cls+=" rv-wrong";
-     if(j===r.chosenIdx&&r.isCorrect)cls+=" rv-correct rv-chosen";
-     let tag="";
-     if(j===r.chosenIdx&&j===r.correctIdx)tag=" ✅ (তোমার উত্তর)";
-     else if(j===r.chosenIdx)tag=" ❌ (তোমার উত্তর)";
-     else if(j===r.correctIdx)tag=" ✅ (সঠিক উত্তর)";
-     return `<div class="${cls}">${String.fromCharCode(65+j)}. ${o}${tag}</div>`;
-    }).join("");
-    const unanswered=r.chosenIdx==null;
-    return `<div class="rv-q ${r.isCorrect?"rv-q-correct":"rv-q-wrong"}">
-     <div class="rv-qhead"><span class="pill ${r.isCorrect?"":"danger-pill"}">${r.isCorrect?"✅ ঠিক":unanswered?"➖ উত্তর দাওনি":"❌ ভুল"}</span>${r.topic?`<span class="pill teal">${r.topic}</span>`:""}</div>
-     <p class="rv-qtext"><b>${i+1}. ${r.q}</b></p>
-     ${optsHtml}
-    </div>`;
-   }).join("");
- }
- $("reviewOverlay").classList.remove("hidden");
-}
-$("reviewClose").onclick=()=>$("reviewOverlay").classList.add("hidden");
-$("reviewOverlay").onclick=e=>{if(e.target.id==="reviewOverlay")$("reviewOverlay").classList.add("hidden");};
 
 /* ---------- SHARED: "elder-brother" tutor prompt builder ----------
    Mirrors the full teaching framework: story-first intro, one chunk at a
    time, easy→proper→exam-level layers, dry runs, difficulty ramp, and
    waiting for the student's answer before moving on. */
 function buildTutorPrompt({topic,context,extra,bengali}){
- const cls=(profile&&profile.className)||"";
+ const cls=profile.className||"";
  if(bengali){
   return `তুমি আমার personal শিক্ষক, mentor, আর দাদার মতো (elder-brother-style) tutor।
 আমি ${cls} class-এর student।
@@ -577,7 +496,7 @@ Now start teaching me "${topic}" from the absolute basics — begin with a simpl
 }
 
 function askAiAboutWeakTopic(topic,pct){
- const bengali=isBengaliText(topic)||isBengaliText((profile&&profile.className)||"");
+ const bengali=isBengaliText(topic)||isBengaliText(profile.className||"");
  const extra=bengali
   ?`গত টেস্টগুলোতে এই topic-এ আমার accuracy মাত্র ${pct}% — তাই একদম basics থেকে ধরে ধরে শেখাও।`
   :`My accuracy on this topic in recent tests is only ${pct}%, so please start from the absolute basics.`;
@@ -619,35 +538,15 @@ function renderTests(){
 $("testSearch").oninput=renderTests;
 
 async function startTest(id){
- activeTest=tests.find(t=>t.id===id);answers={};activeAttempt=null;
- if(!activeTest){alert("Testটি পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।");return;}
- if(timerHandle)clearInterval(timerHandle);
- $("submitTest").disabled=true;
- $("submitTest").textContent="Starting...";
- $("testStatus").textContent="⏳ Test session তৈরি হচ্ছে...";
- $("printPaperBtn").classList.add("hidden");
+ activeTest=tests.find(t=>t.id===id);answers={};
  $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
  $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
- try{
-   if(!auth.currentUser||!profile?.classId)throw new Error("Student profile/session is not ready");
-   const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
-   activeAttempt=r.id;startMs=Date.now();answerSavePromise=Promise.resolve();timerHandle=setInterval(tick,1000);
-   $("submitTest").disabled=false;$("submitTest").textContent="Final Submit";$("testStatus").textContent="";
-   $("runner").scrollIntoView({behavior:"smooth"});
- }catch(err){
-   console.error("Test session creation failed:",err);
-   activeAttempt=null;activeTest=null;$("runner").classList.add("hidden");
-   const denied=err?.code==="permission-denied";
-   alert(denied?"Test শুরু করা যায়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Test শুরু করা যায়নি। Internet/Firebase connection check করে আবার চেষ্টা করো।");
-   return;
- }
+ const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
+ activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
  $("testForm").onchange=async e=>{
    if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
    const n=Object.keys(answers).length;$("prog").style.width=(n/activeTest.questions.length*100)+"%";$("progText").textContent=`Answered ${n}/${activeTest.questions.length}`;
-   const attemptId=activeAttempt;
-   answerSavePromise=updateDoc(doc(db,"attempts",attemptId),{answers:{...answers},progress:n,lastUpdated:serverTimestamp()})
-     .catch(err=>{console.error("Answer autosave failed:",err);});
-   await answerSavePromise;
+   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:n,lastUpdated:serverTimestamp()});
  };
 }
 function tick(){
@@ -655,52 +554,19 @@ function tick(){
  $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
  if(left<=0){clearInterval(timerHandle);finishTest(true);}
 }
-let submittingTest=false;
-$("submitTest").onclick=async()=>{
- if(submittingTest)return;
- if(!activeTest||!activeAttempt){
-   $("testStatus").textContent="⚠️ Test session পাওয়া যাচ্ছে না। Testটি আবার Start করো।";
-   return;
- }
- if(confirm("Final submit করতে নিশ্চিত?"))await finishTest(false);
-};
+$("submitTest").onclick=()=>{if(confirm("Final submit করতে নিশ্চিত?"))finishTest(false);};
 
 async function finishTest(auto){
- if(submittingTest)return;
- submittingTest=true;
- const submitBtn=$("submitTest");
- clearInterval(timerHandle);
- submitBtn.disabled=true;
- submitBtn.textContent=auto?"Auto submitting...":"Submitting...";
- $("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
- $("testStatus").textContent="⏳ Answer submit হচ্ছে...";
- try{
-   if(!activeAttempt)throw new Error("Missing active attempt");
-   await answerSavePromise;
-   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
-   submitBtn.textContent="✅ Submitted";
-   $("testStatus").textContent="✅ Successfully submitted. Progress update হচ্ছে...";
-   await loadProgressAndLeaderboard().catch(()=>{});
- }catch(err){
-   console.error("Final submit failed:",err);
-   submittingTest=false;
-   submitBtn.disabled=false;
-   submitBtn.textContent="Final Submit";
-   $("testForm").querySelectorAll("input").forEach(x=>x.disabled=false);
-   const denied=err?.code==="permission-denied";
-   $("testStatus").textContent=denied?"❌ Firebase permission denied — firestore.rules deploy করতে হবে।":"❌ Submit হয়নি। Internet/Firebase connection check করে আবার Final Submit চাপো।";
-   if(!auto)alert(denied?"Submit হয়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Submit হয়নি। আবার চেষ্টা করো।");
-   return;
- }
- submittingTest=false;
+ clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
+ await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
+ $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
  $("printPaperBtn").classList.remove("hidden");
  $("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      const perfect=d.percentage>=100;
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="row" style="margin-top:10px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button></div><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
-     $("reviewNowBtn").onclick=()=>renderReviewModal(activeTest.title,d.review);
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
      if(d.percentage>=40){confettiBurst(perfect?160:(d.percentage>=80?140:80));playChime(perfect?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
@@ -794,12 +660,7 @@ async function loadProgressAndLeaderboard(){
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
  lastSortedMine=sortedMine;
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Answer Review</button><button class="secondary printBtn" data-id="${a.id}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${a.testId}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
- document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{
-  const a=mine.find(x=>x.id===b.dataset.id);
-  if(!a)return;
-  renderReviewModal(a.testTitle,a.review);
- });
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${a.testId}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
  document.querySelectorAll(".printQpBtn").forEach(b=>b.onclick=()=>{
   const t=tests.find(x=>x.id===b.dataset.testid);
   if(!t){toast("এই test-এর প্রশ্ন আর available নেই","⚠️");return;}
@@ -882,9 +743,8 @@ function listenMyDoubts(){
 }
 /* ---------- MY PRACTICE TEST (client-only, free, nothing saved) ---------- */
 $("pracPromptBtn").onclick=async()=>{
- try{
-  const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
-  const prompt=`আমার জন্য ${(profile&&profile.className)||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
+ const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
+ const prompt=`আমার জন্য ${profile.className||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
 
 Q: প্রশ্ন এখানে
 A: option A
@@ -893,11 +753,7 @@ C: option C
 D: option D
 ANSWER: (A/B/C/D এর একটা)
 TOPIC: sub-topic name`;
-  copyPromptAndOpenChatGPT(prompt,true);
- }catch(err){
-  console.error("pracPromptBtn failed",err);
-  toast("প্রম্পট বানাতে সমস্যা হয়েছে — আবার চেষ্টা করো","⚠️");
- }
+ copyPromptAndOpenChatGPT(prompt,true);
 };
 
 function parsePracticeText(text){
@@ -934,69 +790,4 @@ $("pracStart").onclick=()=>{
   $("pracResult").textContent=`তোমার স্কোর: ${score} / ${pracQs.length}`;
  };
 };
-</script>
-<!-- Practice-test safety fallback: independent of Firebase/module execution. -->
-<script>
-window.addEventListener("DOMContentLoaded",()=>{
- const byId=id=>document.getElementById(id);
- const promptBtn=byId("pracPromptBtn");
- const overlay=byId("aiPromptOverlay");
- const promptBox=byId("aiPromptText");
- const hint=byId("aiPromptHint");
- if(!promptBtn||!overlay||!promptBox)return;
-
- function classLabel(){
-  const who=(byId("who")?.textContent||"").trim();
-  return who&&who.includes("·")?who.split("·")[0].trim():"তোমার class";
- }
- function buildPracticePrompt(){
-  const topic=(byId("pracTopic")?.value||"").trim()||"General revision";
-  const raw=Number(byId("pracCount")?.value);
-  const count=Number.isFinite(raw)&&raw>0?Math.min(Math.floor(raw),50):5;
-  return `আমার জন্য ${classLabel()}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
-
-Q: প্রশ্ন এখানে
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: (A/B/C/D এর একটা)
-TOPIC: sub-topic name`;
- }
- async function copyText(text){
-  if(navigator.clipboard&&window.isSecureContext){
-   try{await navigator.clipboard.writeText(text);return true;}catch(e){}
-  }
-  try{promptBox.focus();promptBox.select();promptBox.setSelectionRange(0,text.length);return document.execCommand("copy");}
-  catch(e){return false;}
- }
-
- promptBtn.onclick=async()=>{
-  const text=buildPracticePrompt();
-  promptBox.value=text;
-  if(hint)hint.textContent="";
-  overlay.classList.remove("hidden");
-  const copied=await copyText(text);
-  if(hint)hint.textContent=copied
-   ?"✅ Prompt copy হয়েছে। এখন ChatGPT খুলে paste করো।"
-   :"👆 Auto-copy না হলে উপরের prompt select করে copy করো।";
-  let opened=null;
-  try{opened=window.open("https://chatgpt.com/","_blank","noopener");}catch(e){}
-  if(!opened&&hint)hint.textContent+=" ChatGPT auto-open block হলে নিচের ‘ChatGPT খোলো’ button চাপো।";
- };
-
- const copyBtn=byId("aiPromptCopyBtn");
- if(copyBtn)copyBtn.onclick=async()=>{
-  const ok=await copyText(promptBox.value);
-  if(hint)hint.textContent=ok?"✅ Prompt copy হয়েছে।":"👆 Prompt select করে manually copy করো।";
- };
- const closeBtn=byId("aiPromptClose");
- if(closeBtn)closeBtn.onclick=()=>overlay.classList.add("hidden");
- const openLink=byId("aiPromptOpenLink");
- if(openLink)openLink.onclick=e=>{
-  e.preventDefault();
-  const w=window.open("https://chatgpt.com/","_blank","noopener");
-  if(!w)location.href="https://chatgpt.com/";
- };
-});
 </script></body></html>

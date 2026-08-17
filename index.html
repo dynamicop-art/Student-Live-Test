@@ -49,18 +49,14 @@
 
 <div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
 <script type="module">
-let mountBlobs=()=>{},mountHeroSparkle=()=>{};
-try{
- const fx=await import("./effects.js");
- ({mountBlobs,mountHeroSparkle}=fx);
-}catch(e){console.warn("effects.js load failed — continuing without decorative effects:",e);}
+import {mountBlobs,mountHeroSparkle} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+mountBlobs();
+mountHeroSparkle();
 import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-mountBlobs();
-mountHeroSparkle();
 const $=id=>document.getElementById(id);
 
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}

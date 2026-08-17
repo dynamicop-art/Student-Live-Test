@@ -110,11 +110,7 @@
 </div></div>
 
 <script type="module">
-let mountBlobs=()=>{},mountHeroSparkle=()=>{},toast=()=>{};
-try{
- const fx=await import("./effects.js");
- ({mountBlobs,mountHeroSparkle,toast}=fx);
-}catch(e){console.warn("effects.js load failed — continuing without decorative effects:",e);}
+import {mountBlobs,mountHeroSparkle,toast} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -135,20 +131,11 @@ $("themeBtn").onclick=()=>{
 
 $("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
 $("logout").onclick=async()=>{
- const btn=$("logout");
- if(btn.disabled)return;
- btn.disabled=true;
- btn.textContent="Logging out...";
- try{
-  await Promise.race([
-   signOut(auth),
-   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
-  ]);
- }catch(e){
-  console.warn("logout fallback:",e);
- }finally{
-  location.replace("index.html");
- }
+ const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
+ const forceReset=setTimeout(()=>{btn.disabled=false;btn.textContent="Logout";},4000);
+ try{await signOut(auth);}
+ catch(e){console.error("logout error:",e);}
+ finally{clearTimeout(forceReset);btn.disabled=false;btn.textContent="Logout";}
 };
 
 onAuthStateChanged(auth,u=>{
@@ -416,20 +403,16 @@ function listenAttempts(){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
     const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;const topicStats={};const review=[];
+     const ans=key.data().answers;let score=0;const topicStats={};
      const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
      for(let i=0;i<ans.length;i++){
-      const chosen=a.answers?.["q"+i];
-      const chosenIdx=chosen==null?null:Number(chosen);
-      const correctIdx=Number(ans[i]);
-      const correct=chosenIdx===correctIdx;
+      const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
       if(correct)score++;
       const topic=(qs[i]&&qs[i].topic)||"General";
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
-      review.push({q:(qs[i]&&qs[i].q)||"",o:(qs[i]&&qs[i].o)||[],topic,chosenIdx,correctIdx,isCorrect:correct});
      }
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,review,gradedAt:serverTimestamp()});
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,gradedAt:serverTimestamp()});
     }
    }
   }
