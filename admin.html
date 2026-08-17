@@ -110,18 +110,13 @@
 </div></div>
 
 <script type="module">
-let mountBlobs=()=>{},mountHeroSparkle=()=>{},toast=()=>{};
-try{
- const fx=await import("./effects.js");
- ({mountBlobs,mountHeroSparkle,toast}=fx);
-}catch(e){console.warn("effects.js load failed — continuing without decorative effects:",e);}
+import {mountBlobs,toast} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 mountBlobs();
-mountHeroSparkle();
 let adminSubjects=[];
 
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -135,20 +130,11 @@ $("themeBtn").onclick=()=>{
 
 $("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
 $("logout").onclick=async()=>{
- const btn=$("logout");
- if(btn.disabled)return;
- btn.disabled=true;
- btn.textContent="Logging out...";
- try{
-  await Promise.race([
-   signOut(auth),
-   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
-  ]);
- }catch(e){
-  console.warn("logout fallback:",e);
- }finally{
-  location.replace("index.html");
- }
+ const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
+ const forceReset=setTimeout(()=>{btn.disabled=false;btn.textContent="Logout";},4000);
+ try{await signOut(auth);}
+ catch(e){console.error("logout error:",e);}
+ finally{clearTimeout(forceReset);btn.disabled=false;btn.textContent="Logout";}
 };
 
 onAuthStateChanged(auth,u=>{
@@ -273,13 +259,8 @@ TOPIC: sub-topic name
 
 আমাকে মোট ${howMany}টা আলাদা TEST দাও (যেমন Test 1, Test 2...), প্রতিটাতে ${count}টা করে আলাদা প্রশ্ন থাকবে, প্রতিটা নতুন TEST: লাইন দিয়ে শুরু হবে ঠিক ওপরের format মেনে। সব কটা টেস্ট এক উত্তরেই একসাথে দাও, যাতে আমি পুরোটা একবারে copy করে নিতে পারি।`;
  }
- const w=window.open("https://chatgpt.com/","_blank");
- navigator.clipboard.writeText(prompt).then(()=>{
-  toast("Prompt copy হয়েছে — ChatGPT ট্যাবে paste করো","🤖");
- }).catch(()=>{
-  window.prompt("Clipboard access পাওয়া যায়নি — এই prompt-টা manually copy করো:",prompt);
- });
- if(!w)toast("Pop-up blocked হয়েছে — ব্রাউজার settings থেকে allow করো","⚠️");
+ try{await navigator.clipboard.writeText(prompt);alert("Prompt copy হয়েছে। ChatGPT-এ paste করে answer আসলে সেটা copy করে নিচের বক্সে paste করো।");window.open("https://chatgpt.com/","_blank");}
+ catch{window.prompt("এই prompt copy করো:",prompt);}
 };
 
 let parsedImportList=[];
@@ -294,10 +275,7 @@ function parseImport(raw){
  body.forEach((block,idx)=>{
   const vals={};
   block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
-  // Match on the first letter only (e.g. "A", "A)", "A." all work) — kept
-  // consistent with the practice-quiz parser in student.html so ChatGPT
-  // output that isn't in the exact "ANSWER: A" format still imports.
-  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").trim().toUpperCase(),ai="ABCD".indexOf(ans[0]||"");
+  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans);
   if(!vals.Q||opts.some(x=>!x)||ai<0)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER incomplete.`);
   else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC||""});answers.push(ai);}
  });
@@ -317,7 +295,7 @@ $("previewImport").onclick=()=>{
  parsedImportList=results.filter(r=>!r.errors.length).map(r=>r.data);
  $("importPreview").innerHTML=results.map((r,i)=>r.errors.length
   ?`<div class="item preview-bad"><h3>❌ Test ${i+1}: fix these</h3>${r.errors.map(e=>`<div>${e}</div>`).join("")}</div>`
-  :`<div class="item preview-ok"><h3>✅ Test ${i+1} ready</h3><p><b>${esc(r.data.title)}</b></p><p>Class: ${esc(r.data.classId)} · Chapter: ${esc(r.data.chapter)||"—"} · ${r.data.questions.length} questions · ${r.data.durationMinutes} min</p>${r.data.questions.slice(0,3).map((q,j)=>`<div class="muted">${j+1}. ${esc(q.q)}</div>`).join("")}${r.data.questions.length>3?`<div class="muted">...and ${r.data.questions.length-3} more</div>`:""}</div>`
+  :`<div class="item preview-ok"><h3>✅ Test ${i+1} ready</h3><p><b>${r.data.title}</b></p><p>Class: ${r.data.classId} · Chapter: ${r.data.chapter||"—"} · ${r.data.questions.length} questions · ${r.data.durationMinutes} min</p>${r.data.questions.slice(0,3).map((q,j)=>`<div class="muted">${j+1}. ${q.q}</div>`).join("")}${r.data.questions.length>3?`<div class="muted">...and ${r.data.questions.length-3} more</div>`:""}</div>`
  ).join("");
  $("publishImport").classList.toggle("hidden",!parsedImportList.length);
  $("publishImport").textContent=parsedImportList.length>1?`✅ Publish All ${parsedImportList.length} Tests`:"✅ Publish Imported Test";
@@ -342,11 +320,11 @@ async function loadInvites(){
 function renderInvites(){
  const q=($("invSearch")?.value||"").trim().toLowerCase();
  const list=adminInvites.filter(d=>!q||(d.name+" "+d.id+" "+(d.className||"")).toLowerCase().includes(q));
- $("inviteList").innerHTML=list.map(d=>`<div class="item"><b>${esc(d.name)}</b> · ${esc(d.id)}<br><span class="muted">${esc(d.className)} (${esc(d.classId)})</span></div>`).join("")||"<p class='muted'>No students found.</p>";
+ $("inviteList").innerHTML=list.map(d=>`<div class="item"><b>${d.name}</b> · ${d.id}<br><span class="muted">${d.className} (${d.classId})</span></div>`).join("")||"<p class='muted'>No students found.</p>";
 }
 if($("invSearch"))$("invSearch").oninput=renderInvites;
 
-async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));adminSubjects=s.docs.map(d=>({id:d.id,...d.data()}));$("subjectList").innerHTML=adminSubjects.map(sub=>`<div class="item"><b>${esc(sub.name)}</b><br><span class="muted">SUBJECT ID: ${esc(sub.id)} · class: ${esc(sub.classId)}</span></div>`).join("");$("stSubjects").textContent=adminSubjects.length;}
+async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));adminSubjects=s.docs.map(d=>({id:d.id,...d.data()}));$("subjectList").innerHTML=adminSubjects.map(sub=>`<div class="item"><b>${sub.name}</b><br><span class="muted">SUBJECT ID: ${sub.id} · class: ${sub.classId}</span></div>`).join("");$("stSubjects").textContent=adminSubjects.length;}
 function subjectNameAdmin(id){return adminSubjects.find(s=>s.id===id)?.name||"Subject";}
 
 async function loadNotes(){
@@ -357,7 +335,7 @@ async function loadNotes(){
 function renderNotesAdmin(){
  const q=($("noteListSearch")?.value||"").trim().toLowerCase();
  const list=adminNotes.filter(d=>!q||(d.title+" "+(d.chapter||"")+" "+d.classId+" "+d.subjectId).toLowerCase().includes(q));
- $("noteList").innerHTML=list.map(d=>`<div class="item"><b>${esc(d.title)}</b>${d.chapter?` <span class="pill teal">${esc(d.chapter)}</span>`:""}<br><span class="muted">${esc(d.classId)} · ${esc(d.subjectId)}</span></div>`).join("")||"<p class='muted'>No notes found.</p>";
+ $("noteList").innerHTML=list.map(d=>`<div class="item"><b>${d.title}</b>${d.chapter?` <span class="pill teal">${d.chapter}</span>`:""}<br><span class="muted">${d.classId} · ${d.subjectId}</span></div>`).join("")||"<p class='muted'>No notes found.</p>";
 }
 if($("noteListSearch"))$("noteListSearch").oninput=renderNotesAdmin;
 
@@ -370,7 +348,7 @@ async function loadTests(){
 function renderTestsAdmin(){
  const q=($("testListSearch")?.value||"").trim().toLowerCase();
  const list=adminTests.filter(d=>!q||(d.title+" "+d.id).toLowerCase().includes(q));
- $("testList").innerHTML=list.map(d=>`<div class="item"><b>${esc(d.title)}</b><br><span class="muted">TEST ID: ${esc(d.id)} · ${d.questionCount} Q · ${d.durationMinutes} min</span></div>`).join("")||"<p class='muted'>No tests found.</p>";
+ $("testList").innerHTML=list.map(d=>`<div class="item"><b>${d.title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.questionCount} Q · ${d.durationMinutes} min</span></div>`).join("")||"<p class='muted'>No tests found.</p>";
 }
 if($("testListSearch"))$("testListSearch").oninput=renderTestsAdmin;
 
@@ -380,7 +358,7 @@ $("addAnn").onclick=async()=>{
  await addDoc(collection(db,"announcements"),{title,classId,content,createdAt:serverTimestamp()});
  $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";toast("Notice published","📣");await loadAnnouncements();
 };
-async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${esc(d.data().classId)}</span><b>${esc(d.data().title)}</b><p class="muted">${esc(d.data().content)}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
+async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">${d.data().content}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
 
 $("addAsg").onclick=async()=>{
  const title=$("asgTitle").value.trim(),classId=$("asgClassId").value.trim(),subjectId=$("asgSubjectId").value.trim(),dueDate=$("asgDue").value,description=$("asgDesc").value.trim();
@@ -388,7 +366,7 @@ $("addAsg").onclick=async()=>{
  await addDoc(collection(db,"assignments"),{title,classId,subjectId,dueDate,description,createdAt:serverTimestamp()});
  $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";toast("Assignment published","📌");await loadAssignments();
 };
-async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${esc(d.data().classId)}</span><b>${esc(d.data().title)}</b><p class="muted">Due: ${esc(d.data().dueDate)||"—"} · ${esc(d.data().description)}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
+async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">Due: ${d.data().dueDate||"—"} · ${d.data().description||""}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
 
 let doubtUnsub=null;
 function listenDoubts(){
@@ -396,11 +374,7 @@ function listenDoubts(){
  doubtUnsub=onSnapshot(collection(db,"doubts"),snap=>{
   const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
   $("stDoubts").textContent=items.filter(x=>x.status==="open").length;
-  // SECURITY: x.question is student-submitted free text. It is escaped below
-  // before insertion — never render it (or x.studentName/x.classId) as raw
-  // HTML, since an unescaped render here would let any student run script in
-  // the teacher's authenticated admin session (stored XSS).
-  $("doubtList").innerHTML=items.map(x=>`<div class="item"><div class="topbar"><div><b>${esc(x.studentName)||"Student"}</b> <span class="muted">(${esc(x.classId)})</span></div><span class="pill ${x.status==='open'?'gold':''}">${esc(x.status)}</span></div><p>${esc(x.question)}</p>${x.answer?`<div class="notice">Reply: ${esc(x.answer)}</div>`:`<textarea class="replyBox" data-id="${esc(x.id)}" placeholder="Reply লিখুন..."></textarea><button class="secondary sendReply" data-id="${esc(x.id)}">Send Reply</button>`}</div>`).join("")||"<p class='muted'>No doubts yet.</p>";
+  $("doubtList").innerHTML=items.map(x=>`<div class="item"><div class="topbar"><div><b>${x.studentName||"Student"}</b> <span class="muted">(${x.classId})</span></div><span class="pill ${x.status==='open'?'gold':''}">${x.status}</span></div><p>${x.question}</p>${x.answer?`<div class="notice">Reply: ${x.answer}</div>`:`<textarea class="replyBox" data-id="${x.id}" placeholder="Reply লিখুন..."></textarea><button class="secondary sendReply" data-id="${x.id}">Send Reply</button>`}</div>`).join("")||"<p class='muted'>No doubts yet.</p>";
   document.querySelectorAll(".sendReply").forEach(b=>b.onclick=async()=>{
    const id=b.dataset.id,box=document.querySelector(`.replyBox[data-id="${id}"]`),answer=box.value.trim();
    if(!answer)return;
@@ -423,20 +397,16 @@ function listenAttempts(){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
     const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;const topicStats={};const review=[];
+     const ans=key.data().answers;let score=0;const topicStats={};
      const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
      for(let i=0;i<ans.length;i++){
-      const chosen=a.answers?.["q"+i];
-      const chosenIdx=chosen==null?null:Number(chosen);
-      const correctIdx=Number(ans[i]);
-      const correct=chosenIdx===correctIdx;
+      const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
       if(correct)score++;
       const topic=(qs[i]&&qs[i].topic)||"General";
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
-      review.push({q:(qs[i]&&qs[i].q)||"",o:(qs[i]&&qs[i].o)||[],topic,chosenIdx,correctIdx,isCorrect:correct});
      }
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,review,gradedAt:serverTimestamp()});
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,gradedAt:serverTimestamp()});
     }
    }
   }
@@ -447,7 +417,7 @@ function listenAttempts(){
 function renderAttempts(){
  const q=($("attemptSearch")?.value||"").trim().toLowerCase();
  const list=latestAttempts.filter(a=>!q||((a.studentName||a.uid)+" "+(a.testTitle||a.testId)).toLowerCase().includes(q));
- $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${esc(a.studentName)||esc(a.uid)}</b><br><span class="muted">${esc(a.testTitle)||esc(a.testId)}</span></div><span class="pill">${esc(a.status)}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts found.</p>";
+ $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${a.studentName||a.uid}</b><br><span class="muted">${a.testTitle||a.testId}</span></div><span class="pill">${a.status}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts found.</p>";
 
  // Dashboard: class average + top performer, from graded submitted attempts
  const graded=latestAttempts.filter(a=>a.status==="submitted"&&a.percentage!=null);
@@ -479,7 +449,7 @@ function todayStrAdmin(){return new Date().toISOString().slice(0,10);}
 async function loadStudentsForProgress(){
  const s=await getDocs(collection(db,"users"));
  const students=s.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>u.role==="student").sort((a,b)=>(a.name||"").localeCompare(b.name||""));
- $("progressStudent").innerHTML=`<option value="">Select a student...</option>`+students.map(u=>`<option value="${esc(u.uid)}">${esc(u.name)} (${esc(u.className)||esc(u.classId)})</option>`).join("");
+ $("progressStudent").innerHTML=`<option value="">Select a student...</option>`+students.map(u=>`<option value="${u.uid}">${u.name} (${u.className||u.classId})</option>`).join("");
 }
 function barClassAdmin(pct){return pct<50?"weak":pct<75?"mid":"strong";}
 function renderStudentProgress(){
@@ -491,17 +461,17 @@ function renderStudentProgress(){
  const bySubject={};
  mine.forEach(a=>{if(a.percentage==null)return;const s=subjectNameAdmin(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
  const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
- $("admSubjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${esc(r.label)}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClassAdmin(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ $("admSubjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClassAdmin(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>এই student এখনো কোনো test দেয়নি।</p>";
 
  const byTopic={};
  mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([t,st])=>{if(!byTopic[t])byTopic[t]={correct:0,total:0};byTopic[t].correct+=st.correct;byTopic[t].total+=st.total;});});
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
- $("admTopicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${esc(r.label)}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClassAdmin(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ $("admTopicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClassAdmin(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টপিক ভিত্তিক ডেটা এখনো নেই।</p>";
 
  const sorted=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
- $("admHistory").innerHTML=sorted.map(a=>`<div class="item"><b>${esc(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>`).join("")||"<p class='muted'>কোনো attempt নেই।</p>";
+ $("admHistory").innerHTML=sorted.map(a=>`<div class="item"><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>`).join("")||"<p class='muted'>কোনো attempt নেই।</p>";
 }
 $("progressStudent").onchange=renderStudentProgress;
 $("purgeSubmitted").onclick=async()=>{

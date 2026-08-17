@@ -6,29 +6,8 @@ export function mountBlobs(){
   if(document.querySelector(".blob-bg"))return;
   const d=document.createElement("div");
   d.className="blob-bg";
-  d.innerHTML=`<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div><div class="blob blob4"></div><div class="blob blob5"></div>`;
+  d.innerHTML=`<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div><div class="blob blob4"></div>`;
   document.body.prepend(d);
-}
-
-/* Adds a shimmering light-sweep + a few twinkling stars to every .hero card
-   for a more "magical", premium feel. Pure CSS-driven decoration. */
-export function mountHeroSparkle(){
-  document.querySelectorAll(".hero").forEach(hero=>{
-    if(hero.querySelector(".sparkle-sweep"))return;
-    const sweep=document.createElement("div");
-    sweep.className="sparkle-sweep";
-    hero.appendChild(sweep);
-    const starGlyphs=["✦","✧","⋆","✨"];
-    const positions=[["10%","18%"],["82%","14%"],["92%","62%"],["6%","70%"],["46%","10%"]];
-    positions.forEach(([left,top],i)=>{
-      const s=document.createElement("span");
-      s.className="star";
-      s.textContent=starGlyphs[i%starGlyphs.length];
-      s.style.left=left;s.style.top=top;
-      s.style.animationDelay=(i*0.45)+"s";
-      hero.appendChild(s);
-    });
-  });
 }
 
 export function confettiBurst(count=90){
@@ -86,16 +65,12 @@ export function playChime(kind="success"){
 }
 
 /* ---------- TOASTS ---------- */
-// Escapes the message before inserting into innerHTML. Every current call
-// site passes a static/trusted string, but this keeps the helper itself safe
-// by default if a future call ever passes through user-typed text.
-function escapeToastMsg(s){return String(s==null?"":s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
 export function toast(message,icon="✅"){
   let layer=document.querySelector(".toast-layer");
   if(!layer){layer=document.createElement("div");layer.className="toast-layer";document.body.appendChild(layer);}
   const t=document.createElement("div");
   t.className="toast";
-  t.innerHTML=`<span>${icon}</span><span>${escapeToastMsg(message)}</span>`;
+  t.innerHTML=`<span>${icon}</span><span>${message}</span>`;
   layer.appendChild(t);
   setTimeout(()=>t.remove(),2800);
 }

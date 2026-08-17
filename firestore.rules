@@ -19,30 +19,9 @@ service cloud.firestore {
         && request.resource.data.role == "student";
       // Students may only ever touch their OWN doc, and only these three
       // self-service fields. Every other field (name/class/role/etc) stays teacher-only.
-      // Content is also validated server-side so the client's 150KB/format checks
-      // can't be bypassed by writing to Firestore directly (e.g. via devtools).
-      function validAvatar(){
-        return !('avatarData' in request.resource.data.diff(resource.data).affectedKeys())
-          || (request.resource.data.avatarData is string
-              && request.resource.data.avatarData.size() < 210000
-              && (request.resource.data.avatarData == ""
-                  || request.resource.data.avatarData.matches('^data:image/.*')));
-      }
-      function validBookmarks(){
-        return !('bookmarks' in request.resource.data.diff(resource.data).affectedKeys())
-          || (request.resource.data.bookmarks is list && request.resource.data.bookmarks.size() < 500);
-      }
-      function validStreak(){
-        return !('streak' in request.resource.data.diff(resource.data).affectedKeys())
-          || (request.resource.data.streak is map
-              && request.resource.data.streak.count is int
-              && request.resource.data.streak.count >= 0
-              && request.resource.data.streak.count < 100000);
-      }
       allow update: if isTeacher() || (
         signedIn() && uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatarData','bookmarks','streak'])
-        && validAvatar() && validBookmarks() && validStreak()
       );
       allow delete: if isTeacher();
     }
@@ -84,7 +63,7 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.testId == resource.data.testId
         && request.resource.data.classId == resource.data.classId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats','review'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats'])
       );
 
       allow delete: if isTeacher();
@@ -115,10 +94,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass()
-        && request.resource.data.status == "open"
-        && request.resource.data.question is string
-        && request.resource.data.question.size() > 0
-        && request.resource.data.question.size() < 3000;
+        && request.resource.data.status == "open";
       allow read: if isTeacher() || (signedIn() && resource.data.uid == request.auth.uid);
       // Only the teacher may answer / change status.
       allow update: if isTeacher();
