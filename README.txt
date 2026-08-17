@@ -49,7 +49,51 @@ Teacher side (admin.html):
   attempt, which powers the student's "weak areas" chart — this happens
   automatically, no extra step needed.
 
-DATA MODEL ADDITIONS (for your reference, no action needed)
+WHAT'S NEW IN V4 (no firestore.rules change needed — same as before)
+Teacher side (admin.html):
+- 📈 Student Progress tab: pick any one student from a dropdown and see THEIR
+  subject-wise accuracy, topic-wise weak areas, and full test history —
+  exactly like the student sees it themselves, but for whichever student
+  you choose.
+- 🤖 Free AI Prompt Helper (Import Test tab): fill in Class/Subject/Chapter/
+  Topic/question count, click the button — a ready-to-use ChatGPT prompt is
+  copied and ChatGPT opens in a new tab. Paste ChatGPT's answer back into the
+  import box.
+- Multi-test batch import: you can now paste SEVERAL "TEST: ..." blocks in
+  one go (just start each new one with a line beginning "TEST:") and hit
+  Preview — all valid ones publish together with one click. Ask the AI
+  prompt helper for "How many tests" > 1 and it'll ask ChatGPT to generate
+  several at once.
+
+Student side (student.html):
+- 🏆 Recent Test Leaderboards, now on the Home tab: shows the last 3
+  published tests, each with a mini top-5 leaderboard (updates as
+  classmates submit).
+- 🎯 My Practice Test (Tests tab): a free, ChatGPT-prompt-assisted personal
+  quiz. Nothing is saved to Firebase — it runs and grades entirely in the
+  browser, so it costs nothing and needs no extra setup.
+
+ABOUT "AUTOMATIC" AI TEST GENERATION (you asked, here's the honest answer)
+- Fully automatic (you type one instruction and a real test appears with NO
+  copy-pasting) needs a paid AI API key wired into the website — Firebase's
+  free "Spark" plan cannot call OpenAI/Anthropic for free at any real volume,
+  and scheduled/recurring auto-generation additionally needs Cloud Functions,
+  which requires the paid "Blaze" plan (still has a generous free quota, but
+  needs a billing card on file).
+- What IS free and now built in: the "Copy AI Prompt" buttons above. You (or
+  a student, for their own practice) click once, ChatGPT opens with the
+  right prompt already copied, you paste the answer back — 30 seconds, zero
+  cost. Multi-test batch import makes this fast even for a whole month of
+  tests at once.
+- If later you're fine paying a few cents per generated test, real one-click
+  automatic generation (no copy-paste at all) becomes possible — just say so
+  and I'll wire it up.
+
+IDEAS YOU HAVEN'T ADDED YET (free, easy to build when you want them)
+- Attendance/login log for parents to see engagement.
+- Weekly auto-summary notice ("this week: 3 tests, avg 72%") posted to Home.
+- Export a student's full report as a Word/PDF file to send to parents.
+- Simple parent view-only login (read-only version of student portal).
 - announcements/{id}: title, content, classId
 - assignments/{id}: title, description, classId, subjectId, dueDate
 - assignmentStatus/{assignmentId_uid}: uid, assignmentId, classId, done
