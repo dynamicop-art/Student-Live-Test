@@ -110,7 +110,11 @@
 </div></div>
 
 <script type="module">
-import {mountBlobs,mountHeroSparkle,toast} from "./effects.js";
+let mountBlobs=()=>{},mountHeroSparkle=()=>{},toast=()=>{};
+try{
+ const fx=await import("./effects.js");
+ ({mountBlobs,mountHeroSparkle,toast}=fx);
+}catch(e){console.warn("effects.js load failed — continuing without decorative effects:",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";

@@ -183,9 +183,14 @@
     <div id="reviewBody" class="review-body"></div>
   </div>
 </div>
+</div><!-- /wrap -->
 
 <script type="module">
-import {mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn} from "./effects.js";
+let mountBlobs=()=>{},mountHeroSparkle=()=>{},confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>true,setSoundOn=()=>{};
+try{
+ const fx=await import("./effects.js");
+ ({mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn}=fx);
+}catch(e){console.warn("effects.js load failed — continuing without decorative effects (sound/confetti/sparkle):",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -976,5 +981,4 @@ TOPIC: sub-topic name`;
   if(!w)location.href="https://chatgpt.com/";
  };
 });
-</script>
-</body></html>
+</script></body></html>
