@@ -573,3 +573,31 @@ html,body{overflow-x:hidden}
   .stat b{font-size:24px}
   .toast{font-size:12.5px;padding:10px 16px;white-space:normal;text-align:center}
 }
+
+/* ---------- AI PROMPT MODAL ---------- */
+.ai-modal-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(16,20,40,.55);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+}
+.ai-modal{
+  width:100%;max-width:560px;max-height:88vh;overflow:auto;
+  background:var(--surface);border-radius:var(--radius);
+  box-shadow:var(--shadow-lg);border:1px solid var(--line);
+  padding:22px;
+}
+.ai-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ai-modal-head h3{margin:0;font-size:18px}
+.ai-modal-x{
+  background:var(--surface-soft);color:var(--ink);box-shadow:none;border:1.5px solid var(--line);
+  width:34px;height:34px;padding:0;border-radius:50%;font-size:14px;flex-shrink:0;
+}
+.ai-modal-sub{margin:8px 0 12px;font-size:13.5px;line-height:1.5}
+.ai-modal-textarea{
+  width:100%;min-height:220px;resize:vertical;
+  font-family:"Hind Siliguri",Inter,system-ui,sans-serif;font-size:13.5px;line-height:1.6;
+}
+.ai-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.ai-modal-actions button,.ai-modal-actions .btn{flex:1 1 180px;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.ai-modal-hint{margin:10px 0 0;font-size:12.5px}
+html[data-theme="dark"] .ai-modal-x{background:#182a52;border-color:var(--line)}

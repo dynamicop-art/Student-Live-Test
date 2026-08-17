@@ -154,6 +154,22 @@
   <div class="card"><h2>📜 My Doubts</h2><div id="myDoubts"></div></div>
 </section>
 
+
+<!-- ================= AI PROMPT MODAL (shared) ================= -->
+<div id="aiPromptOverlay" class="ai-modal-overlay hidden">
+  <div class="ai-modal">
+    <div class="ai-modal-head">
+      <h3>🤖 তোমার AI Tutor Prompt রেডি</h3>
+      <button id="aiPromptClose" class="ai-modal-x" type="button" title="Close">✖</button>
+    </div>
+    <p class="muted ai-modal-sub">নিচের prompt-টা ChatGPT-তে paste করলেই ও তোমার ছোট ভাইয়ের মতো, ধাপে ধাপে পড়াবে। Button-এ চাপলে auto-copy হয়ে যাবে — না হলে নিজে বেছে copy করে নাও।</p>
+    <textarea id="aiPromptText" class="ai-modal-textarea" readonly></textarea>
+    <div class="ai-modal-actions">
+      <button id="aiPromptCopyBtn" type="button">📋 Prompt Copy করো</button>
+      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">🚀 ChatGPT খোলো</a>
+    </div>
+    <p id="aiPromptHint" class="muted ai-modal-hint"></p>
+  </div>
 </div>
 
 <script type="module">
@@ -371,65 +387,127 @@ async function toggleBookmark(noteId){
  renderNotes();
 }
 
-/* ---------- SHARED: ChatGPT prompt copy + open (popup-safe) ---------- */
+/* ---------- SHARED: ChatGPT prompt modal (works even when window.open / clipboard
+   are blocked, e.g. inside app-webviews) ---------- */
 function isBengaliText(str){return /[\u0980-\u09FF]/.test(str||"");}
+
+function fallbackCopy(text){
+ // execCommand fallback works in far more embedded/webview contexts than
+ // navigator.clipboard, which needs a secure context + explicit permission.
+ const ta=$("aiPromptText");
+ ta.focus();ta.select();ta.setSelectionRange(0,text.length);
+ try{return document.execCommand("copy");}catch(e){return false;}
+}
+
+async function tryCopy(text){
+ if(navigator.clipboard&&window.isSecureContext){
+  try{await navigator.clipboard.writeText(text);return true;}catch(e){/* fall through */}
+ }
+ return fallbackCopy(text);
+}
+
 function copyPromptAndOpenChatGPT(promptText,bengali){
- // Open the tab FIRST, synchronously, inside the click handler — this preserves the
- // browser's "user gesture" so the popup isn't blocked. Only THEN copy to clipboard
- // (which is async and would otherwise happen after the gesture window closes).
- const w=window.open("https://chatgpt.com/","_blank");
- navigator.clipboard.writeText(promptText).then(()=>{
-  toast(bengali?"Prompt copy হয়েছে — ChatGPT ট্যাবে paste করো":"Prompt copied — paste it in the ChatGPT tab","🤖");
- }).catch(()=>{
-  window.prompt(bengali?"Clipboard access পাওয়া যায়নি — এই prompt-টা manually copy করো:":"Clipboard access unavailable — copy this prompt manually:",promptText);
+ // Always show the prompt in-app first — this guarantees the student can see/copy
+ // it manually even if clipboard access or pop-up tabs are blocked by the
+ // surrounding browser/webview. Auto-copy and auto-open are then attempted on top.
+ $("aiPromptText").value=promptText;
+ $("aiPromptHint").textContent="";
+ $("aiPromptOverlay").classList.remove("hidden");
+ tryCopy(promptText).then(ok=>{
+  toast(ok
+   ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
+   :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
+   ok?"🤖":"⚠️");
+  if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
  });
- if(!w)toast(bengali?"Pop-up blocked হয়েছে — ব্রাউজার settings থেকে allow করো":"Pop-up was blocked — please allow pop-ups for this site","⚠️");
+}
+
+$("aiPromptClose").onclick=()=>$("aiPromptOverlay").classList.add("hidden");
+$("aiPromptOverlay").onclick=e=>{if(e.target.id==="aiPromptOverlay")$("aiPromptOverlay").classList.add("hidden");};
+$("aiPromptCopyBtn").onclick=async()=>{
+ const ok=await tryCopy($("aiPromptText").value);
+ toast(ok?"Prompt copy হয়েছে":"Copy করা যায়নি — নিজে select করে copy করো",ok?"📋":"⚠️");
+};
+$("aiPromptOpenLink").addEventListener("click",()=>{
+ // The <a target="_blank"> handles the actual navigation natively (works in more
+ // webview setups than window.open()); this just gives a heads-up if it silently
+ // no-ops, since some embedded webviews block new tabs entirely.
+ setTimeout(()=>{toast("ChatGPT না খুললে, ChatGPT app/browser নিজে খুলে prompt-টা paste করো","💡");},900);
+});
+
+/* ---------- SHARED: "elder-brother" tutor prompt builder ----------
+   Mirrors the full teaching framework: story-first intro, one chunk at a
+   time, easy→proper→exam-level layers, dry runs, difficulty ramp, and
+   waiting for the student's answer before moving on. */
+function buildTutorPrompt({topic,context,extra,bengali}){
+ const cls=profile.className||"";
+ if(bengali){
+  return `তুমি আমার personal শিক্ষক, mentor, আর দাদার মতো (elder-brother-style) tutor।
+আমি ${cls} class-এর student।
+
+Topic: ${topic}
+${context?`নিচে আমার নিজের note/context আছে, দরকারে ব্যবহার করো:\n${context}\n`:""}${extra?`${extra}\n`:""}
+আমাকে বাংলায় শেখাও, নিচের নিয়মগুলো কঠোরভাবে মেনে:
+
+1) ধরে নাও এই topic সম্পর্কে আমি প্রায় কিছুই জানি না। পুরো chapter একসাথে দিও না — একটা করে ছোট logical chunk শেখাও, প্রতিটা গুরুত্বপূর্ণ concept-এর পরে থেমে আমার সাথে interact করো, বুঝেছি কিনা check করো, তারপর এগোও।
+2) সবার আগে একটা সহজ real-life গল্প/পরিস্থিতি দিয়ে শুরু করো — এই topic কেন আছে, real life-এ এর idea কোথায় দেখা যায়, আমি কেন এটা শিখছি। প্রথমে আমাকে curious করো, definition দিয়ে শুরু কোরো না।
+3) তারপর খুব সহজ ভাষায় মূল idea বোঝাও, প্রথমে ভারী technical শব্দ এড়িয়ে যাও। আগে আমাকে "ওহ! তাহলে এটাই ব্যাপার" ভাবতে দাও, তারপর proper term introduce করো।
+4) সম্ভব হলে visualize করতে সাহায্য করো — diagram, arrow, flowchart, table, বা ধাপে ধাপে value/অবস্থা পরিবর্তনের ছবি (দরকারমতো simple রাখবে)।
+5) শুধু "নিয়মটা এই" বলে থেমো না — নিয়মটা কেন কাজ করে সেটাও বোঝাও। formula হলে প্রতিটা অংশ কোথা থেকে আসছে বলো।
+6) প্রতিটা গুরুত্বপূর্ণ concept তিনটা layer-এ দাও: (Layer 1) খুব সহজ ব্যাখ্যা, (Layer 2) proper conceptual ব্যাখ্যা, (Layer 3) exam-ready definition/answer।
+7) একটা সহজ example ধীরে ধীরে সমাধান করে দেখাও এই ধাপে: সমস্যা → আমাদের কাছে কী তথ্য আছে → কী বের করতে হবে → কোন concept লাগবে → কেন → সমাধান। Calculation/multi-step process হলে একটা proper dry run দেখাও (value ধাপে ধাপে কীভাবে বদলাচ্ছে)।
+8) তারপর আমাকে একটা ছোট প্রশ্ন দাও এবং সাথে সাথে উত্তর বলে দিও না — আমার উত্তরের জন্য অপেক্ষা করো। আমি ভুল করলে "ভুল" বলেই থেমো না — ঠিক কোথায় আমার চিন্তা ভুল হয়েছে (concept/formula/calculation/logic/interpretation) সেটা ধরে অন্য একটা উদাহরণ দিয়ে আবার বোঝাও।
+9) ধীরে ধীরে কঠিন করো: 🟢 Basic → 🟡 Conceptual → 🟠 Application → 🔴 Challenging। সহজ থেকে সরাসরি কঠিন প্রশ্নে লাফ দিও না।
+10) মাঝে মাঝে জিজ্ঞেস করো — "কেন এমন হলো?", "condition বদলালে কী হবে?", "ভুলটা খুঁজে বের করো", "নিজের ভাষায় বুঝিয়ে বলো তো" — মুখস্থকে understanding হিসেবে ধরো না।
+11) যেটুকু সত্যিই মুখস্থ রাখতে হবে তার জন্য সহজ mnemonic/analogy/memory trick দাও, কিন্তু বোঝার বদলে মুখস্থকে প্রাধান্য দিও না।
+12) topic শেষ করার আগে exam-important points, common question pattern, সাধারণ ভুল/trap, এবং সম্ভাব্য short/long answer বলে দাও — ${cls} level অনুযায়ী।
+13) আমি যদি "বুঝিনি" বলি, একই ব্যাখ্যা আবার repeat কোরো না — অন্য analogy, অন্য example, diagram, বা ছোট ছোট ভাগে ভেঙে বোঝাও। ভুল বোঝার জন্য কখনো লজ্জা দিও না।
+14) ধৈর্যশীল, বন্ধুত্বপূর্ণ, উৎসাহদায়ক (অতিরিক্ত প্রশংসা না করে) কিন্তু ভুল reasoning-এ strict থাকো। আমাকে independent করাই তোমার লক্ষ্য।
+
+গতির চেয়ে বোঝাটা বেশি গুরুত্বপূর্ণ। একবারে একটা chunk শেখাও, আমার সাথে interact করো, বুঝেছি কিনা check করো, তারপর এগোও।
+
+এখন "${topic}" একদম basics থেকে শেখানো শুরু করো — একটা সহজ real-life গল্প/পরিস্থিতি দিয়ে শুরু করো। প্রথম message-এই পুরো lesson দিয়ে দিও না।`;
+ }
+ return `You are my personal teacher, mentor, and elder-brother-style tutor.
+I am a ${cls} student.
+
+Topic: ${topic}
+${context?`Here is my own note/context, use it where useful:\n${context}\n`:""}${extra?`${extra}\n`:""}
+Teach me following these rules strictly:
+
+1) Assume I know almost nothing about this topic. Do not dump the whole chapter at once — teach one logical chunk at a time, stop after each important concept to interact with me and check my understanding before moving on.
+2) Start with a simple real-life story or situation first — why this topic exists, where its idea shows up in real life, why I'm learning it. Make me curious before giving definitions.
+3) Explain the core idea in very simple language first, avoiding heavy technical terms initially. Let me think "oh, so THAT's what it means" before introducing the proper term.
+4) Help me visualize it wherever possible — diagrams, arrows, flowcharts, tables, or step-by-step value/state changes (keep it simple).
+5) Never just state "this is the rule" — explain WHY the rule works. If there's a formula, explain where each part comes from.
+6) Teach each important concept in three layers: (Layer 1) very easy explanation, (Layer 2) proper conceptual explanation, (Layer 3) exam-ready definition/answer.
+7) Walk through one easy example slowly: problem → what information we have → what we need → which concept to use → why → solution. For calculations/multi-step processes, show a proper dry run of how values change step by step.
+8) Then give me a small question and wait for my answer instead of revealing it immediately. If I'm wrong, don't just say "wrong" — find exactly where my thinking went wrong (concept/formula/calculation/logic/interpretation) and re-explain that part with a different example.
+9) Increase difficulty gradually: 🟢 Basic → 🟡 Conceptual → 🟠 Application → 🔴 Challenging. Never jump straight from easy to hard.
+10) Occasionally ask "why?", "what happens if this condition changes?", "find the mistake", "explain it back to me in your own words" — don't accept memorization as understanding.
+11) For things that genuinely need memorizing, give a simple mnemonic/analogy/memory trick, but never replace understanding with memorization.
+12) Before finishing the topic, give me exam-important points, common question patterns, common traps, and likely short/long answers — appropriate for ${cls} level.
+13) If I say I don't understand, don't repeat the same explanation — use a different analogy, example, diagram, or break it into smaller pieces. Never make me feel embarrassed.
+14) Be patient, friendly, encouraging (without over-praising), but strict about incorrect reasoning. Your goal is to make me independent.
+
+Understanding matters more than speed. Teach one chunk at a time, interact with me, check my understanding, then continue.
+
+Now start teaching me "${topic}" from the absolute basics — begin with a simple real-life story or situation. Do not give me the entire lesson in your first message.`;
 }
 
 function askAiAboutWeakTopic(topic,pct){
  const bengali=isBengaliText(topic)||isBengaliText(profile.className||"");
- const prompt=bengali?
-`আমি "${topic}" বিষয়ে দুর্বল — গত টেস্টগুলোতে আমার এই topic-এ accuracy মাত্র ${pct}%। আমি একজন ${profile.className||""} student, বাংলা মাধ্যমে পড়ি।
-
-আমাকে "${topic}" বিষয়টা শুরু থেকে সহজ বাংলায় শেখাও, এই sequence-এ:
-1) সহজ ভাষায় মূল concept
-2) একটা real-life example
-3) ধাপে ধাপে সমাধান করার পদ্ধতি
-4) students সাধারণত যে ভুলগুলো করে সেগুলো
-5) আমার practice করার জন্য সহজ থেকে কঠিন ৫টা প্রশ্ন, উত্তরসহ
-
-আমি মুখস্থ না করে concept বুঝে শিখতে চাই।`
-:
-`I am weak in the topic "${topic}" — my accuracy on this topic in recent tests is only ${pct}%. I am a ${profile.className||""} student.
-
-Please teach me "${topic}" from the basics, in this order:
-1) A simple explanation of the core concept
-2) One real-life example
-3) A step-by-step method to solve problems on this topic
-4) Common mistakes students make here
-5) 5 practice questions (easy to hard) with answers, so I can test myself
-
-I want to actually understand the concept, not just memorize it.`;
+ const extra=bengali
+  ?`গত টেস্টগুলোতে এই topic-এ আমার accuracy মাত্র ${pct}% — তাই একদম basics থেকে ধরে ধরে শেখাও।`
+  :`My accuracy on this topic in recent tests is only ${pct}%, so please start from the absolute basics.`;
+ const prompt=buildTutorPrompt({topic,extra,bengali});
  copyPromptAndOpenChatGPT(prompt,bengali);
 }
 
 async function aiHelp(title,content){
- const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
-
-Topic: ${title}
-Context/Notes: ${content}
-
-আমাকে এই sequence-এ শেখাও:
-1) খুব সহজ real-life example
-2) basic concept
-3) visual imagination/ছোট diagram
-4) step-by-step explanation
-5) important English terms-এর বাংলা মানে
-6) common mistakes
-7) 3টা practice question
-
-আমি মুখস্থ না করে concept বুঝতে চাই।`;
- copyPromptAndOpenChatGPT(promptText,true);
+ const bengali=true;
+ const prompt=buildTutorPrompt({topic:title,context:content,bengali});
+ copyPromptAndOpenChatGPT(prompt,bengali);
 }
 
 /* ---------- FLASHCARDS ---------- */
