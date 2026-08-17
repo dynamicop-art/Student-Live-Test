@@ -1,5 +1,6 @@
-// Small shared visual-polish helpers: floating background blobs + confetti burst.
-// Pure decoration — no data, no network calls, safe to include anywhere.
+// Small shared visual-polish helpers: floating background blobs, confetti burst,
+// tiny synth sound effects (Web Audio, no audio files) and toast notifications.
+// Pure client-side decoration — no data, no network calls, safe to include anywhere.
 
 export function mountBlobs(){
   if(document.querySelector(".blob-bg"))return;
@@ -10,7 +11,7 @@ export function mountBlobs(){
 }
 
 export function confettiBurst(count=90){
-  const colors=["#7c3aed","#ec4899","#f59e0b","#06b6d4","#10b981","#fde68a"];
+  const colors=["#1d4ed8","#4f46e5","#c8960c","#7c3aed","#16a34a","#f3d477"];
   const layer=document.createElement("div");
   layer.className="confetti-layer";
   document.body.appendChild(layer);
@@ -29,4 +30,47 @@ export function confettiBurst(count=90){
     layer.appendChild(p);
   }
   setTimeout(()=>layer.remove(),4200);
+}
+
+/* ---------- SOUND (tiny synth chimes, no external audio files) ---------- */
+function soundOn(){try{return localStorage.getItem("sound")!=="off";}catch(e){return true;}}
+export function isSoundOn(){return soundOn();}
+export function setSoundOn(on){try{localStorage.setItem("sound",on?"on":"off");}catch(e){}}
+
+let _actx=null;
+function ctx(){
+  if(!soundOn())return null;
+  try{_actx=_actx||new (window.AudioContext||window.webkitAudioContext)();if(_actx.state==="suspended")_actx.resume();return _actx;}
+  catch(e){return null;}
+}
+function tone(freq,start,dur,type="sine",gainPeak=0.16){
+  const c=ctx();if(!c)return;
+  const osc=c.createOscillator(),gain=c.createGain();
+  osc.type=type;osc.frequency.value=freq;
+  osc.connect(gain);gain.connect(c.destination);
+  const t0=c.currentTime+start;
+  gain.gain.setValueAtTime(0,t0);
+  gain.gain.linearRampToValueAtTime(gainPeak,t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.start(t0);osc.stop(t0+dur+0.02);
+}
+// kind: "success" | "perfect" | "click" | "notify" | "timer"
+export function playChime(kind="success"){
+  if(!soundOn())return;
+  if(kind==="perfect"){tone(523.25,0,.16,"triangle");tone(659.25,.13,.16,"triangle");tone(783.99,.26,.28,"triangle");}
+  else if(kind==="success"){tone(587.33,0,.14,"sine");tone(880,.11,.22,"sine");}
+  else if(kind==="click"){tone(660,0,.06,"square",.08);}
+  else if(kind==="notify"){tone(740,0,.1,"sine",.12);tone(988,.09,.14,"sine",.1);}
+  else if(kind==="timer"){tone(440,0,.18,"triangle");tone(440,.22,.18,"triangle");tone(440,.44,.3,"triangle");}
+}
+
+/* ---------- TOASTS ---------- */
+export function toast(message,icon="✅"){
+  let layer=document.querySelector(".toast-layer");
+  if(!layer){layer=document.createElement("div");layer.className="toast-layer";document.body.appendChild(layer);}
+  const t=document.createElement("div");
+  t.className="toast";
+  t.innerHTML=`<span>${icon}</span><span>${message}</span>`;
+  layer.appendChild(t);
+  setTimeout(()=>t.remove(),2800);
 }

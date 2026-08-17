@@ -2,13 +2,16 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Portal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231d4ed8'/%3E%3Cstop offset='1' stop-color='%23c8960c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body>
-<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="fab-row">
+  <button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔊</button>
+  <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+</div>
 <div class="wrap">
 <section class="hero topbar">
   <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
@@ -25,6 +28,8 @@
 
 <!-- ================= HOME ================= -->
 <section id="home" class="tab">
+  <div class="card quote-card"><div class="quote-mark">"</div><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
+
   <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
 
   <div class="card"><h2>🏆 Recent Test Leaderboards</h2><p class="muted">সর্বশেষ ৩টা test-এর leaderboard — যে যত জন attend করেছে, তাদের মধ্যে ranking।</p><div id="recentLeaderboards" class="grid2"></div></div>
@@ -121,6 +126,7 @@
 <div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
 <div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
 <form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
+<button id="printPaperBtn" class="secondary hidden">🖨️ Download Question Paper</button>
 </section>
 <section id="resultBox" class="card hidden"></section>
 
@@ -131,6 +137,7 @@
 
 <!-- ================= PROGRESS ================= -->
 <section id="progress" class="tab hidden">
+  <div class="card topbar"><div><h2 style="margin:0">📊 Your Progress</h2><p class="muted" style="margin:4px 0 0">Subject accuracy, weak areas, class rank ও পুরো history — এক নজরে।</p></div><button id="printReport" class="gold-btn">🖨️ Print Full Report</button></div>
   <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
   <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
   <div class="card"><h2>🏆 Class Leaderboard</h2><p class="muted">তোমার class-এর সবার average score-এর ভিত্তিতে র‍্যাঙ্কিং।</p><div id="leaderboard"></div></div>
@@ -150,7 +157,7 @@
 </div>
 
 <script type="module">
-import {mountBlobs,confettiBurst} from "./effects.js";
+import {mountBlobs,confettiBurst,playChime,toast,isSoundOn,setSoundOn} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -158,6 +165,7 @@ import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 mountBlobs();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
+let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -168,6 +176,31 @@ $("themeBtn").onclick=()=>{
  else{document.documentElement.setAttribute("data-theme","dark");localStorage.setItem("theme","dark");}
  applyThemeBtn();
 };
+
+/* ---------- SOUND TOGGLE ---------- */
+function applySoundBtn(){$("soundBtn").textContent=isSoundOn()?"🔊":"🔇";}
+applySoundBtn();
+$("soundBtn").onclick=()=>{setSoundOn(!isSoundOn());applySoundBtn();if(isSoundOn())playChime("click");};
+
+/* ---------- QUOTE OF THE DAY ---------- */
+const QUOTES=[
+ ["আজকের একটু চেষ্টা, আগামীকালের বড় ফলাফল।","Daily Motivation"],
+ ["পড়াশোনায় ধারাবাহিকতাই সবচেয়ে বড় শক্তি।","Study Tip"],
+ ["ভুল থেকেই শেখা হয় সবচেয়ে বেশি — ভয় না পেয়ে চেষ্টা চালিয়ে যাও।","Daily Motivation"],
+ ["Success is the sum of small efforts, repeated day after day.","Robert Collier"],
+ ["আজকে যেটুকু revise করবে, পরীক্ষার আগের রাতে সেটাই তোমাকে বাঁচাবে।","Study Tip"],
+ ["The expert in anything was once a beginner.","Daily Motivation"],
+ ["নিজের progress অন্যের সাথে না মিলিয়ে, গতকালের নিজের সাথে মেলাও।","Daily Motivation"],
+ ["Don't watch the clock; do what it does — keep going.","Sam Levenson"],
+ ["একটা ছোট streak প্রতিদিন বড় অভ্যাস তৈরি করে।","Study Tip"],
+ ["পরিশ্রম কখনো বৃথা যায় না — একদিন ঠিক ফল আসবে।","Daily Motivation"]
+];
+function renderQuote(){
+ const dayIdx=Math.floor(Date.now()/86400000)%QUOTES.length;
+ const [q,by]=QUOTES[dayIdx];
+ $("quoteText").textContent=`"${q}"`;$("quoteBy").textContent=`— ${by}`;
+}
+renderQuote();
 
 $("logout").onclick=async()=>{
  const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
@@ -202,7 +235,7 @@ $("saveAvatar").onclick=async()=>{
    if(f.size>150*1024)throw new Error("ছবি 150 KB এর মধ্যে হতে হবে।");
    const dataUrl=await fileToDataUrl(f);
    await updateDoc(doc(db,"users",auth.currentUser.uid),{avatarData:dataUrl});
-   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";
+   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";toast("Profile picture updated","🖼️");
  }catch(e){$("avatarMsg").textContent=e.message;}
 };
 
@@ -219,12 +252,12 @@ async function updateStreak(){
 }
 function renderBadges(){
  const c=(profile.streak&&profile.streak.count)||0;
- const levels=[["🔥 3-day",3],["🥉 7-day",7],["🥈 14-day",14],["🥇 30-day",30]];
- $("badgeRow").innerHTML=levels.map(([label,n])=>`<span class="badge ${c>=n?"":"locked"}">${label}</span>`).join("");
+ const levels=[["🔥 3-day",3,""],["🥉 7-day",7,""],["🥈 14-day",14,""],["🥇 30-day",30,""],["💎 60-day",60,""],["👑 100-day Legend",100,"legend"]];
+ $("badgeRow").innerHTML=levels.map(([label,n,cls])=>`<span class="badge ${c>=n?cls:"locked"}">${label}</span>`).join("");
 }
 
 /* ---------- XP / LEVEL (derived client-side, nothing new saved to Firebase) ---------- */
-const LEVEL_TITLES=["Rookie Learner","Curious Mind","Steady Scholar","Rising Star","Bright Achiever","Top Performer","Class Legend"];
+const LEVEL_TITLES=["Rookie Learner","Curious Mind","Steady Scholar","Rising Star","Bright Achiever","Top Performer","Class Legend","Scholar Elite","Master Mind","Hub Champion"];
 function renderXP(submittedTestCount){
  const streakDays=(profile.streak&&profile.streak.count)||0;
  const bookmarkCount=(profile.bookmarks||[]).length;
@@ -253,7 +286,7 @@ $("pomoStart").onclick=()=>{
  if(pomoHandle)return;
  pomoHandle=setInterval(()=>{
   pomoLeft--;renderPomo();
-  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
+  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;playChime("timer");alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
  },1000);
 };
 $("pomoPause").onclick=()=>{clearInterval(pomoHandle);pomoHandle=null;};
@@ -407,14 +440,50 @@ async function finishTest(auto){
  clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
  await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
  $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ $("printPaperBtn").classList.remove("hidden");
+ $("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
-     if(d.percentage>=40)confettiBurst(d.percentage>=80?140:80);
+     const perfect=d.percentage>=100;
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     if(d.percentage>=40){confettiBurst(perfect?160:(d.percentage>=80?140:80));playChime(perfect?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
  });
+}
+
+function printQuestionPaper(test){
+ if(!test||!test.questions||!test.questions.length){toast("Question paper পাওয়া যায়নি","⚠️");return;}
+ const qHtml=test.questions.map((x,i)=>{
+  const optsHtml=x.o.map((o,j)=>`<div class="qp-opt">${String.fromCharCode(65+j)}. ${o}</div>`).join("");
+  return `<div class="qp-q"><div class="qp-qtext"><b>${i+1}.</b> ${x.q}${x.topic?` <span class="qp-topic">[${x.topic}]</span>`:""}</div><div class="qp-opts">${optsHtml}</div></div>`;
+ }).join("");
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${test.title} - Question Paper</title><style>
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#101c3d;padding:0;font-size:12.5px}
+  .qp-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1d4ed8;padding-bottom:8px;margin-bottom:10px}
+  .qp-head h1{margin:0;font-size:19px;color:#1d4ed8}
+  .qp-head .qp-brand{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6b8c;margin-bottom:2px}
+  .qp-meta{font-size:11.5px;color:#5b6b8c;text-align:right;line-height:1.5}
+  .qp-cols{column-count:2;column-gap:22px}
+  .qp-q{break-inside:avoid;page-break-inside:avoid;margin-bottom:10px}
+  .qp-qtext{margin-bottom:3px;line-height:1.4}
+  .qp-topic{font-size:10px;color:#8a95b8;font-weight:600}
+  .qp-opts{margin-left:14px}
+  .qp-opt{line-height:1.5}
+  .qp-foot{margin-top:14px;padding-top:8px;border-top:1px solid #dbe6f7;font-size:10.5px;color:#5b6b8c}
+  </style></head><body>
+  <div class="qp-head">
+    <div><div class="qp-brand">Arpan Learning Suite</div><h1>${test.title}</h1></div>
+    <div class="qp-meta">${profile.name} · ${profile.className}<br>${test.chapter||""}<br>${new Date().toLocaleDateString()}</div>
+  </div>
+  <div class="qp-cols">${qHtml}</div>
+  <div class="qp-foot">Question paper only — answer key is not included for exam integrity.</div>
+  </body></html>`);
+ w.document.close();w.print();
 }
 
 /* ---------- ASSIGNMENTS ---------- */
@@ -454,6 +523,7 @@ async function loadProgressAndLeaderboard(){
  const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
  $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p>";
+ lastSubjRows=subjRows;
 
  // topic-wise
  const byTopic={};
@@ -461,14 +531,21 @@ async function loadProgressAndLeaderboard(){
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
  $("topicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
+ lastTopicRows=topicRows;
 
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ lastSortedMine=sortedMine;
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${a.testId}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ document.querySelectorAll(".printQpBtn").forEach(b=>b.onclick=()=>{
+  const t=tests.find(x=>x.id===b.dataset.testid);
+  if(!t){toast("এই test-এর প্রশ্ন আর available নেই","⚠️");return;}
+  printQuestionPaper(t);
+ });
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);
   const w=window.open("","_blank");
-  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
+  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#1d4ed8}</style></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
   w.document.close();w.print();
  });
 
@@ -487,6 +564,33 @@ async function loadProgressAndLeaderboard(){
  renderRecentLeaderboards();
 }
 
+$("printReport").onclick=()=>{
+ if(!lastSortedMine.length&&!lastSubjRows.length){toast("এখনো কোনো টেস্ট ডেটা নেই","⚠️");return;}
+ const overallAvg=lastSortedMine.filter(a=>a.percentage!=null).length
+  ?Math.round(lastSortedMine.filter(a=>a.percentage!=null).reduce((s,a)=>s+a.percentage,0)/lastSortedMine.filter(a=>a.percentage!=null).length):0;
+ const rowsHtml=(rows)=>rows.length?rows.map(r=>`<tr><td>${r.label}</td><td style="text-align:right"><b>${r.pct}%</b></td></tr>`).join(""):`<tr><td colspan="2" style="color:#777">No data yet</td></tr>`;
+ const histHtml=lastSortedMine.length?lastSortedMine.map(a=>`<tr><td>${a.testTitle}</td><td style="text-align:right">${a.score!=null?`${a.score}/${a.total} (${a.percentage}%)`:"Pending"}</td></tr>`).join(""):`<tr><td colspan="2" style="color:#777">No attempts yet</td></tr>`;
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${profile.name} - Progress Report</title><style>
+  body{font-family:'Segoe UI',sans-serif;padding:40px;color:#101c3d}
+  h1{color:#1d4ed8;margin-bottom:0}
+  .sub{color:#5b6b8c;margin-top:4px}
+  h2{color:#152a6b;border-bottom:2px solid #c8960c;padding-bottom:6px;margin-top:34px}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  td{padding:8px 6px;border-bottom:1px solid #dbeee2}
+  .badge-big{display:inline-block;margin-top:14px;padding:10px 20px;border-radius:999px;background:linear-gradient(135deg,#f3d477,#c8960c);color:#3a2a02;font-weight:800}
+  </style></head><body>
+  <h1>Arpan Learning Suite</h1>
+  <div class="sub">Full Progress Report — ${profile.name} · ${profile.className}</div>
+  <div class="badge-big">Overall Average: ${overallAvg}%</div>
+  <h2>Subject-wise Accuracy</h2><table>${rowsHtml(lastSubjRows)}</table>
+  <h2>Topic-wise Weak Areas</h2><table>${rowsHtml(lastTopicRows)}</table>
+  <h2>Test History</h2><table>${histHtml}</table>
+  <p style="margin-top:30px;color:#999;font-size:12px">Generated on ${new Date().toLocaleDateString()}</p>
+  </body></html>`);
+ w.document.close();w.print();
+};
+
 function renderRecentLeaderboards(){
  const recent=[...tests].filter(t=>t.createdAt).sort((a,b)=>(b.createdAt.seconds||0)-(a.createdAt.seconds||0)).slice(0,3);
  if(!recent.length){$("recentLeaderboards").innerHTML="<p class='muted'>এখনো কোনো test publish হয়নি।</p>";return;}
@@ -503,7 +607,7 @@ $("sendDoubt").onclick=async()=>{
  const subjectId=$("doubtSubject").value,question=$("doubtText").value.trim();
  if(!question)return $("doubtMsg").textContent="প্রশ্ন লিখো আগে।";
  await addDoc(collection(db,"doubts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,subjectId,question,status:"open",createdAt:serverTimestamp()});
- $("doubtText").value="";$("doubtMsg").textContent="✅ পাঠানো হয়েছে। টিচার শীঘ্রই reply দেবেন।";
+ $("doubtText").value="";$("doubtMsg").textContent="✅ পাঠানো হয়েছে। টিচার শীঘ্রই reply দেবেন।";toast("Doubt sent to teacher","💬");playChime("notify");
 };
 let doubtsUnsub=null;
 function listenMyDoubts(){
