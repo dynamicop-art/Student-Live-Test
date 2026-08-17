@@ -1,4 +1,39 @@
-⚠️ LATEST FIX — alignment + "buttons not working" (this update):
+⚠️ SECURITY & BUG FIX UPDATE (this update):
+- 🔒 FIXED: stored XSS via student "Doubts". Doubt questions (and other
+  Firestore-sourced text) are now HTML-escaped everywhere they're rendered,
+  in both admin.html and student.html. Previously, a student's raw doubt
+  text was inserted directly into the page — a malicious `<script>`/`onerror`
+  payload typed into "Ask a Doubt" could have run inside the TEACHER's
+  authenticated admin session the moment they opened the Doubt Box. This is
+  the most important fix in this update.
+  ⚠️ ACTION NEEDED: no rules change for this one, but re-upload admin.html,
+  student.html and effects.js.
+- 🔒 FIXED: firestore.rules now validates the three fields students can
+  self-update on their own profile (avatarData/bookmarks/streak) server-side
+  — size limits and basic type/format checks. Previously these were only
+  checked in the browser UI (e.g. "avatar must be under 150KB"), so a student
+  could bypass them entirely via devtools/direct Firestore calls. Doubt
+  question length is now also capped server-side.
+  ⚠️ ACTION NEEDED: RE-PUBLISH firestore.rules (Firebase Console -> Firestore
+  Database -> Rules -> paste the new firestore.rules -> Publish), or this
+  protection won't be active.
+- 🐛 FIXED: a student whose account signup failed cleanup (e.g. network drop
+  right after an invalid/uninvited signup attempt) could get permanently
+  locked out with "email already in use," even though no real account was
+  ever finished. Signup now retries cleanup and, on a later attempt, safely
+  recovers from this orphaned-account state instead of blocking the student
+  forever.
+- 🐛 FIXED: admin's bulk test importer required the `ANSWER:` line to be an
+  exact single letter ("A"), while the student practice-quiz parser already
+  accepted "A)" / "A." etc. Both now use the same lenient first-letter match,
+  so AI-generated import blocks are less likely to be silently rejected.
+- 🧹 CLEANUP: removed a leftover duplicate click-handler for the practice
+  test's "Copy AI Prompt" button in student.html (two handlers were bound to
+  the same button; only the second ever ran, so the first was dead code).
+FILES CHANGED: admin.html, student.html, index.html, effects.js,
+firestore.rules (re-upload all of these — and re-publish firestore.rules).
+
+
 - 🐛 ROOT CAUSE FOUND: student.html was missing one closing `</div>` tag for
   the page's outer `.wrap` container (an HTML mistake, not something you
   did). Browsers silently "fix" this by auto-closing it at the very end of

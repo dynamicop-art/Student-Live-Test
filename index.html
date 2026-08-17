@@ -79,15 +79,52 @@ $("login").onclick=async()=>{
  }catch(e){$("lmsg").textContent="Login failed: "+e.message;}
 };
 
+// Best-effort cleanup for a signup that turns out to be invalid (no/inactive
+// invite). Retries a few times before giving up — a single transient network
+// failure here used to permanently "use up" that email address in Firebase
+// Auth (with no matching Firestore profile), locking the real invited student
+// out forever with an "email-already-in-use" error. If every retry still
+// fails, we at least sign the half-created account out so nothing is left in
+// a logged-in state; the leftover Auth-only account is harmless (no profile
+// doc, no access to anything) and can be deleted from the Firebase Console if
+// it ever needs cleaning up, or self-heals automatically the next time
+// someone attempts to sign up again with that email (see below).
+async function deleteUserWithRetry(user,attempts=3){
+ for(let i=0;i<attempts;i++){
+   try{await deleteUser(user);return true;}
+   catch(e){if(i<attempts-1)await new Promise(r=>setTimeout(r,500));}
+ }
+ try{await signOut(auth);}catch(e){}
+ return false;
+}
+
 $("signup").onclick=async()=>{
  let cred=null;
  try{
    const email=$("semail").value.trim().toLowerCase();
-   if(!email||$("spass").value.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
-   cred=await createUserWithEmailAndPassword(auth,email,$("spass").value);
+   const pass=$("spass").value;
+   if(!email||pass.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
+
+   try{
+     cred=await createUserWithEmailAndPassword(auth,email,pass);
+   }catch(err){
+     if(err.code==="auth/email-already-in-use"){
+       // Could be a real existing account, OR a leftover/orphaned account from
+       // a previous signup attempt whose invite was invalid and whose cleanup
+       // failed (see deleteUserWithRetry above). Try signing into it with the
+       // credentials just typed — if that succeeds, it's safe to re-run the
+       // invite check below and either finish setup or clean it up properly.
+       try{cred=await signInWithEmailAndPassword(auth,email,pass);}
+       catch(signInErr){throw new Error("এই email দিয়ে আগে থেকেই account আছে। নিচে Login ব্যবহার করো, অথবা password ভুলে গেলে Teacher-কে জানাও।");}
+     }else throw err;
+   }
+
+   const existingProfile=await getDoc(doc(db,"users",cred.user.uid));
+   if(existingProfile.exists()){location.href="student.html";return;}
+
    const inv=await getDoc(doc(db,"invites",email));
    if(!inv.exists()||inv.data().active!==true){
-     await deleteUser(cred.user);
+     await deleteUserWithRetry(cred.user);
      throw new Error("এই email teacher allow করেননি।");
    }
    const d=inv.data();

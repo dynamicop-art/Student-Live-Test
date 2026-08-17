@@ -86,12 +86,16 @@ export function playChime(kind="success"){
 }
 
 /* ---------- TOASTS ---------- */
+// Escapes the message before inserting into innerHTML. Every current call
+// site passes a static/trusted string, but this keeps the helper itself safe
+// by default if a future call ever passes through user-typed text.
+function escapeToastMsg(s){return String(s==null?"":s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
 export function toast(message,icon="✅"){
   let layer=document.querySelector(".toast-layer");
   if(!layer){layer=document.createElement("div");layer.className="toast-layer";document.body.appendChild(layer);}
   const t=document.createElement("div");
   t.className="toast";
-  t.innerHTML=`<span>${icon}</span><span>${message}</span>`;
+  t.innerHTML=`<span>${icon}</span><span>${escapeToastMsg(message)}</span>`;
   layer.appendChild(t);
   setTimeout(()=>t.remove(),2800);
 }
