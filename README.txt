@@ -362,8 +362,15 @@ Google Cloud OAuth setup (Drive API, consent screen, picker) which is a
 separate, more involved integration than a simple file swap — happy to build
 it as a next step if you want it. For now, small text notes plus attachments
 under 80 KB keep everything on Firebase's free tier with zero extra setup.
-FINAL SUBMIT FIX — REVISION 2
-=============================
+FINAL SUBMIT FIX — REVISION 3 (ROOT-READY)
+==========================================
+IMPORTANT: Extract this ZIP first. Upload the extracted files, not the ZIP.
+All files must appear directly in the GitHub repository root beside each other.
+Do not create or upload a final_submit_v3 folder.
+
+After deployment, the exam section must show: Build: FINAL-SUBMIT-V3
+If that marker is absent, GitHub Pages is still serving an older student.html.
+
 This package is intentionally different from the earlier fixed package.
 
 Final Submit now:
