@@ -362,3 +362,17 @@ Google Cloud OAuth setup (Drive API, consent screen, picker) which is a
 separate, more involved integration than a simple file swap — happy to build
 it as a next step if you want it. For now, small text notes plus attachments
 under 80 KB keep everything on Firebase's free tier with zero extra setup.
+FINAL SUBMIT FIX — REVISION 2
+=============================
+This package is intentionally different from the earlier fixed package.
+
+Final Submit now:
+1. uses a direct click event listener;
+2. immediately displays that the click was detected;
+3. cannot be blocked by a failed background autosave;
+4. sends the complete current answers again in the final Firestore update;
+5. reports permission, offline, or other errors under the button;
+6. stays above decorative layers and remains touch/click enabled.
+
+Replace every hosted file with the files from this folder. Deploy the included
+firestore.rules as well. Do not mix this package with older files.

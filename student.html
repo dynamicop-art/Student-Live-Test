@@ -665,14 +665,19 @@ function tick(){
  if(left<=0){clearInterval(timerHandle);finishTest(true);}
 }
 let submittingTest=false;
-$("submitTest").onclick=async()=>{
+const submitTestButton=$("submitTest");
+submitTestButton.addEventListener("click",async event=>{
+ event.preventDefault();
+ event.stopPropagation();
+ $("testStatus").textContent="Final Submit button চাপা হয়েছে…";
  if(submittingTest)return;
  if(!activeTest||!activeAttempt){
    $("testStatus").textContent="⚠️ Test session পাওয়া যাচ্ছে না। Testটি আবার Start করো।";
    return;
  }
  if(confirm("Final submit করতে নিশ্চিত?"))await finishTest(false);
-};
+ else $("testStatus").textContent="Submit বাতিল করা হয়েছে। আবার চাইলে Final Submit চাপো।";
+});
 
 async function finishTest(auto){
  if(submittingTest)return;
@@ -687,11 +692,14 @@ async function finishTest(auto){
    if(!auth.currentUser)throw new Error("Your login session has expired");
    if(!activeAttempt)throw new Error("Missing active attempt");
    const attemptId=activeAttempt;
-   await answerSavePromise;
+   // A failed background autosave must never block Final Submit. The final
+   // write below contains the complete current answers object itself.
+   await answerSavePromise.catch(err=>console.warn("Autosave failed; final submit will retry all answers:",err));
    await updateDoc(doc(db,"attempts",attemptId),{answers:{...answers},progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
    submitBtn.textContent="✅ Submitted";
    $("testStatus").textContent="✅ Successfully submitted. Progress update হচ্ছে...";
-   await loadProgressAndLeaderboard().catch(()=>{});
+   // Refresh is secondary; submission has already succeeded at this point.
+   loadProgressAndLeaderboard().catch(err=>console.warn("Progress refresh failed after successful submit:",err));
  }catch(err){
    console.error("Final submit failed:",err);
    submittingTest=false;

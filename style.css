@@ -473,6 +473,9 @@ html[data-theme="dark"] .theme-fab,html[data-theme="dark"] .sound-fab{background
 
 /* Confetti */
 .confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+
+/* Keep the exam action above decorative layers and make its click target explicit. */
+#submitTest{position:relative;z-index:20;pointer-events:auto;touch-action:manipulation;min-height:46px}
 .confetti-piece{position:absolute;top:-20px;border-radius:2px;animation:confettiFall linear forwards}
 @keyframes confettiFall{
   0%{transform:translateY(0) rotate(0deg);opacity:1}
