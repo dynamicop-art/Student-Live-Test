@@ -232,11 +232,20 @@ function renderQuote(){
 renderQuote();
 
 $("logout").onclick=async()=>{
- const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
- const forceRedirect=setTimeout(()=>{location.href="index.html";},4000);
- try{await signOut(auth);}
- catch(e){console.error("logout error:",e);}
- finally{clearTimeout(forceRedirect);location.href="index.html";}
+ const btn=$("logout");
+ if(btn.disabled)return;
+ btn.disabled=true;
+ btn.textContent="Logging out...";
+ try{
+  await Promise.race([
+   signOut(auth),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
+  ]);
+ }catch(e){
+  console.warn("logout fallback:",e);
+ }finally{
+  location.replace("index.html");
+ }
 };
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
@@ -867,4 +876,70 @@ $("pracStart").onclick=()=>{
   $("pracResult").textContent=`তোমার স্কোর: ${score} / ${pracQs.length}`;
  };
 };
-</script></body></html>
+</script>
+<!-- Practice-test safety fallback: independent of Firebase/module execution. -->
+<script>
+window.addEventListener("DOMContentLoaded",()=>{
+ const byId=id=>document.getElementById(id);
+ const promptBtn=byId("pracPromptBtn");
+ const overlay=byId("aiPromptOverlay");
+ const promptBox=byId("aiPromptText");
+ const hint=byId("aiPromptHint");
+ if(!promptBtn||!overlay||!promptBox)return;
+
+ function classLabel(){
+  const who=(byId("who")?.textContent||"").trim();
+  return who&&who.includes("·")?who.split("·")[0].trim():"তোমার class";
+ }
+ function buildPracticePrompt(){
+  const topic=(byId("pracTopic")?.value||"").trim()||"General revision";
+  const raw=Number(byId("pracCount")?.value);
+  const count=Number.isFinite(raw)&&raw>0?Math.min(Math.floor(raw),50):5;
+  return `আমার জন্য ${classLabel()}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
+
+Q: প্রশ্ন এখানে
+A: option A
+B: option B
+C: option C
+D: option D
+ANSWER: (A/B/C/D এর একটা)
+TOPIC: sub-topic name`;
+ }
+ async function copyText(text){
+  if(navigator.clipboard&&window.isSecureContext){
+   try{await navigator.clipboard.writeText(text);return true;}catch(e){}
+  }
+  try{promptBox.focus();promptBox.select();promptBox.setSelectionRange(0,text.length);return document.execCommand("copy");}
+  catch(e){return false;}
+ }
+
+ promptBtn.onclick=async()=>{
+  const text=buildPracticePrompt();
+  promptBox.value=text;
+  if(hint)hint.textContent="";
+  overlay.classList.remove("hidden");
+  const copied=await copyText(text);
+  if(hint)hint.textContent=copied
+   ?"✅ Prompt copy হয়েছে। এখন ChatGPT খুলে paste করো।"
+   :"👆 Auto-copy না হলে উপরের prompt select করে copy করো।";
+  let opened=null;
+  try{opened=window.open("https://chatgpt.com/","_blank","noopener");}catch(e){}
+  if(!opened&&hint)hint.textContent+=" ChatGPT auto-open block হলে নিচের ‘ChatGPT খোলো’ button চাপো।";
+ };
+
+ const copyBtn=byId("aiPromptCopyBtn");
+ if(copyBtn)copyBtn.onclick=async()=>{
+  const ok=await copyText(promptBox.value);
+  if(hint)hint.textContent=ok?"✅ Prompt copy হয়েছে।":"👆 Prompt select করে manually copy করো।";
+ };
+ const closeBtn=byId("aiPromptClose");
+ if(closeBtn)closeBtn.onclick=()=>overlay.classList.add("hidden");
+ const openLink=byId("aiPromptOpenLink");
+ if(openLink)openLink.onclick=e=>{
+  e.preventDefault();
+  const w=window.open("https://chatgpt.com/","_blank","noopener");
+  if(!w)location.href="https://chatgpt.com/";
+ };
+});
+</script>
+</body></html>

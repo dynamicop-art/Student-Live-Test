@@ -131,11 +131,20 @@ $("themeBtn").onclick=()=>{
 
 $("doLogin").onclick=async()=>{try{const c=await signInWithEmailAndPassword(auth,$("email").value.trim(),$("pass").value);if((c.user.email||"").toLowerCase()!==TEACHER_EMAIL.toLowerCase()){await signOut(auth);throw new Error("Teacher account required.");}}catch(e){$("msg").textContent=e.message;}};
 $("logout").onclick=async()=>{
- const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
- const forceReset=setTimeout(()=>{btn.disabled=false;btn.textContent="Logout";},4000);
- try{await signOut(auth);}
- catch(e){console.error("logout error:",e);}
- finally{clearTimeout(forceReset);btn.disabled=false;btn.textContent="Logout";}
+ const btn=$("logout");
+ if(btn.disabled)return;
+ btn.disabled=true;
+ btn.textContent="Logging out...";
+ try{
+  await Promise.race([
+   signOut(auth),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
+  ]);
+ }catch(e){
+  console.warn("logout fallback:",e);
+ }finally{
+  location.replace("index.html");
+ }
 };
 
 onAuthStateChanged(auth,u=>{
