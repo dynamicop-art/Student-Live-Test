@@ -37,6 +37,18 @@
     <p class="muted">প্রতিদিন hub-এ ঢুকলেই streak বাড়ে — নিয়মিত revision-এর অভ্যাস তৈরি করার জন্য।</p>
   </div>
 
+  <div class="card"><h2>🎮 Your Level</h2>
+    <div class="xp-box">
+      <div class="xp-ring" id="xpRing" data-level="1" style="--xppct:0"></div>
+      <div class="xp-info">
+        <div class="xp-title" id="xpTitle">Rookie Learner</div>
+        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+        <div class="xp-sub" id="xpSub">0 XP</div>
+      </div>
+    </div>
+    <p class="muted">Tests দিলে, notes পড়লে আর streak রাখলে XP বাড়ে — level up করে নতুন badge unlock করো।</p>
+  </div>
+
   <div class="card"><h2>⏱️ Pomodoro Study Timer</h2>
     <div class="pomo-box">
       <div class="pomo-ring" id="pomoRing" data-time="25:00" style="--pct:0"></div>
@@ -138,11 +150,13 @@
 </div>
 
 <script type="module">
+import {mountBlobs,confettiBurst} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+mountBlobs();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
 
 /* ---------- THEME ---------- */
@@ -208,6 +222,24 @@ function renderBadges(){
  const levels=[["🔥 3-day",3],["🥉 7-day",7],["🥈 14-day",14],["🥇 30-day",30]];
  $("badgeRow").innerHTML=levels.map(([label,n])=>`<span class="badge ${c>=n?"":"locked"}">${label}</span>`).join("");
 }
+
+/* ---------- XP / LEVEL (derived client-side, nothing new saved to Firebase) ---------- */
+const LEVEL_TITLES=["Rookie Learner","Curious Mind","Steady Scholar","Rising Star","Bright Achiever","Top Performer","Class Legend"];
+function renderXP(submittedTestCount){
+ const streakDays=(profile.streak&&profile.streak.count)||0;
+ const bookmarkCount=(profile.bookmarks||[]).length;
+ const xp=streakDays*5+submittedTestCount*20+bookmarkCount*2;
+ const perLevel=100;
+ const level=Math.min(LEVEL_TITLES.length,Math.floor(xp/perLevel)+1);
+ const intoLevel=xp-((level-1)*perLevel);
+ const pct=Math.min(100,Math.round((intoLevel/perLevel)*100));
+ $("xpRing").setAttribute("data-level",level);
+ $("xpRing").style.setProperty("--xppct",pct);
+ $("xpFill").style.width=pct+"%";
+ $("xpTitle").textContent=`Level ${level} · ${LEVEL_TITLES[level-1]}`;
+ $("xpSub").textContent=`${xp} XP · ${perLevel-intoLevel} XP to next level`;
+}
+renderXP(0);
 
 /* ---------- POMODORO ---------- */
 let pomoTotal=25*60,pomoLeft=25*60,pomoHandle=null;
@@ -379,6 +411,7 @@ async function finishTest(auto){
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     if(d.percentage>=40)confettiBurst(d.percentage>=80?140:80);
      unsub();loadProgressAndLeaderboard();
    }
  });
@@ -413,6 +446,7 @@ function barClass(pct){return pct<50?"weak":pct<75?"mid":"strong";}
 async function loadProgressAndLeaderboard(){
  const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
  const mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");
+ renderXP(mine.length);
 
  // subject-wise
  const bySubject={};

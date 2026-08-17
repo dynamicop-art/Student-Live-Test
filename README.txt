@@ -1,3 +1,17 @@
+STUDENT LEARNING HUB — SETUP
+
+⚠️ VISUAL REFRESH (this update): vibrant gradient theme, animated floating
+background blobs, glowing hero, gradient buttons/headings, a new XP/Level
+gamification card on the student Home tab (computed from existing streak +
+test + bookmark data — nothing new saved to Firebase, no rules change), and
+a confetti celebration when a test result lands with 40%+. A landing-page
+feature showcase and stats strip were also added to index.html.
+NO firestore.rules change is needed for this update.
+ONE EXTRA FILE TO UPLOAD: effects.js (alongside index.html/admin.html/
+student.html/style.css/config.js) — index.html, student.html and admin.html
+all import it for the background blobs / confetti. If you skip uploading
+it, those pages will fail to load (a missing-module error) until it's added.
+
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
 ⚠️ IMPORTANT: RE-PUBLISH firestore.rules AGAIN
@@ -114,6 +128,7 @@ FILES TO UPLOAD TO YOUR GITHUB PAGES REPOSITORY ROOT
 - student.html
 - style.css
 - config.js
+- effects.js
 
 OTHER FILES (do NOT need to be public for website operation)
 - firestore.rules
