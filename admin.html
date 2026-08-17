@@ -403,16 +403,20 @@ function listenAttempts(){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
     const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;const topicStats={};
+     const ans=key.data().answers;let score=0;const topicStats={};const review=[];
      const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
      for(let i=0;i<ans.length;i++){
-      const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
+      const chosen=a.answers?.["q"+i];
+      const chosenIdx=chosen==null?null:Number(chosen);
+      const correctIdx=Number(ans[i]);
+      const correct=chosenIdx===correctIdx;
       if(correct)score++;
       const topic=(qs[i]&&qs[i].topic)||"General";
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
+      review.push({q:(qs[i]&&qs[i].q)||"",o:(qs[i]&&qs[i].o)||[],topic,chosenIdx,correctIdx,isCorrect:correct});
      }
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,gradedAt:serverTimestamp()});
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,review,gradedAt:serverTimestamp()});
     }
    }
   }

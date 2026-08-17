@@ -166,9 +166,21 @@
     <textarea id="aiPromptText" class="ai-modal-textarea" readonly></textarea>
     <div class="ai-modal-actions">
       <button id="aiPromptCopyBtn" type="button">📋 Prompt Copy করো</button>
-      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">🚀 ChatGPT খোলো</a>
+      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_system" rel="noopener noreferrer">🚀 ChatGPT খোলো</a>
     </div>
     <p id="aiPromptHint" class="muted ai-modal-hint"></p>
+  </div>
+</div>
+
+<!-- ================= ANSWER REVIEW MODAL (correct vs wrong) ================= -->
+<div id="reviewOverlay" class="ai-modal-overlay hidden">
+  <div class="ai-modal review-modal">
+    <div class="ai-modal-head">
+      <h3 id="reviewTitle">📝 Answer Review</h3>
+      <button id="reviewClose" class="ai-modal-x" type="button" title="Close">✖</button>
+    </div>
+    <p class="muted ai-modal-sub">সবুজ = তোমার সঠিক উত্তর। লাল = তোমার ভুল উত্তর (পাশে সঠিক উত্তরও দেখানো আছে)।</p>
+    <div id="reviewBody" class="review-body"></div>
   </div>
 </div>
 
@@ -407,19 +419,26 @@ async function tryCopy(text){
 }
 
 function copyPromptAndOpenChatGPT(promptText,bengali){
- // Always show the prompt in-app first — this guarantees the student can see/copy
- // it manually even if clipboard access or pop-up tabs are blocked by the
- // surrounding browser/webview. Auto-copy and auto-open are then attempted on top.
- $("aiPromptText").value=promptText;
- $("aiPromptHint").textContent="";
- $("aiPromptOverlay").classList.remove("hidden");
- tryCopy(promptText).then(ok=>{
-  toast(ok
-   ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
-   :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
-   ok?"🤖":"⚠️");
-  if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
- });
+ try{
+  // Always show the prompt in-app first — this guarantees the student can see/copy
+  // it manually even if clipboard access or pop-up tabs are blocked by the
+  // surrounding browser/webview. Auto-copy is then attempted on top.
+  $("aiPromptText").value=promptText;
+  $("aiPromptHint").textContent="";
+  $("aiPromptOverlay").classList.remove("hidden");
+  tryCopy(promptText).then(ok=>{
+   toast(ok
+    ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
+    :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
+    ok?"🤖":"⚠️");
+   if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
+  });
+ }catch(err){
+  // Defensive: guarantee the student always gets *some* feedback instead of the
+  // button silently doing nothing, which is impossible to debug from their end.
+  console.error("copyPromptAndOpenChatGPT failed",err);
+  toast(bengali?"কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করো":"Something went wrong — please try again","⚠️");
+ }
 }
 
 $("aiPromptClose").onclick=()=>$("aiPromptOverlay").classList.add("hidden");
@@ -428,19 +447,66 @@ $("aiPromptCopyBtn").onclick=async()=>{
  const ok=await tryCopy($("aiPromptText").value);
  toast(ok?"Prompt copy হয়েছে":"Copy করা যায়নি — নিজে select করে copy করো",ok?"📋":"⚠️");
 };
-$("aiPromptOpenLink").addEventListener("click",()=>{
- // The <a target="_blank"> handles the actual navigation natively (works in more
- // webview setups than window.open()); this just gives a heads-up if it silently
- // no-ops, since some embedded webviews block new tabs entirely.
- setTimeout(()=>{toast("ChatGPT না খুললে, ChatGPT app/browser নিজে খুলে prompt-টা paste করো","💡");},900);
+const CHATGPT_URL="https://chatgpt.com/";
+$("aiPromptOpenLink").addEventListener("click",(e)=>{
+ // Never let the raw <a> navigation run: in many WebView "app wrapper" builders
+ // (GoNative, Median, Appilix, etc.) a plain anchor click can navigate the SAME
+ // webview away to chatgpt.com, wiping this app with no way back. Always route
+ // through window.open() instead — "_system" is the convention those wrappers
+ // watch for to hand the link to the phone's real browser/app, leaving this app
+ // untouched underneath so the student can always switch back to it.
+ e.preventDefault();
+ let opened=null;
+ try{opened=window.open(CHATGPT_URL,"_system");}catch(err){}
+ if(!opened){try{opened=window.open(CHATGPT_URL,"_blank","noopener");}catch(err){}}
+ if(opened){
+  setTimeout(()=>{toast("ChatGPT খোলা হয়েছে — prompt paste করে দাও","🤖");},400);
+ }else{
+  toast("ChatGPT automatic খোলা যায়নি — নিজে ChatGPT app/browser খুলে prompt-টা paste করো","⚠️");
+  $("aiPromptHint").textContent="👆 উপরের বক্স থেকে prompt copy করে নিজে ChatGPT app-এ গিয়ে paste করো।";
+ }
 });
+
+/* ---------- SHARED: correct-vs-wrong answer review modal ---------- */
+function renderReviewModal(title,review){
+ $("reviewTitle").textContent=`📝 ${title} — Answer Review`;
+ if(!review||!review.length){
+  $("reviewBody").innerHTML="<p class='muted'>এই test-এর জন্য review data পাওয়া যায়নি।</p>";
+ }else{
+  const correctCount=review.filter(r=>r.isCorrect).length;
+  $("reviewBody").innerHTML=
+   `<p class="review-summary">✅ ঠিক: <b>${correctCount}</b> &nbsp; ❌ ভুল: <b>${review.length-correctCount}</b> &nbsp; মোট: <b>${review.length}</b></p>`
+   +review.map((r,i)=>{
+    const optsHtml=(r.o||[]).map((o,j)=>{
+     let cls="rv-opt";
+     if(j===r.correctIdx)cls+=" rv-correct";
+     if(j===r.chosenIdx&&!r.isCorrect)cls+=" rv-wrong";
+     if(j===r.chosenIdx&&r.isCorrect)cls+=" rv-correct rv-chosen";
+     let tag="";
+     if(j===r.chosenIdx&&j===r.correctIdx)tag=" ✅ (তোমার উত্তর)";
+     else if(j===r.chosenIdx)tag=" ❌ (তোমার উত্তর)";
+     else if(j===r.correctIdx)tag=" ✅ (সঠিক উত্তর)";
+     return `<div class="${cls}">${String.fromCharCode(65+j)}. ${o}${tag}</div>`;
+    }).join("");
+    const unanswered=r.chosenIdx==null;
+    return `<div class="rv-q ${r.isCorrect?"rv-q-correct":"rv-q-wrong"}">
+     <div class="rv-qhead"><span class="pill ${r.isCorrect?"":"danger-pill"}">${r.isCorrect?"✅ ঠিক":unanswered?"➖ উত্তর দাওনি":"❌ ভুল"}</span>${r.topic?`<span class="pill teal">${r.topic}</span>`:""}</div>
+     <p class="rv-qtext"><b>${i+1}. ${r.q}</b></p>
+     ${optsHtml}
+    </div>`;
+   }).join("");
+ }
+ $("reviewOverlay").classList.remove("hidden");
+}
+$("reviewClose").onclick=()=>$("reviewOverlay").classList.add("hidden");
+$("reviewOverlay").onclick=e=>{if(e.target.id==="reviewOverlay")$("reviewOverlay").classList.add("hidden");};
 
 /* ---------- SHARED: "elder-brother" tutor prompt builder ----------
    Mirrors the full teaching framework: story-first intro, one chunk at a
    time, easy→proper→exam-level layers, dry runs, difficulty ramp, and
    waiting for the student's answer before moving on. */
 function buildTutorPrompt({topic,context,extra,bengali}){
- const cls=profile.className||"";
+ const cls=(profile&&profile.className)||"";
  if(bengali){
   return `তুমি আমার personal শিক্ষক, mentor, আর দাদার মতো (elder-brother-style) tutor।
 আমি ${cls} class-এর student।
@@ -496,7 +562,7 @@ Now start teaching me "${topic}" from the absolute basics — begin with a simpl
 }
 
 function askAiAboutWeakTopic(topic,pct){
- const bengali=isBengaliText(topic)||isBengaliText(profile.className||"");
+ const bengali=isBengaliText(topic)||isBengaliText((profile&&profile.className)||"");
  const extra=bengali
   ?`গত টেস্টগুলোতে এই topic-এ আমার accuracy মাত্র ${pct}% — তাই একদম basics থেকে ধরে ধরে শেখাও।`
   :`My accuracy on this topic in recent tests is only ${pct}%, so please start from the absolute basics.`;
@@ -566,7 +632,8 @@ async function finishTest(auto){
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      const perfect=d.percentage>=100;
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="row" style="margin-top:10px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button></div><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     $("reviewNowBtn").onclick=()=>renderReviewModal(activeTest.title,d.review);
      if(d.percentage>=40){confettiBurst(perfect?160:(d.percentage>=80?140:80));playChime(perfect?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
@@ -660,7 +727,12 @@ async function loadProgressAndLeaderboard(){
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
  lastSortedMine=sortedMine;
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${a.testId}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Answer Review</button><button class="secondary printBtn" data-id="${a.id}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${a.testId}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{
+  const a=mine.find(x=>x.id===b.dataset.id);
+  if(!a)return;
+  renderReviewModal(a.testTitle,a.review);
+ });
  document.querySelectorAll(".printQpBtn").forEach(b=>b.onclick=()=>{
   const t=tests.find(x=>x.id===b.dataset.testid);
   if(!t){toast("এই test-এর প্রশ্ন আর available নেই","⚠️");return;}
@@ -743,8 +815,9 @@ function listenMyDoubts(){
 }
 /* ---------- MY PRACTICE TEST (client-only, free, nothing saved) ---------- */
 $("pracPromptBtn").onclick=async()=>{
- const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
- const prompt=`আমার জন্য ${profile.className||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
+ try{
+  const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
+  const prompt=`আমার জন্য ${(profile&&profile.className)||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
 
 Q: প্রশ্ন এখানে
 A: option A
@@ -753,7 +826,11 @@ C: option C
 D: option D
 ANSWER: (A/B/C/D এর একটা)
 TOPIC: sub-topic name`;
- copyPromptAndOpenChatGPT(prompt,true);
+  copyPromptAndOpenChatGPT(prompt,true);
+ }catch(err){
+  console.error("pracPromptBtn failed",err);
+  toast("প্রম্পট বানাতে সমস্যা হয়েছে — আবার চেষ্টা করো","⚠️");
+ }
 };
 
 function parsePracticeText(text){
