@@ -2,15 +2,23 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Learning Hub</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231d4ed8'/%3E%3Cstop offset='1' stop-color='%23c8960c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body>
-<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="fab-row"><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
 <div class="wrap">
-<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
+<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট, XP লেভেল আর প্রিন্টযোগ্য রিপোর্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
+
+<div class="stat-strip reveal">
+  <div class="ss-item"><div class="ss-num">V–XII</div><div class="ss-label">All Classes</div></div>
+  <div class="ss-item"><div class="ss-num">Live</div><div class="ss-label">Tests &amp; Results</div></div>
+  <div class="ss-item"><div class="ss-num">🔥</div><div class="ss-label">Study Streaks</div></div>
+  <div class="ss-item"><div class="ss-num">100%</div><div class="ss-label">Private &amp; Free</div></div>
+</div>
+
 <div class="grid">
   <section class="card login-card"><div class="section-kicker">🔑 Student Access</div><h2>Welcome back</h2>
     <input id="lemail" type="email" placeholder="Email">
@@ -27,13 +35,32 @@
     <p class="muted">Students, subjects, notes, tests এবং live results manage করুন।</p>
     <a class="btn" href="admin.html">Open Admin Panel</a>
   </section>
-</div><div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
+</div>
+
+<h2 style="text-align:center;margin-top:34px" class="grad-text">Everything students need, in one place</h2>
+<div class="feature-grid">
+  <div class="feature-item reveal"><div class="fi-icon">📝</div><h3>Smart Notes</h3><p>Searchable, bookmarkable notes with flashcard revision mode.</p></div>
+  <div class="feature-item reveal"><div class="fi-icon">🧪</div><h3>Live Tests</h3><p>Instant results, class leaderboards and per-topic weak areas.</p></div>
+  <div class="feature-item reveal"><div class="fi-icon">🔥</div><h3>Study Streaks</h3><p>Daily streaks, XP levels and badges that make revision a habit.</p></div>
+  <div class="feature-item reveal"><div class="fi-icon">💬</div><h3>Ask Doubts</h3><p>Send a question straight to your teacher and get a reply.</p></div>
+  <div class="feature-item reveal"><div class="fi-icon">🎮</div><h3>XP &amp; Levels</h3><p>Earn XP from streaks, notes and tests — level up and unlock badges.</p></div>
+  <div class="feature-item reveal"><div class="fi-icon">🖨️</div><h3>Printable Reports</h3><p>One-click full progress report, ready to save as PDF or print.</p></div>
+</div>
+
+<div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
 <script type="module">
+let mountBlobs=()=>{},mountHeroSparkle=()=>{};
+try{
+ const fx=await import("./effects.js");
+ ({mountBlobs,mountHeroSparkle}=fx);
+}catch(e){console.warn("effects.js load failed — continuing without decorative effects:",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+mountBlobs();
+mountHeroSparkle();
 const $=id=>document.getElementById(id);
 
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -52,15 +79,52 @@ $("login").onclick=async()=>{
  }catch(e){$("lmsg").textContent="Login failed: "+e.message;}
 };
 
+// Best-effort cleanup for a signup that turns out to be invalid (no/inactive
+// invite). Retries a few times before giving up — a single transient network
+// failure here used to permanently "use up" that email address in Firebase
+// Auth (with no matching Firestore profile), locking the real invited student
+// out forever with an "email-already-in-use" error. If every retry still
+// fails, we at least sign the half-created account out so nothing is left in
+// a logged-in state; the leftover Auth-only account is harmless (no profile
+// doc, no access to anything) and can be deleted from the Firebase Console if
+// it ever needs cleaning up, or self-heals automatically the next time
+// someone attempts to sign up again with that email (see below).
+async function deleteUserWithRetry(user,attempts=3){
+ for(let i=0;i<attempts;i++){
+   try{await deleteUser(user);return true;}
+   catch(e){if(i<attempts-1)await new Promise(r=>setTimeout(r,500));}
+ }
+ try{await signOut(auth);}catch(e){}
+ return false;
+}
+
 $("signup").onclick=async()=>{
  let cred=null;
  try{
    const email=$("semail").value.trim().toLowerCase();
-   if(!email||$("spass").value.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
-   cred=await createUserWithEmailAndPassword(auth,email,$("spass").value);
+   const pass=$("spass").value;
+   if(!email||pass.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
+
+   try{
+     cred=await createUserWithEmailAndPassword(auth,email,pass);
+   }catch(err){
+     if(err.code==="auth/email-already-in-use"){
+       // Could be a real existing account, OR a leftover/orphaned account from
+       // a previous signup attempt whose invite was invalid and whose cleanup
+       // failed (see deleteUserWithRetry above). Try signing into it with the
+       // credentials just typed — if that succeeds, it's safe to re-run the
+       // invite check below and either finish setup or clean it up properly.
+       try{cred=await signInWithEmailAndPassword(auth,email,pass);}
+       catch(signInErr){throw new Error("এই email দিয়ে আগে থেকেই account আছে। নিচে Login ব্যবহার করো, অথবা password ভুলে গেলে Teacher-কে জানাও।");}
+     }else throw err;
+   }
+
+   const existingProfile=await getDoc(doc(db,"users",cred.user.uid));
+   if(existingProfile.exists()){location.href="student.html";return;}
+
    const inv=await getDoc(doc(db,"invites",email));
    if(!inv.exists()||inv.data().active!==true){
-     await deleteUser(cred.user);
+     await deleteUserWithRetry(cred.user);
      throw new Error("এই email teacher allow করেননি।");
    }
    const d=inv.data();

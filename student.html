@@ -2,13 +2,16 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Portal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231d4ed8'/%3E%3Cstop offset='1' stop-color='%23c8960c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body>
-<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="fab-row">
+  <button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔊</button>
+  <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+</div>
 <div class="wrap">
 <section class="hero topbar">
   <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
@@ -25,7 +28,11 @@
 
 <!-- ================= HOME ================= -->
 <section id="home" class="tab">
+  <div class="card quote-card"><div class="quote-mark">"</div><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
+
   <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
+
+  <div class="card"><h2>🏆 Recent Test Leaderboards</h2><p class="muted">সর্বশেষ ৩টা test-এর leaderboard — যে যত জন attend করেছে, তাদের মধ্যে ranking।</p><div id="recentLeaderboards" class="grid2"></div></div>
 
   <div class="card"><h2>🔥 Study Streak</h2>
     <div class="streak-box">
@@ -33,6 +40,18 @@
       <div class="badge-row" id="badgeRow"></div>
     </div>
     <p class="muted">প্রতিদিন hub-এ ঢুকলেই streak বাড়ে — নিয়মিত revision-এর অভ্যাস তৈরি করার জন্য।</p>
+  </div>
+
+  <div class="card"><h2>🎮 Your Level</h2>
+    <div class="xp-box">
+      <div class="xp-ring" id="xpRing" data-level="1" style="--xppct:0"></div>
+      <div class="xp-info">
+        <div class="xp-title" id="xpTitle">Rookie Learner</div>
+        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+        <div class="xp-sub" id="xpSub">0 XP</div>
+      </div>
+    </div>
+    <p class="muted">Tests দিলে, notes পড়লে আর streak রাখলে XP বাড়ে — level up করে নতুন badge unlock করো।</p>
   </div>
 
   <div class="card"><h2>⏱️ Pomodoro Study Timer</h2>
@@ -92,12 +111,22 @@
     <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
     <div id="testsList"></div>
   </div>
+
+  <div class="card"><h2>🎯 My Practice Test</h2>
+    <p class="muted">নিজের জন্য practice test বানাও — এটা কোথাও save হয় না, শুধু তোমার browser-এ চলে, তাই সম্পূর্ণ ফ্রি ও instant।</p>
+    <div class="row"><input id="pracTopic" placeholder="Topic (e.g. Trigonometry)"><input id="pracCount" type="number" min="3" max="20" value="5" placeholder="Questions"></div>
+    <button id="pracPromptBtn" class="secondary">🤖 Copy AI Prompt & Open ChatGPT</button>
+    <textarea id="pracPaste" placeholder="ChatGPT-এর output এখানে paste করো..."></textarea>
+    <button id="pracStart">Start Practice</button>
+    <div id="pracQuiz"></div>
+  </div>
 </section>
 
 <section id="runner" class="card hidden">
 <div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
 <div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
 <form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
+<button id="printPaperBtn" class="secondary hidden">🖨️ Download Question Paper</button>
 </section>
 <section id="resultBox" class="card hidden"></section>
 
@@ -108,6 +137,7 @@
 
 <!-- ================= PROGRESS ================= -->
 <section id="progress" class="tab hidden">
+  <div class="card topbar"><div><h2 style="margin:0">📊 Your Progress</h2><p class="muted" style="margin:4px 0 0">Subject accuracy, weak areas, class rank ও পুরো history — এক নজরে।</p></div><button id="printReport" class="gold-btn">🖨️ Print Full Report</button></div>
   <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
   <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
   <div class="card"><h2>🏆 Class Leaderboard</h2><p class="muted">তোমার class-এর সবার average score-এর ভিত্তিতে র‍্যাঙ্কিং।</p><div id="leaderboard"></div></div>
@@ -124,15 +154,58 @@
   <div class="card"><h2>📜 My Doubts</h2><div id="myDoubts"></div></div>
 </section>
 
+
+<!-- ================= AI PROMPT MODAL (shared) ================= -->
+<div id="aiPromptOverlay" class="ai-modal-overlay hidden">
+  <div class="ai-modal">
+    <div class="ai-modal-head">
+      <h3>🤖 তোমার AI Tutor Prompt রেডি</h3>
+      <button id="aiPromptClose" class="ai-modal-x" type="button" title="Close">✖</button>
+    </div>
+    <p class="muted ai-modal-sub">নিচের prompt-টা ChatGPT-তে paste করলেই ও তোমার ছোট ভাইয়ের মতো, ধাপে ধাপে পড়াবে। Button-এ চাপলে auto-copy হয়ে যাবে — না হলে নিজে বেছে copy করে নাও।</p>
+    <textarea id="aiPromptText" class="ai-modal-textarea" readonly></textarea>
+    <div class="ai-modal-actions">
+      <button id="aiPromptCopyBtn" type="button">📋 Prompt Copy করো</button>
+      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_system" rel="noopener noreferrer">🚀 ChatGPT খোলো</a>
+    </div>
+    <p id="aiPromptHint" class="muted ai-modal-hint"></p>
+  </div>
 </div>
 
+<!-- ================= ANSWER REVIEW MODAL (correct vs wrong) ================= -->
+<div id="reviewOverlay" class="ai-modal-overlay hidden">
+  <div class="ai-modal review-modal">
+    <div class="ai-modal-head">
+      <h3 id="reviewTitle">📝 Answer Review</h3>
+      <button id="reviewClose" class="ai-modal-x" type="button" title="Close">✖</button>
+    </div>
+    <p class="muted ai-modal-sub">সবুজ = তোমার সঠিক উত্তর। লাল = তোমার ভুল উত্তর (পাশে সঠিক উত্তরও দেখানো আছে)।</p>
+    <div id="reviewBody" class="review-body"></div>
+  </div>
+</div>
+</div><!-- /wrap -->
+
 <script type="module">
+let mountBlobs=()=>{},mountHeroSparkle=()=>{},confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>true,setSoundOn=()=>{};
+try{
+ const fx=await import("./effects.js");
+ ({mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn}=fx);
+}catch(e){console.warn("effects.js load failed — continuing without decorative effects (sound/confetti/sparkle):",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
+// Escapes any dynamic text before it's inserted via innerHTML. Used on
+// doubt/notice/assignment/note/test text and anything else that ultimately
+// comes from Firestore, so untrusted data (e.g. another student's doubt
+// question, in shared views) can never break out into real HTML/script.
+function esc(s){return String(s==null?"":s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+mountBlobs();
+mountHeroSparkle();
+let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
+let answerSavePromise=Promise.resolve();
+let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -144,12 +217,46 @@ $("themeBtn").onclick=()=>{
  applyThemeBtn();
 };
 
+/* ---------- SOUND TOGGLE ---------- */
+function applySoundBtn(){$("soundBtn").textContent=isSoundOn()?"🔊":"🔇";}
+applySoundBtn();
+$("soundBtn").onclick=()=>{setSoundOn(!isSoundOn());applySoundBtn();if(isSoundOn())playChime("click");};
+
+/* ---------- QUOTE OF THE DAY ---------- */
+const QUOTES=[
+ ["আজকের একটু চেষ্টা, আগামীকালের বড় ফলাফল।","Daily Motivation"],
+ ["পড়াশোনায় ধারাবাহিকতাই সবচেয়ে বড় শক্তি।","Study Tip"],
+ ["ভুল থেকেই শেখা হয় সবচেয়ে বেশি — ভয় না পেয়ে চেষ্টা চালিয়ে যাও।","Daily Motivation"],
+ ["Success is the sum of small efforts, repeated day after day.","Robert Collier"],
+ ["আজকে যেটুকু revise করবে, পরীক্ষার আগের রাতে সেটাই তোমাকে বাঁচাবে।","Study Tip"],
+ ["The expert in anything was once a beginner.","Daily Motivation"],
+ ["নিজের progress অন্যের সাথে না মিলিয়ে, গতকালের নিজের সাথে মেলাও।","Daily Motivation"],
+ ["Don't watch the clock; do what it does — keep going.","Sam Levenson"],
+ ["একটা ছোট streak প্রতিদিন বড় অভ্যাস তৈরি করে।","Study Tip"],
+ ["পরিশ্রম কখনো বৃথা যায় না — একদিন ঠিক ফল আসবে।","Daily Motivation"]
+];
+function renderQuote(){
+ const dayIdx=Math.floor(Date.now()/86400000)%QUOTES.length;
+ const [q,by]=QUOTES[dayIdx];
+ $("quoteText").textContent=`"${q}"`;$("quoteBy").textContent=`— ${by}`;
+}
+renderQuote();
+
 $("logout").onclick=async()=>{
- const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
- const forceRedirect=setTimeout(()=>{location.href="index.html";},4000);
- try{await signOut(auth);}
- catch(e){console.error("logout error:",e);}
- finally{clearTimeout(forceRedirect);location.href="index.html";}
+ const btn=$("logout");
+ if(btn.disabled)return;
+ btn.disabled=true;
+ btn.textContent="Logging out...";
+ try{
+  await Promise.race([
+   signOut(auth),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("logout timeout")),2500))
+  ]);
+ }catch(e){
+  console.warn("logout fallback:",e);
+ }finally{
+  location.replace("index.html");
+ }
 };
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
@@ -167,7 +274,7 @@ document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
 /* ---------- AVATAR ---------- */
 function renderAvatar(){
  const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
- $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${profile.avatarData}" alt="avatar">`:`<span class="avatar-placeholder">${initial}</span>`;
+ $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${esc(profile.avatarData)}" alt="avatar">`:`<span class="avatar-placeholder">${esc(initial)}</span>`;
 }
 function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("saveAvatar").onclick=async()=>{
@@ -177,7 +284,7 @@ $("saveAvatar").onclick=async()=>{
    if(f.size>150*1024)throw new Error("ছবি 150 KB এর মধ্যে হতে হবে।");
    const dataUrl=await fileToDataUrl(f);
    await updateDoc(doc(db,"users",auth.currentUser.uid),{avatarData:dataUrl});
-   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";
+   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";toast("Profile picture updated","🖼️");
  }catch(e){$("avatarMsg").textContent=e.message;}
 };
 
@@ -194,9 +301,27 @@ async function updateStreak(){
 }
 function renderBadges(){
  const c=(profile.streak&&profile.streak.count)||0;
- const levels=[["🔥 3-day",3],["🥉 7-day",7],["🥈 14-day",14],["🥇 30-day",30]];
- $("badgeRow").innerHTML=levels.map(([label,n])=>`<span class="badge ${c>=n?"":"locked"}">${label}</span>`).join("");
+ const levels=[["🔥 3-day",3,""],["🥉 7-day",7,""],["🥈 14-day",14,""],["🥇 30-day",30,""],["💎 60-day",60,""],["👑 100-day Legend",100,"legend"]];
+ $("badgeRow").innerHTML=levels.map(([label,n,cls])=>`<span class="badge ${c>=n?cls:"locked"}">${label}</span>`).join("");
 }
+
+/* ---------- XP / LEVEL (derived client-side, nothing new saved to Firebase) ---------- */
+const LEVEL_TITLES=["Rookie Learner","Curious Mind","Steady Scholar","Rising Star","Bright Achiever","Top Performer","Class Legend","Scholar Elite","Master Mind","Hub Champion"];
+function renderXP(submittedTestCount){
+ const streakDays=(profile.streak&&profile.streak.count)||0;
+ const bookmarkCount=(profile.bookmarks||[]).length;
+ const xp=streakDays*5+submittedTestCount*20+bookmarkCount*2;
+ const perLevel=100;
+ const level=Math.min(LEVEL_TITLES.length,Math.floor(xp/perLevel)+1);
+ const intoLevel=xp-((level-1)*perLevel);
+ const pct=Math.min(100,Math.round((intoLevel/perLevel)*100));
+ $("xpRing").setAttribute("data-level",level);
+ $("xpRing").style.setProperty("--xppct",pct);
+ $("xpFill").style.width=pct+"%";
+ $("xpTitle").textContent=`Level ${level} · ${LEVEL_TITLES[level-1]}`;
+ $("xpSub").textContent=`${xp} XP · ${perLevel-intoLevel} XP to next level`;
+}
+renderXP(0);
 
 /* ---------- POMODORO ---------- */
 let pomoTotal=25*60,pomoLeft=25*60,pomoHandle=null;
@@ -210,7 +335,7 @@ $("pomoStart").onclick=()=>{
  if(pomoHandle)return;
  pomoHandle=setInterval(()=>{
   pomoLeft--;renderPomo();
-  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
+  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;playChime("timer");alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
  },1000);
 };
 $("pomoPause").onclick=()=>{clearInterval(pomoHandle);pomoHandle=null;};
@@ -225,26 +350,26 @@ function subjectName(id){return subjects.find(s=>s.id===id)?.name||"Subject";}
 /* ---------- LOAD ALL DATA ---------- */
 async function loadData(){
  const ss=await getDocs(query(collection(db,"subjects"),where("classId","==",profile.classId)));subjects=ss.docs.map(d=>({id:d.id,...d.data()}));
- $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${s.name}</h3><span class="pill">${profile.className}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
- $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+ $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${esc(s.name)}</h3><span class="pill">${esc(profile.className)}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
+ $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
 
  // Live: new notes/tests/notices/assignments the teacher publishes appear
  // instantly, no logout/login or manual reload needed.
  onSnapshot(query(collection(db,"notes"),where("classId","==",profile.classId)),snap=>{
   notes=snap.docs.map(d=>({id:d.id,...d.data()}));
   const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
-  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
+  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
   renderNotes();
  },err=>console.error("notes listener error:",err));
 
  onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
   tests=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderTests();
+  renderTests();renderRecentLeaderboards();
  },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
   const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${n.title}</b><p class="muted">${n.content}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
+  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${esc(n.title)}</b><p class="muted">${esc(n.content)}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
  });
 
  onSnapshot(query(collection(db,"assignments"),where("classId","==",profile.classId)),async snap=>{
@@ -275,10 +400,10 @@ function renderNotes(){
  const list=filteredNotes();const bookmarks=profile.bookmarks||[];
  $("notesList").innerHTML=list.map(n=>{
   const isBm=bookmarks.includes(n.id);
-  return `<div class="item"><div class="topbar"><span class="pill">${subjectName(n.subjectId)}</span><button class="bookmark-btn ${isBm?"active":""}" data-id="${n.id}" title="Bookmark">${isBm?"★":"☆"}</button></div>
-  ${n.chapter?`<span class="pill teal">${n.chapter}</span>`:""}
-  <h3>${n.title}</h3><div>${(n.content||"").replaceAll("\n","<br>")}</div>
-  ${n.attachmentData?`<p><a class="btn secondary" download="${n.attachmentName||"note"}" href="${n.attachmentData}">📎 Open attachment</a></p>`:""}
+  return `<div class="item"><div class="topbar"><span class="pill">${esc(subjectName(n.subjectId))}</span><button class="bookmark-btn ${isBm?"active":""}" data-id="${esc(n.id)}" title="Bookmark">${isBm?"★":"☆"}</button></div>
+  ${n.chapter?`<span class="pill teal">${esc(n.chapter)}</span>`:""}
+  <h3>${esc(n.title)}</h3><div>${esc(n.content).replaceAll("\n","<br>")}</div>
+  ${n.attachmentData?`<p><a class="btn secondary" download="${esc(n.attachmentName)||"note"}" href="${esc(n.attachmentData)}">📎 Open attachment</a></p>`:""}
   <button class="ai" data-title="${encodeURIComponent(n.title)}" data-content="${encodeURIComponent(n.content||"")}">✨ Explain with ChatGPT</button></div>`;
  }).join("")||"<p>কোনো note পাওয়া যায়নি।</p>";
  document.querySelectorAll(".ai").forEach(b=>b.onclick=()=>aiHelp(decodeURIComponent(b.dataset.title),decodeURIComponent(b.dataset.content)));
@@ -294,24 +419,181 @@ async function toggleBookmark(noteId){
  renderNotes();
 }
 
+/* ---------- SHARED: ChatGPT prompt modal (works even when window.open / clipboard
+   are blocked, e.g. inside app-webviews) ---------- */
+function isBengaliText(str){return /[\u0980-\u09FF]/.test(str||"");}
+
+function fallbackCopy(text){
+ // execCommand fallback works in far more embedded/webview contexts than
+ // navigator.clipboard, which needs a secure context + explicit permission.
+ const ta=$("aiPromptText");
+ ta.focus();ta.select();ta.setSelectionRange(0,text.length);
+ try{return document.execCommand("copy");}catch(e){return false;}
+}
+
+async function tryCopy(text){
+ if(navigator.clipboard&&window.isSecureContext){
+  try{await navigator.clipboard.writeText(text);return true;}catch(e){/* fall through */}
+ }
+ return fallbackCopy(text);
+}
+
+function copyPromptAndOpenChatGPT(promptText,bengali){
+ try{
+  // Always show the prompt in-app first — this guarantees the student can see/copy
+  // it manually even if clipboard access or pop-up tabs are blocked by the
+  // surrounding browser/webview. Auto-copy is then attempted on top.
+  $("aiPromptText").value=promptText;
+  $("aiPromptHint").textContent="";
+  $("aiPromptOverlay").classList.remove("hidden");
+  tryCopy(promptText).then(ok=>{
+   toast(ok
+    ?(bengali?"Prompt copy হয়েছে — ChatGPT-তে paste করো":"Prompt copied — paste it in ChatGPT")
+    :(bengali?"Auto-copy হয়নি — নিচের বক্স থেকে নিজে copy করো":"Auto-copy failed — copy it manually from the box below"),
+    ok?"🤖":"⚠️");
+   if(!ok)$("aiPromptHint").textContent=bengali?"👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।":"👆 Tap the text above, select all, and copy.";
+  });
+ }catch(err){
+  // Defensive: guarantee the student always gets *some* feedback instead of the
+  // button silently doing nothing, which is impossible to debug from their end.
+  console.error("copyPromptAndOpenChatGPT failed",err);
+  toast(bengali?"কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করো":"Something went wrong — please try again","⚠️");
+ }
+}
+
+$("aiPromptClose").onclick=()=>$("aiPromptOverlay").classList.add("hidden");
+$("aiPromptOverlay").onclick=e=>{if(e.target.id==="aiPromptOverlay")$("aiPromptOverlay").classList.add("hidden");};
+$("aiPromptCopyBtn").onclick=async()=>{
+ const ok=await tryCopy($("aiPromptText").value);
+ toast(ok?"Prompt copy হয়েছে":"Copy করা যায়নি — নিজে select করে copy করো",ok?"📋":"⚠️");
+};
+const CHATGPT_URL="https://chatgpt.com/";
+$("aiPromptOpenLink").addEventListener("click",(e)=>{
+ // Never let the raw <a> navigation run: in many WebView "app wrapper" builders
+ // (GoNative, Median, Appilix, etc.) a plain anchor click can navigate the SAME
+ // webview away to chatgpt.com, wiping this app with no way back. Always route
+ // through window.open() instead — "_system" is the convention those wrappers
+ // watch for to hand the link to the phone's real browser/app, leaving this app
+ // untouched underneath so the student can always switch back to it.
+ e.preventDefault();
+ let opened=null;
+ try{opened=window.open(CHATGPT_URL,"_system");}catch(err){}
+ if(!opened){try{opened=window.open(CHATGPT_URL,"_blank","noopener");}catch(err){}}
+ if(opened){
+  setTimeout(()=>{toast("ChatGPT খোলা হয়েছে — prompt paste করে দাও","🤖");},400);
+ }else{
+  toast("ChatGPT automatic খোলা যায়নি — নিজে ChatGPT app/browser খুলে prompt-টা paste করো","⚠️");
+  $("aiPromptHint").textContent="👆 উপরের বক্স থেকে prompt copy করে নিজে ChatGPT app-এ গিয়ে paste করো।";
+ }
+});
+
+/* ---------- SHARED: correct-vs-wrong answer review modal ---------- */
+function renderReviewModal(title,review){
+ $("reviewTitle").textContent=`📝 ${title} — Answer Review`;
+ if(!review||!review.length){
+  $("reviewBody").innerHTML="<p class='muted'>এই test-এর জন্য review data পাওয়া যায়নি।</p>";
+ }else{
+  const correctCount=review.filter(r=>r.isCorrect).length;
+  $("reviewBody").innerHTML=
+   `<p class="review-summary">✅ ঠিক: <b>${correctCount}</b> &nbsp; ❌ ভুল: <b>${review.length-correctCount}</b> &nbsp; মোট: <b>${review.length}</b></p>`
+   +review.map((r,i)=>{
+    const optsHtml=(r.o||[]).map((o,j)=>{
+     let cls="rv-opt";
+     if(j===r.correctIdx)cls+=" rv-correct";
+     if(j===r.chosenIdx&&!r.isCorrect)cls+=" rv-wrong";
+     if(j===r.chosenIdx&&r.isCorrect)cls+=" rv-correct rv-chosen";
+     let tag="";
+     if(j===r.chosenIdx&&j===r.correctIdx)tag=" ✅ (তোমার উত্তর)";
+     else if(j===r.chosenIdx)tag=" ❌ (তোমার উত্তর)";
+     else if(j===r.correctIdx)tag=" ✅ (সঠিক উত্তর)";
+     return `<div class="${cls}">${String.fromCharCode(65+j)}. ${esc(o)}${tag}</div>`;
+    }).join("");
+    const unanswered=r.chosenIdx==null;
+    return `<div class="rv-q ${r.isCorrect?"rv-q-correct":"rv-q-wrong"}">
+     <div class="rv-qhead"><span class="pill ${r.isCorrect?"":"danger-pill"}">${r.isCorrect?"✅ ঠিক":unanswered?"➖ উত্তর দাওনি":"❌ ভুল"}</span>${r.topic?`<span class="pill teal">${esc(r.topic)}</span>`:""}</div>
+     <p class="rv-qtext"><b>${i+1}. ${esc(r.q)}</b></p>
+     ${optsHtml}
+    </div>`;
+   }).join("");
+ }
+ $("reviewOverlay").classList.remove("hidden");
+}
+$("reviewClose").onclick=()=>$("reviewOverlay").classList.add("hidden");
+$("reviewOverlay").onclick=e=>{if(e.target.id==="reviewOverlay")$("reviewOverlay").classList.add("hidden");};
+
+/* ---------- SHARED: "elder-brother" tutor prompt builder ----------
+   Mirrors the full teaching framework: story-first intro, one chunk at a
+   time, easy→proper→exam-level layers, dry runs, difficulty ramp, and
+   waiting for the student's answer before moving on. */
+function buildTutorPrompt({topic,context,extra,bengali}){
+ const cls=(profile&&profile.className)||"";
+ if(bengali){
+  return `তুমি আমার personal শিক্ষক, mentor, আর দাদার মতো (elder-brother-style) tutor।
+আমি ${cls} class-এর student।
+
+Topic: ${topic}
+${context?`নিচে আমার নিজের note/context আছে, দরকারে ব্যবহার করো:\n${context}\n`:""}${extra?`${extra}\n`:""}
+আমাকে বাংলায় শেখাও, নিচের নিয়মগুলো কঠোরভাবে মেনে:
+
+1) ধরে নাও এই topic সম্পর্কে আমি প্রায় কিছুই জানি না। পুরো chapter একসাথে দিও না — একটা করে ছোট logical chunk শেখাও, প্রতিটা গুরুত্বপূর্ণ concept-এর পরে থেমে আমার সাথে interact করো, বুঝেছি কিনা check করো, তারপর এগোও।
+2) সবার আগে একটা সহজ real-life গল্প/পরিস্থিতি দিয়ে শুরু করো — এই topic কেন আছে, real life-এ এর idea কোথায় দেখা যায়, আমি কেন এটা শিখছি। প্রথমে আমাকে curious করো, definition দিয়ে শুরু কোরো না।
+3) তারপর খুব সহজ ভাষায় মূল idea বোঝাও, প্রথমে ভারী technical শব্দ এড়িয়ে যাও। আগে আমাকে "ওহ! তাহলে এটাই ব্যাপার" ভাবতে দাও, তারপর proper term introduce করো।
+4) সম্ভব হলে visualize করতে সাহায্য করো — diagram, arrow, flowchart, table, বা ধাপে ধাপে value/অবস্থা পরিবর্তনের ছবি (দরকারমতো simple রাখবে)।
+5) শুধু "নিয়মটা এই" বলে থেমো না — নিয়মটা কেন কাজ করে সেটাও বোঝাও। formula হলে প্রতিটা অংশ কোথা থেকে আসছে বলো।
+6) প্রতিটা গুরুত্বপূর্ণ concept তিনটা layer-এ দাও: (Layer 1) খুব সহজ ব্যাখ্যা, (Layer 2) proper conceptual ব্যাখ্যা, (Layer 3) exam-ready definition/answer।
+7) একটা সহজ example ধীরে ধীরে সমাধান করে দেখাও এই ধাপে: সমস্যা → আমাদের কাছে কী তথ্য আছে → কী বের করতে হবে → কোন concept লাগবে → কেন → সমাধান। Calculation/multi-step process হলে একটা proper dry run দেখাও (value ধাপে ধাপে কীভাবে বদলাচ্ছে)।
+8) তারপর আমাকে একটা ছোট প্রশ্ন দাও এবং সাথে সাথে উত্তর বলে দিও না — আমার উত্তরের জন্য অপেক্ষা করো। আমি ভুল করলে "ভুল" বলেই থেমো না — ঠিক কোথায় আমার চিন্তা ভুল হয়েছে (concept/formula/calculation/logic/interpretation) সেটা ধরে অন্য একটা উদাহরণ দিয়ে আবার বোঝাও।
+9) ধীরে ধীরে কঠিন করো: 🟢 Basic → 🟡 Conceptual → 🟠 Application → 🔴 Challenging। সহজ থেকে সরাসরি কঠিন প্রশ্নে লাফ দিও না।
+10) মাঝে মাঝে জিজ্ঞেস করো — "কেন এমন হলো?", "condition বদলালে কী হবে?", "ভুলটা খুঁজে বের করো", "নিজের ভাষায় বুঝিয়ে বলো তো" — মুখস্থকে understanding হিসেবে ধরো না।
+11) যেটুকু সত্যিই মুখস্থ রাখতে হবে তার জন্য সহজ mnemonic/analogy/memory trick দাও, কিন্তু বোঝার বদলে মুখস্থকে প্রাধান্য দিও না।
+12) topic শেষ করার আগে exam-important points, common question pattern, সাধারণ ভুল/trap, এবং সম্ভাব্য short/long answer বলে দাও — ${cls} level অনুযায়ী।
+13) আমি যদি "বুঝিনি" বলি, একই ব্যাখ্যা আবার repeat কোরো না — অন্য analogy, অন্য example, diagram, বা ছোট ছোট ভাগে ভেঙে বোঝাও। ভুল বোঝার জন্য কখনো লজ্জা দিও না।
+14) ধৈর্যশীল, বন্ধুত্বপূর্ণ, উৎসাহদায়ক (অতিরিক্ত প্রশংসা না করে) কিন্তু ভুল reasoning-এ strict থাকো। আমাকে independent করাই তোমার লক্ষ্য।
+
+গতির চেয়ে বোঝাটা বেশি গুরুত্বপূর্ণ। একবারে একটা chunk শেখাও, আমার সাথে interact করো, বুঝেছি কিনা check করো, তারপর এগোও।
+
+এখন "${topic}" একদম basics থেকে শেখানো শুরু করো — একটা সহজ real-life গল্প/পরিস্থিতি দিয়ে শুরু করো। প্রথম message-এই পুরো lesson দিয়ে দিও না।`;
+ }
+ return `You are my personal teacher, mentor, and elder-brother-style tutor.
+I am a ${cls} student.
+
+Topic: ${topic}
+${context?`Here is my own note/context, use it where useful:\n${context}\n`:""}${extra?`${extra}\n`:""}
+Teach me following these rules strictly:
+
+1) Assume I know almost nothing about this topic. Do not dump the whole chapter at once — teach one logical chunk at a time, stop after each important concept to interact with me and check my understanding before moving on.
+2) Start with a simple real-life story or situation first — why this topic exists, where its idea shows up in real life, why I'm learning it. Make me curious before giving definitions.
+3) Explain the core idea in very simple language first, avoiding heavy technical terms initially. Let me think "oh, so THAT's what it means" before introducing the proper term.
+4) Help me visualize it wherever possible — diagrams, arrows, flowcharts, tables, or step-by-step value/state changes (keep it simple).
+5) Never just state "this is the rule" — explain WHY the rule works. If there's a formula, explain where each part comes from.
+6) Teach each important concept in three layers: (Layer 1) very easy explanation, (Layer 2) proper conceptual explanation, (Layer 3) exam-ready definition/answer.
+7) Walk through one easy example slowly: problem → what information we have → what we need → which concept to use → why → solution. For calculations/multi-step processes, show a proper dry run of how values change step by step.
+8) Then give me a small question and wait for my answer instead of revealing it immediately. If I'm wrong, don't just say "wrong" — find exactly where my thinking went wrong (concept/formula/calculation/logic/interpretation) and re-explain that part with a different example.
+9) Increase difficulty gradually: 🟢 Basic → 🟡 Conceptual → 🟠 Application → 🔴 Challenging. Never jump straight from easy to hard.
+10) Occasionally ask "why?", "what happens if this condition changes?", "find the mistake", "explain it back to me in your own words" — don't accept memorization as understanding.
+11) For things that genuinely need memorizing, give a simple mnemonic/analogy/memory trick, but never replace understanding with memorization.
+12) Before finishing the topic, give me exam-important points, common question patterns, common traps, and likely short/long answers — appropriate for ${cls} level.
+13) If I say I don't understand, don't repeat the same explanation — use a different analogy, example, diagram, or break it into smaller pieces. Never make me feel embarrassed.
+14) Be patient, friendly, encouraging (without over-praising), but strict about incorrect reasoning. Your goal is to make me independent.
+
+Understanding matters more than speed. Teach one chunk at a time, interact with me, check my understanding, then continue.
+
+Now start teaching me "${topic}" from the absolute basics — begin with a simple real-life story or situation. Do not give me the entire lesson in your first message.`;
+}
+
+function askAiAboutWeakTopic(topic,pct){
+ const bengali=isBengaliText(topic)||isBengaliText((profile&&profile.className)||"");
+ const extra=bengali
+  ?`গত টেস্টগুলোতে এই topic-এ আমার accuracy মাত্র ${pct}% — তাই একদম basics থেকে ধরে ধরে শেখাও।`
+  :`My accuracy on this topic in recent tests is only ${pct}%, so please start from the absolute basics.`;
+ const prompt=buildTutorPrompt({topic,extra,bengali});
+ copyPromptAndOpenChatGPT(prompt,bengali);
+}
+
 async function aiHelp(title,content){
- const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
-
-Topic: ${title}
-Context/Notes: ${content}
-
-আমাকে এই sequence-এ শেখাও:
-1) খুব সহজ real-life example
-2) basic concept
-3) visual imagination/ছোট diagram
-4) step-by-step explanation
-5) important English terms-এর বাংলা মানে
-6) common mistakes
-7) 3টা practice question
-
-আমি মুখস্থ না করে concept বুঝতে চাই।`;
- try{await navigator.clipboard.writeText(promptText);alert("Prompt copy হয়েছে। এখন ChatGPT খুলছে—paste করো।");window.open("https://chatgpt.com/","_blank");}
- catch{window.prompt("এই prompt copy করো:",promptText);}
+ const bengali=true;
+ const prompt=buildTutorPrompt({topic:title,context:content,bengali});
+ copyPromptAndOpenChatGPT(prompt,bengali);
 }
 
 /* ---------- FLASHCARDS ---------- */
@@ -323,7 +605,7 @@ $("flashBtn").onclick=()=>{
 };
 function renderFlash(){
  const n=flashDeck[flashIdx];
- $("flashCard").innerHTML=flashShowBack?`<div>${n.content.replaceAll("\n","<br>")}<div class="hint">Tap to see question</div></div>`:`<div>${n.title}<div class="hint">Tap to reveal answer</div></div>`;
+ $("flashCard").innerHTML=flashShowBack?`<div>${esc(n.content).replaceAll("\n","<br>")}<div class="hint">Tap to see question</div></div>`:`<div>${esc(n.title)}<div class="hint">Tap to reveal answer</div></div>`;
  $("flashProgress").textContent=`${flashIdx+1} / ${flashDeck.length}`;
 }
 $("flashCard").onclick=()=>{flashShowBack=!flashShowBack;renderFlash();};
@@ -336,21 +618,45 @@ $("flashClose").onclick=()=>$("flashSection").classList.add("hidden");
 function renderTests(){
  const q=$("testSearch").value.trim().toLowerCase();
  const list=tests.filter(t=>!q||(t.title+" "+(t.chapter||"")).toLowerCase().includes(q));
- $("testsList").innerHTML=list.map(t=>`<div class="item"><span class="pill">${subjectName(t.subjectId)}</span><h3>${t.title}</h3><p class="muted">${t.chapter||""} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${t.id}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
+ $("testsList").innerHTML=list.map(t=>`<div class="item"><span class="pill">${esc(subjectName(t.subjectId))}</span><h3>${esc(t.title)}</h3><p class="muted">${esc(t.chapter)} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${esc(t.id)}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
  document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
 }
 $("testSearch").oninput=renderTests;
 
 async function startTest(id){
- activeTest=tests.find(t=>t.id===id);answers={};
+ activeTest=tests.find(t=>t.id===id);answers={};activeAttempt=null;
+ if(!activeTest){alert("Testটি পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।");return;}
+ if(timerHandle)clearInterval(timerHandle);
+ $("submitTest").disabled=true;
+ $("submitTest").textContent="Starting...";
+ $("testStatus").textContent="⏳ Test session তৈরি হচ্ছে...";
+ $("printPaperBtn").classList.add("hidden");
  $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
- $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
- const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
- activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
+ $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${esc(x.topic)||"Question"}</span><p><b>${i+1}. ${esc(x.q)}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("");
+ try{
+   if(!auth.currentUser||!profile?.classId)throw new Error("Student profile/session is not ready");
+   const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
+   activeAttempt=r.id;startMs=Date.now();answerSavePromise=Promise.resolve();timerHandle=setInterval(tick,1000);
+   $("submitTest").disabled=false;$("submitTest").textContent="Final Submit";$("testStatus").textContent="";
+   $("runner").scrollIntoView({behavior:"smooth"});
+ }catch(err){
+   console.error("Test session creation failed:",err);
+   activeAttempt=null;activeTest=null;$("runner").classList.add("hidden");
+   const denied=err?.code==="permission-denied";
+   alert(denied?"Test শুরু করা যায়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Test শুরু করা যায়নি। Internet/Firebase connection check করে আবার চেষ্টা করো।");
+   return;
+ }
  $("testForm").onchange=async e=>{
    if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
    const n=Object.keys(answers).length;$("prog").style.width=(n/activeTest.questions.length*100)+"%";$("progText").textContent=`Answered ${n}/${activeTest.questions.length}`;
-   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:n,lastUpdated:serverTimestamp()});
+   const attemptId=activeAttempt;
+   const answersSnapshot={...answers};
+   // Keep autosaves strictly ordered. Without this chain, a slow older write can
+   // arrive after a newer write/final submit and replace the latest answers.
+   answerSavePromise=answerSavePromise
+     .catch(()=>{})
+     .then(()=>updateDoc(doc(db,"attempts",attemptId),{answers:answersSnapshot,progress:n,lastUpdated:serverTimestamp()}));
+   await answerSavePromise;
  };
 }
 function tick(){
@@ -358,19 +664,92 @@ function tick(){
  $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
  if(left<=0){clearInterval(timerHandle);finishTest(true);}
 }
-$("submitTest").onclick=()=>{if(confirm("Final submit করতে নিশ্চিত?"))finishTest(false);};
+let submittingTest=false;
+$("submitTest").onclick=async()=>{
+ if(submittingTest)return;
+ if(!activeTest||!activeAttempt){
+   $("testStatus").textContent="⚠️ Test session পাওয়া যাচ্ছে না। Testটি আবার Start করো।";
+   return;
+ }
+ if(confirm("Final submit করতে নিশ্চিত?"))await finishTest(false);
+};
 
 async function finishTest(auto){
- clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
- await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
- $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ if(submittingTest)return;
+ submittingTest=true;
+ const submitBtn=$("submitTest");
+ clearInterval(timerHandle);
+ submitBtn.disabled=true;
+ submitBtn.textContent=auto?"Auto submitting...":"Submitting...";
+ $("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
+ $("testStatus").textContent="⏳ Answer submit হচ্ছে...";
+ try{
+   if(!auth.currentUser)throw new Error("Your login session has expired");
+   if(!activeAttempt)throw new Error("Missing active attempt");
+   const attemptId=activeAttempt;
+   await answerSavePromise;
+   await updateDoc(doc(db,"attempts",attemptId),{answers:{...answers},progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
+   submitBtn.textContent="✅ Submitted";
+   $("testStatus").textContent="✅ Successfully submitted. Progress update হচ্ছে...";
+   await loadProgressAndLeaderboard().catch(()=>{});
+ }catch(err){
+   console.error("Final submit failed:",err);
+   submittingTest=false;
+   submitBtn.disabled=false;
+   submitBtn.textContent="Final Submit";
+   $("testForm").querySelectorAll("input").forEach(x=>x.disabled=false);
+   const denied=err?.code==="permission-denied";
+   const offline=err?.code==="unavailable"||!navigator.onLine;
+   $("testStatus").textContent=denied?"❌ Firebase permission denied — নতুন firestore.rules deploy করতে হবে।":offline?"❌ Internet connection নেই। Connection ফিরলে আবার Final Submit চাপো।":`❌ Submit হয়নি (${err?.code||err?.message||"unknown error"})। আবার চেষ্টা করো।`;
+   if(!auto)alert(denied?"Submit হয়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Submit হয়নি। আবার চেষ্টা করো।");
+   return;
+ }
+ submittingTest=false;
+ $("printPaperBtn").classList.remove("hidden");
+ $("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     const perfect=d.percentage>=100;
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${esc(activeTest.title)}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="row" style="margin-top:10px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button></div><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     $("reviewNowBtn").onclick=()=>renderReviewModal(activeTest.title,d.review);
+     if(d.percentage>=40){confettiBurst(perfect?160:(d.percentage>=80?140:80));playChime(perfect?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
  });
+}
+
+function printQuestionPaper(test){
+ if(!test||!test.questions||!test.questions.length){toast("Question paper পাওয়া যায়নি","⚠️");return;}
+ const qHtml=test.questions.map((x,i)=>{
+  const optsHtml=x.o.map((o,j)=>`<div class="qp-opt">${String.fromCharCode(65+j)}. ${esc(o)}</div>`).join("");
+  return `<div class="qp-q"><div class="qp-qtext"><b>${i+1}.</b> ${esc(x.q)}${x.topic?` <span class="qp-topic">[${esc(x.topic)}]</span>`:""}</div><div class="qp-opts">${optsHtml}</div></div>`;
+ }).join("");
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${esc(test.title)} - Question Paper</title><style>
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#101c3d;padding:0;font-size:12.5px}
+  .qp-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1d4ed8;padding-bottom:8px;margin-bottom:10px}
+  .qp-head h1{margin:0;font-size:19px;color:#1d4ed8}
+  .qp-head .qp-brand{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6b8c;margin-bottom:2px}
+  .qp-meta{font-size:11.5px;color:#5b6b8c;text-align:right;line-height:1.5}
+  .qp-cols{column-count:2;column-gap:22px}
+  .qp-q{break-inside:avoid;page-break-inside:avoid;margin-bottom:10px}
+  .qp-qtext{margin-bottom:3px;line-height:1.4}
+  .qp-topic{font-size:10px;color:#8a95b8;font-weight:600}
+  .qp-opts{margin-left:14px}
+  .qp-opt{line-height:1.5}
+  .qp-foot{margin-top:14px;padding-top:8px;border-top:1px solid #dbe6f7;font-size:10.5px;color:#5b6b8c}
+  </style></head><body>
+  <div class="qp-head">
+    <div><div class="qp-brand">Arpan Learning Suite</div><h1>${esc(test.title)}</h1></div>
+    <div class="qp-meta">${esc(profile.name)} · ${esc(profile.className)}<br>${esc(test.chapter)}<br>${new Date().toLocaleDateString()}</div>
+  </div>
+  <div class="qp-cols">${qHtml}</div>
+  <div class="qp-foot">Question paper only — answer key is not included for exam integrity.</div>
+  </body></html>`);
+ w.document.close();w.print();
 }
 
 /* ---------- ASSIGNMENTS ---------- */
@@ -386,8 +765,8 @@ function renderAssignments(){
  const sorted=[...assignments].sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
  $("asgList").innerHTML=sorted.map(a=>{
   const done=doneAssignmentIds.has(a.id);
-  return `<div class="item assign-item ${done?"done":""}"><input type="checkbox" class="asgCheck" data-id="${a.id}" ${done?"checked":""}>
-  <div style="flex:1"><span class="pill">${subjectName(a.subjectId)}</span> ${dueTag(a.dueDate)}<h3>${a.title}</h3><p class="muted">${a.description||""}</p></div></div>`;
+  return `<div class="item assign-item ${done?"done":""}"><input type="checkbox" class="asgCheck" data-id="${esc(a.id)}" ${done?"checked":""}>
+  <div style="flex:1"><span class="pill">${esc(subjectName(a.subjectId))}</span> ${dueTag(a.dueDate)}<h3>${esc(a.title)}</h3><p class="muted">${esc(a.description)}</p></div></div>`;
  }).join("")||"<p class='muted'>এখনো কোনো assignment নেই।</p>";
  document.querySelectorAll(".asgCheck").forEach(cb=>cb.onchange=async()=>{
   const id=cb.dataset.id,done=cb.checked;
@@ -402,42 +781,100 @@ function barClass(pct){return pct<50?"weak":pct<75?"mid":"strong";}
 async function loadProgressAndLeaderboard(){
  const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
  const mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");
+ renderXP(mine.length);
 
  // subject-wise
  const bySubject={};
  mine.forEach(a=>{if(a.percentage==null)return;const s=subjectName(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
  const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
- $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${esc(r.label)}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p>";
+ lastSubjRows=subjRows;
 
  // topic-wise
  const byTopic={};
  mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;});});
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
- $("topicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ $("topicBars").innerHTML=topicRows.length?topicRows.map((r,i)=>`<div class="barrow"><div class="barlabel"><span>${esc(r.label)}</span><span style="display:flex;gap:8px;align-items:center;flex-shrink:0"><span>${r.pct}%</span><button class="askAiTopic" data-idx="${i}" title="Get ChatGPT help on this topic">🤖 Ask ChatGPT</button></span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
+ lastTopicRows=topicRows;
+ document.querySelectorAll(".askAiTopic").forEach(b=>b.onclick=()=>{
+  const r=lastTopicRows[Number(b.dataset.idx)];if(!r)return;
+  askAiAboutWeakTopic(r.label,r.pct);
+ });
 
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ lastSortedMine=sortedMine;
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${esc(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div class="row" style="gap:8px;flex-wrap:wrap">${a.score!=null?`<button class="secondary reviewBtn" data-id="${esc(a.id)}">📝 Answer Review</button><button class="secondary printBtn" data-id="${esc(a.id)}">🖨️ Print Result</button>`:""}<button class="secondary printQpBtn" data-testid="${esc(a.testId)}">📄 Question Paper</button></div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{
+  const a=mine.find(x=>x.id===b.dataset.id);
+  if(!a)return;
+  renderReviewModal(a.testTitle,a.review);
+ });
+ document.querySelectorAll(".printQpBtn").forEach(b=>b.onclick=()=>{
+  const t=tests.find(x=>x.id===b.dataset.testid);
+  if(!t){toast("এই test-এর প্রশ্ন আর available নেই","⚠️");return;}
+  printQuestionPaper(t);
+ });
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);
   const w=window.open("","_blank");
-  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
+  w.document.write(`<html><head><title>${esc(a.testTitle)} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#1d4ed8}</style></head><body><h2>Arpan Learning Suite</h2><h1>${esc(a.testTitle)}</h1><p>Student: ${esc(profile.name)} (${esc(profile.className)})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
   w.document.close();w.print();
  });
 
  // leaderboard (classmates' submitted+graded attempts)
  const classAttempts=await getDocs(query(collection(db,"attempts"),where("classId","==",profile.classId),where("status","==","submitted")));
+ cachedClassAttempts=classAttempts.docs.map(d=>({id:d.id,...d.data()}));
  const byUid={};
- classAttempts.docs.forEach(d=>{
-  const a=d.data();if(a.percentage==null)return;
+ cachedClassAttempts.forEach(a=>{
+  if(a.percentage==null)return;
   if(!byUid[a.uid])byUid[a.uid]={name:a.studentName||"Student",sum:0,n:0};
   byUid[a.uid].sum+=a.percentage;byUid[a.uid].n++;
  });
  const board=Object.entries(byUid).map(([uid,v])=>({uid,name:v.name,avg:Math.round(v.sum/v.n)})).sort((x,y)=>y.avg-x.avg).slice(0,10);
- $("leaderboard").innerHTML=board.length?board.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${r.name}</span><span class="lb-score">${r.avg}%</span></div>`).join("")
+ $("leaderboard").innerHTML=board.length?board.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${esc(r.name)}</span><span class="lb-score">${r.avg}%</span></div>`).join("")
   :"<p class='muted'>এখনো কোনো graded attempt নেই।</p>";
+ renderRecentLeaderboards();
+}
+
+$("printReport").onclick=()=>{
+ if(!lastSortedMine.length&&!lastSubjRows.length){toast("এখনো কোনো টেস্ট ডেটা নেই","⚠️");return;}
+ const overallAvg=lastSortedMine.filter(a=>a.percentage!=null).length
+  ?Math.round(lastSortedMine.filter(a=>a.percentage!=null).reduce((s,a)=>s+a.percentage,0)/lastSortedMine.filter(a=>a.percentage!=null).length):0;
+ const rowsHtml=(rows)=>rows.length?rows.map(r=>`<tr><td>${esc(r.label)}</td><td style="text-align:right"><b>${r.pct}%</b></td></tr>`).join(""):`<tr><td colspan="2" style="color:#777">No data yet</td></tr>`;
+ const histHtml=lastSortedMine.length?lastSortedMine.map(a=>`<tr><td>${esc(a.testTitle)}</td><td style="text-align:right">${a.score!=null?`${a.score}/${a.total} (${a.percentage}%)`:"Pending"}</td></tr>`).join(""):`<tr><td colspan="2" style="color:#777">No attempts yet</td></tr>`;
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${esc(profile.name)} - Progress Report</title><style>
+  body{font-family:'Segoe UI',sans-serif;padding:40px;color:#101c3d}
+  h1{color:#1d4ed8;margin-bottom:0}
+  .sub{color:#5b6b8c;margin-top:4px}
+  h2{color:#152a6b;border-bottom:2px solid #c8960c;padding-bottom:6px;margin-top:34px}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  td{padding:8px 6px;border-bottom:1px solid #dbeee2}
+  .badge-big{display:inline-block;margin-top:14px;padding:10px 20px;border-radius:999px;background:linear-gradient(135deg,#f3d477,#c8960c);color:#3a2a02;font-weight:800}
+  </style></head><body>
+  <h1>Arpan Learning Suite</h1>
+  <div class="sub">Full Progress Report — ${esc(profile.name)} · ${esc(profile.className)}</div>
+  <div class="badge-big">Overall Average: ${overallAvg}%</div>
+  <h2>Subject-wise Accuracy</h2><table>${rowsHtml(lastSubjRows)}</table>
+  <h2>Topic-wise Weak Areas</h2><table>${rowsHtml(lastTopicRows)}</table>
+  <h2>Test History</h2><table>${histHtml}</table>
+  <p style="margin-top:30px;color:#999;font-size:12px">Generated on ${new Date().toLocaleDateString()}</p>
+  </body></html>`);
+ w.document.close();w.print();
+};
+
+function renderRecentLeaderboards(){
+ const recent=[...tests].filter(t=>t.createdAt).sort((a,b)=>(b.createdAt.seconds||0)-(a.createdAt.seconds||0)).slice(0,3);
+ if(!recent.length){$("recentLeaderboards").innerHTML="<p class='muted'>এখনো কোনো test publish হয়নি।</p>";return;}
+ $("recentLeaderboards").innerHTML=recent.map(t=>{
+  const rows=cachedClassAttempts.filter(a=>a.testId===t.id&&a.percentage!=null).sort((a,b)=>b.percentage-a.percentage).slice(0,5);
+  const body=rows.length?rows.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${esc(r.studentName)||"Student"}</span><span class="lb-score">${r.percentage}%</span></div>`).join("")
+   :"<p class='muted' style='margin:6px 0'>এখনো কেউ attend করেনি।</p>";
+  return `<div class="item"><h3>${esc(t.title)}</h3>${body}</div>`;
+ }).join("");
 }
 
 /* ---------- DOUBTS ---------- */
@@ -445,14 +882,122 @@ $("sendDoubt").onclick=async()=>{
  const subjectId=$("doubtSubject").value,question=$("doubtText").value.trim();
  if(!question)return $("doubtMsg").textContent="প্রশ্ন লিখো আগে।";
  await addDoc(collection(db,"doubts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,subjectId,question,status:"open",createdAt:serverTimestamp()});
- $("doubtText").value="";$("doubtMsg").textContent="✅ পাঠানো হয়েছে। টিচার শীঘ্রই reply দেবেন।";
+ $("doubtText").value="";$("doubtMsg").textContent="✅ পাঠানো হয়েছে। টিচার শীঘ্রই reply দেবেন।";toast("Doubt sent to teacher","💬");playChime("notify");
 };
 let doubtsUnsub=null;
 function listenMyDoubts(){
  if(doubtsUnsub)doubtsUnsub();
  doubtsUnsub=onSnapshot(query(collection(db,"doubts"),where("uid","==",auth.currentUser.uid)),snap=>{
   const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-  $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${subjectName(x.subjectId)}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${x.question}</p>${x.answer?`<div class="doubt-a">${x.answer}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
+  $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${esc(subjectName(x.subjectId))}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${esc(x.question)}</p>${x.answer?`<div class="doubt-a">${esc(x.answer)}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
  });
 }
+/* ---------- MY PRACTICE TEST (client-only, free, nothing saved) ---------- */
+// NOTE: the "Copy AI Prompt & Open ChatGPT" button for practice tests is wired
+// up in the small classic <script> at the bottom of this file (the
+// "practice-test safety fallback" block), not here. It used to be bound in
+// both places — since a later `.onclick =` assignment always wins, this
+// block's version was silently dead code and has been removed to avoid two
+// confusing, slightly different implementations. See `buildPracticePrompt()`
+// near the end of the file for the actual logic.
+
+function parsePracticeText(text){
+ const blocks=text.replace(/\r/g,"").split(/\n---\s*\n|\n---\s*$/).map(b=>b.trim()).filter(Boolean);
+ const qs=[];
+ blocks.forEach(b=>{
+  const vals={};
+  b.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
+  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans[0]);
+  if(vals.Q&&opts.every(x=>x)&&ai>=0)qs.push({q:vals.Q,o:opts,answer:ai,topic:vals.TOPIC||""});
+ });
+ return qs;
+}
+
+let pracQs=[],pracAnswers={};
+$("pracStart").onclick=()=>{
+ pracQs=parsePracticeText($("pracPaste").value);
+ if(!pracQs.length){alert("প্রশ্ন পড়া যায়নি — format ঠিক আছে কিনা দেখো (Q/A/B/C/D/ANSWER)।");return;}
+ pracAnswers={};
+ $("pracQuiz").innerHTML=pracQs.map((x,i)=>`<div class="q"><span class="pill">${esc(x.topic)||"Practice"}</span><p><b>${i+1}. ${esc(x.q)}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="prac${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("")
+  +`<button id="pracCheck" class="secondary">✅ Check Answers</button><p id="pracResult" class="muted"></p>`;
+ $("pracQuiz").onchange=e=>{if(e.target.name&&e.target.name.startsWith("prac"))pracAnswers[e.target.name]=Number(e.target.value);};
+ $("pracCheck").onclick=()=>{
+  let score=0;
+  pracQs.forEach((x,i)=>{
+   const chosen=pracAnswers["prac"+i];
+   $("pracQuiz").querySelectorAll(`input[name="prac${i}"]`).forEach((inp,j)=>{
+    const lbl=inp.parentElement;
+    if(j===x.answer)lbl.style.background="#dcfce7";
+    else if(j===chosen)lbl.style.background="#fee2e2";
+   });
+   if(chosen===x.answer)score++;
+  });
+  $("pracResult").textContent=`তোমার স্কোর: ${score} / ${pracQs.length}`;
+ };
+};
+</script>
+<!-- Practice-test safety fallback: independent of Firebase/module execution. -->
+<script>
+window.addEventListener("DOMContentLoaded",()=>{
+ const byId=id=>document.getElementById(id);
+ const promptBtn=byId("pracPromptBtn");
+ const overlay=byId("aiPromptOverlay");
+ const promptBox=byId("aiPromptText");
+ const hint=byId("aiPromptHint");
+ if(!promptBtn||!overlay||!promptBox)return;
+
+ function classLabel(){
+  const who=(byId("who")?.textContent||"").trim();
+  return who&&who.includes("·")?who.split("·")[0].trim():"তোমার class";
+ }
+ function buildPracticePrompt(){
+  const topic=(byId("pracTopic")?.value||"").trim()||"General revision";
+  const raw=Number(byId("pracCount")?.value);
+  const count=Number.isFinite(raw)&&raw>0?Math.min(Math.floor(raw),50):5;
+  return `আমার জন্য ${classLabel()}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
+
+Q: প্রশ্ন এখানে
+A: option A
+B: option B
+C: option C
+D: option D
+ANSWER: (A/B/C/D এর একটা)
+TOPIC: sub-topic name`;
+ }
+ async function copyText(text){
+  if(navigator.clipboard&&window.isSecureContext){
+   try{await navigator.clipboard.writeText(text);return true;}catch(e){}
+  }
+  try{promptBox.focus();promptBox.select();promptBox.setSelectionRange(0,text.length);return document.execCommand("copy");}
+  catch(e){return false;}
+ }
+
+ promptBtn.onclick=async()=>{
+  const text=buildPracticePrompt();
+  promptBox.value=text;
+  if(hint)hint.textContent="";
+  overlay.classList.remove("hidden");
+  const copied=await copyText(text);
+  if(hint)hint.textContent=copied
+   ?"✅ Prompt copy হয়েছে। এখন ChatGPT খুলে paste করো।"
+   :"👆 Auto-copy না হলে উপরের prompt select করে copy করো।";
+  let opened=null;
+  try{opened=window.open("https://chatgpt.com/","_blank","noopener");}catch(e){}
+  if(!opened&&hint)hint.textContent+=" ChatGPT auto-open block হলে নিচের ‘ChatGPT খোলো’ button চাপো।";
+ };
+
+ const copyBtn=byId("aiPromptCopyBtn");
+ if(copyBtn)copyBtn.onclick=async()=>{
+  const ok=await copyText(promptBox.value);
+  if(hint)hint.textContent=ok?"✅ Prompt copy হয়েছে।":"👆 Prompt select করে manually copy করো।";
+ };
+ const closeBtn=byId("aiPromptClose");
+ if(closeBtn)closeBtn.onclick=()=>overlay.classList.add("hidden");
+ const openLink=byId("aiPromptOpenLink");
+ if(openLink)openLink.onclick=e=>{
+  e.preventDefault();
+  const w=window.open("https://chatgpt.com/","_blank","noopener");
+  if(!w)location.href="https://chatgpt.com/";
+ };
+});
 </script></body></html>
