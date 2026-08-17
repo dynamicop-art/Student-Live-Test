@@ -2,13 +2,13 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teacher Admin</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231d4ed8'/%3E%3Cstop offset='1' stop-color='%23c8960c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body>
-<div class="fab-row"><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
+<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
 <section class="hero topbar"><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Teacher Command Center</h1><p>Students, subjects, notes, assessments এবং live performance — সব এক clean workspace থেকে manage করুন।</p></div><button id="logout" class="secondary">Logout</button></section>
 
@@ -31,7 +31,6 @@
 <div class="stat"><b id="stStudents">0</b>Students</div><div class="stat"><b id="stSubjects">0</b>Subjects</div>
 <div class="stat"><b id="stTests">0</b>Tests</div><div class="stat"><b id="stLive">0</b>Live attempts</div>
 <div class="stat"><b id="stDoubts">0</b>Open doubts</div><div class="stat"><b id="stAssign">0</b>Assignments</div>
-<div class="stat"><b id="stAvg">—</b>Class Average</div><div class="stat"><b id="stTop">—</b>Top Performer</div>
 </div>
 <div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন। Notice/Assignment/Doubts যেকোনো সময় manage করা যাবে।</p></div>
 </section>
@@ -39,9 +38,7 @@
 <section id="students" class="tab card hidden"><h2>👥 Allow Student</h2>
 <div class="row"><input id="invName" placeholder="Student name"><input id="invEmail" type="email" placeholder="Student email"></div>
 <div class="row"><input id="invClassId" placeholder="Class ID: class5 / class12"><input id="invClassName" placeholder="Display: Class V / Class XII"></div>
-<button id="addInvite">Add / Update Student</button>
-<div class="filter-bar"><input id="invSearch" placeholder="🔍 Search students..."></div>
-<div id="inviteList"></div></section>
+<button id="addInvite">Add / Update Student</button><div id="inviteList"></div></section>
 
 <section id="subjects" class="tab card hidden"><h2>📘 Subjects</h2>
 <div class="row"><input id="subName" placeholder="Subject name"><input id="subClassId" placeholder="Class ID e.g. class12"></div>
@@ -51,15 +48,11 @@
 <div class="row"><input id="noteTitle" placeholder="Note title"><input id="noteClassId" placeholder="Class ID"><input id="noteSubjectId" placeholder="Subject ID"><input id="noteChapter" placeholder="Chapter (optional)"></div>
 <textarea id="noteContent" placeholder="বাংলায় short note / formula / explanation paste করুন..."></textarea>
 <label class="muted">Optional tiny PDF/image, maximum 80 KB</label><input id="noteFile" type="file" accept=".pdf,image/*">
-<button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p>
-<div class="filter-bar"><input id="noteListSearch" placeholder="🔍 Search notes..."></div>
-<div id="noteList"></div></section>
+<button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p><div id="noteList"></div></section>
 
 <section id="tests" class="tab card hidden"><h2>🧪 Manual Test Creator</h2>
 <div class="row"><input id="testTitle" placeholder="Test title"><input id="testClassId" placeholder="Class ID"><input id="testSubjectId" placeholder="Subject ID"><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
-<div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p>
-<div class="filter-bar"><input id="testListSearch" placeholder="🔍 Search tests..."></div>
-<div id="testList"></div></section>
+<div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p><div id="testList"></div></section>
 
 <section id="importer" class="tab card hidden">
 <span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
@@ -80,7 +73,6 @@
 </section>
 
 <section id="results" class="tab card hidden"><h2>📊 Live Results</h2>
-<div class="filter-bar"><input id="attemptSearch" placeholder="🔍 Search by student or test..."><button id="exportCsv" class="gold-btn">⬇️ Export CSV</button></div>
 <div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
 
 <section id="announcements" class="tab card hidden"><h2>📣 Notice Board</h2>
@@ -110,13 +102,11 @@
 </div></div>
 
 <script type="module">
-import {mountBlobs,toast} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-mountBlobs();
 let adminSubjects=[];
 
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -152,16 +142,12 @@ $("addInvite").onclick=async()=>{
  const email=$("invEmail").value.trim().toLowerCase(),name=$("invName").value.trim(),classId=$("invClassId").value.trim();
  if(!email||!name||!classId)return alert("Name, email, class ID required.");
  await setDoc(doc(db,"invites",email),{email,name,classId,className:$("invClassName").value.trim()||classId,active:true,updatedAt:serverTimestamp()},{merge:true});
- $("invName").value="";$("invEmail").value="";$("invClassId").value="";$("invClassName").value="";
- toast(`${name} added/updated`,"👥");
  await loadInvites();
 };
 
 $("addSubject").onclick=async()=>{
  const name=$("subName").value.trim(),classId=$("subClassId").value.trim();if(!name||!classId)return;
- await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});
- $("subName").value="";toast(`Subject "${name}" added`,"📘");
- await loadSubjects();
+ await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});await loadSubjects();
 };
 
 async function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
@@ -173,7 +159,7 @@ $("addNote").onclick=async()=>{
   const f=$("noteFile").files[0];
   if(f){if(f.size>80*1024)throw new Error("Attachment must be 80 KB or smaller.");attachmentData=await fileToDataUrl(f);attachmentName=f.name;attachmentType=f.type;}
   await addDoc(collection(db,"notes"),{title,classId,subjectId,chapter,content:$("noteContent").value.trim(),attachmentData,attachmentName,attachmentType,createdAt:serverTimestamp()});
-  $("noteMsg").textContent="✅ Note published.";toast("Note published","📝");await loadNotes();
+  $("noteMsg").textContent="✅ Note published.";await loadNotes();
  }catch(e){$("noteMsg").textContent=e.message;}
 };
 
@@ -195,7 +181,7 @@ $("saveTest").onclick=async()=>{
   });
   if(!publicQs.length)throw new Error("At least one complete question required.");
   await saveTestData({title:$("testTitle").value.trim(),classId:$("testClassId").value.trim(),subjectId:$("testSubjectId").value.trim(),durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
-  $("testMsg").textContent="✅ Test published.";toast("Test published","🧪");await loadTests();
+  $("testMsg").textContent="✅ Test published.";await loadTests();
  }catch(e){$("testMsg").textContent=e.message;}
 };
 
@@ -305,58 +291,21 @@ $("publishImport").onclick=async()=>{
   if(!parsedImportList.length)throw new Error("Preview first.");
   for(const data of parsedImportList)await saveTestData(data);
   $("importMsg").textContent=`✅ ${parsedImportList.length} test(s) published successfully.`;
-  toast(`${parsedImportList.length} test(s) published`,"⚡");
   parsedImportList=[];$("publishImport").classList.add("hidden");await loadTests();
  }catch(e){$("importMsg").textContent=e.message;}
 };
 
-let adminInvites=[],adminNotes=[],adminTests=[];
-async function loadInvites(){
- const s=await getDocs(collection(db,"invites"));
- adminInvites=s.docs.map(d=>({id:d.id,...d.data()}));
- $("stStudents").textContent=adminInvites.length;
- renderInvites();
-}
-function renderInvites(){
- const q=($("invSearch")?.value||"").trim().toLowerCase();
- const list=adminInvites.filter(d=>!q||(d.name+" "+d.id+" "+(d.className||"")).toLowerCase().includes(q));
- $("inviteList").innerHTML=list.map(d=>`<div class="item"><b>${d.name}</b> · ${d.id}<br><span class="muted">${d.className} (${d.classId})</span></div>`).join("")||"<p class='muted'>No students found.</p>";
-}
-if($("invSearch"))$("invSearch").oninput=renderInvites;
-
+async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b> · ${d.id}<br><span class="muted">${d.data().className} (${d.data().classId})</span></div>`).join("");$("stStudents").textContent=s.size;}
 async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));adminSubjects=s.docs.map(d=>({id:d.id,...d.data()}));$("subjectList").innerHTML=adminSubjects.map(sub=>`<div class="item"><b>${sub.name}</b><br><span class="muted">SUBJECT ID: ${sub.id} · class: ${sub.classId}</span></div>`).join("");$("stSubjects").textContent=adminSubjects.length;}
 function subjectNameAdmin(id){return adminSubjects.find(s=>s.id===id)?.name||"Subject";}
-
-async function loadNotes(){
- const s=await getDocs(collection(db,"notes"));
- adminNotes=s.docs.map(d=>({id:d.id,...d.data()}));
- renderNotesAdmin();
-}
-function renderNotesAdmin(){
- const q=($("noteListSearch")?.value||"").trim().toLowerCase();
- const list=adminNotes.filter(d=>!q||(d.title+" "+(d.chapter||"")+" "+d.classId+" "+d.subjectId).toLowerCase().includes(q));
- $("noteList").innerHTML=list.map(d=>`<div class="item"><b>${d.title}</b>${d.chapter?` <span class="pill teal">${d.chapter}</span>`:""}<br><span class="muted">${d.classId} · ${d.subjectId}</span></div>`).join("")||"<p class='muted'>No notes found.</p>";
-}
-if($("noteListSearch"))$("noteListSearch").oninput=renderNotesAdmin;
-
-async function loadTests(){
- const s=await getDocs(collection(db,"tests"));
- adminTests=s.docs.map(d=>({id:d.id,...d.data()}));
- $("stTests").textContent=adminTests.length;
- renderTestsAdmin();
-}
-function renderTestsAdmin(){
- const q=($("testListSearch")?.value||"").trim().toLowerCase();
- const list=adminTests.filter(d=>!q||(d.title+" "+d.id).toLowerCase().includes(q));
- $("testList").innerHTML=list.map(d=>`<div class="item"><b>${d.title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.questionCount} Q · ${d.durationMinutes} min</span></div>`).join("")||"<p class='muted'>No tests found.</p>";
-}
-if($("testListSearch"))$("testListSearch").oninput=renderTestsAdmin;
+async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b>${d.data().chapter?` <span class="pill teal">${d.data().chapter}</span>`:""}<br><span class="muted">${d.data().classId} · ${d.data().subjectId}</span></div>`).join("");}
+async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.data().questionCount} Q · ${d.data().durationMinutes} min</span></div>`).join("");$("stTests").textContent=s.size;}
 
 $("addAnn").onclick=async()=>{
  const title=$("annTitle").value.trim(),classId=$("annClassId").value.trim(),content=$("annContent").value.trim();
  if(!title||!classId||!content)return $("annMsg").textContent="Title, Class ID ও notice text দিন।";
  await addDoc(collection(db,"announcements"),{title,classId,content,createdAt:serverTimestamp()});
- $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";toast("Notice published","📣");await loadAnnouncements();
+ $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";await loadAnnouncements();
 };
 async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">${d.data().content}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
 
@@ -364,7 +313,7 @@ $("addAsg").onclick=async()=>{
  const title=$("asgTitle").value.trim(),classId=$("asgClassId").value.trim(),subjectId=$("asgSubjectId").value.trim(),dueDate=$("asgDue").value,description=$("asgDesc").value.trim();
  if(!title||!classId||!subjectId)return $("asgMsg").textContent="Title, Class ID, Subject ID দিন।";
  await addDoc(collection(db,"assignments"),{title,classId,subjectId,dueDate,description,createdAt:serverTimestamp()});
- $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";toast("Assignment published","📌");await loadAssignments();
+ $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";await loadAssignments();
 };
 async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">Due: ${d.data().dueDate||"—"} · ${d.data().description||""}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
 
@@ -379,7 +328,6 @@ function listenDoubts(){
    const id=b.dataset.id,box=document.querySelector(`.replyBox[data-id="${id}"]`),answer=box.value.trim();
    if(!answer)return;
    await updateDoc(doc(db,"doubts",id),{answer,status:"answered",answeredAt:serverTimestamp()});
-   toast("Reply sent","💬");
   });
  });
 }
@@ -415,35 +363,8 @@ function listenAttempts(){
  });
 }
 function renderAttempts(){
- const q=($("attemptSearch")?.value||"").trim().toLowerCase();
- const list=latestAttempts.filter(a=>!q||((a.studentName||a.uid)+" "+(a.testTitle||a.testId)).toLowerCase().includes(q));
- $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${a.studentName||a.uid}</b><br><span class="muted">${a.testTitle||a.testId}</span></div><span class="pill">${a.status}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts found.</p>";
-
- // Dashboard: class average + top performer, from graded submitted attempts
- const graded=latestAttempts.filter(a=>a.status==="submitted"&&a.percentage!=null);
- if(graded.length){
-  const avg=Math.round(graded.reduce((s,a)=>s+a.percentage,0)/graded.length);
-  $("stAvg").textContent=avg+"%";
-  const byUid={};
-  graded.forEach(a=>{if(!byUid[a.uid])byUid[a.uid]={name:a.studentName||"Student",sum:0,n:0};byUid[a.uid].sum+=a.percentage;byUid[a.uid].n++;});
-  const top=Object.values(byUid).map(v=>({name:v.name,avg:v.sum/v.n})).sort((x,y)=>y.avg-x.avg)[0];
-  $("stTop").textContent=top?top.name:"—";
- }else{$("stAvg").textContent="—";$("stTop").textContent="—";}
+ $("attemptList").innerHTML=latestAttempts.map(a=>`<div class="item"><div class="topbar"><div><b>${a.studentName||a.uid}</b><br><span class="muted">${a.testTitle||a.testId}</span></div><span class="pill">${a.status}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts yet.</p>";
 }
-if($("attemptSearch"))$("attemptSearch").oninput=renderAttempts;
-
-$("exportCsv").onclick=()=>{
- if(!latestAttempts.length){toast("No attempt data to export","⚠️");return;}
- const rows=[["Student","Test","Class","Status","Score","Total","Percentage"]];
- latestAttempts.forEach(a=>rows.push([a.studentName||a.uid,a.testTitle||a.testId,a.classId||"",a.status,a.score??"",a.total??"",a.percentage!=null?a.percentage+"%":""]));
- const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
- const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
- const url=URL.createObjectURL(blob);
- const a=document.createElement("a");a.href=url;a.download=`results-${todayStrAdmin()}.csv`;document.body.appendChild(a);a.click();a.remove();
- URL.revokeObjectURL(url);
- toast("CSV exported","⬇️");
-};
-function todayStrAdmin(){return new Date().toISOString().slice(0,10);}
 
 /* ---------- INDIVIDUAL STUDENT PROGRESS ---------- */
 async function loadStudentsForProgress(){
