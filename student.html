@@ -27,8 +27,6 @@
 <section id="home" class="tab">
   <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
 
-  <div class="card"><h2>🏆 Recent Test Leaderboards</h2><p class="muted">সর্বশেষ ৩টা test-এর leaderboard — যে যত জন attend করেছে, তাদের মধ্যে ranking।</p><div id="recentLeaderboards" class="grid2"></div></div>
-
   <div class="card"><h2>🔥 Study Streak</h2>
     <div class="streak-box">
       <div class="streak-num">🔥 <span id="streakCount">0</span> days</div>
@@ -94,15 +92,6 @@
     <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
     <div id="testsList"></div>
   </div>
-
-  <div class="card"><h2>🎯 My Practice Test</h2>
-    <p class="muted">নিজের জন্য practice test বানাও — এটা কোথাও save হয় না, শুধু তোমার browser-এ চলে, তাই সম্পূর্ণ ফ্রি ও instant।</p>
-    <div class="row"><input id="pracTopic" placeholder="Topic (e.g. Trigonometry)"><input id="pracCount" type="number" min="3" max="20" value="5" placeholder="Questions"></div>
-    <button id="pracPromptBtn" class="secondary">🤖 Copy AI Prompt & Open ChatGPT</button>
-    <textarea id="pracPaste" placeholder="ChatGPT-এর output এখানে paste করো..."></textarea>
-    <button id="pracStart">Start Practice</button>
-    <div id="pracQuiz"></div>
-  </div>
 </section>
 
 <section id="runner" class="card hidden">
@@ -143,7 +132,7 @@ import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/fireba
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
+let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -250,7 +239,7 @@ async function loadData(){
 
  onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
   tests=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderTests();renderRecentLeaderboards();
+  renderTests();
  },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
@@ -440,28 +429,15 @@ async function loadProgressAndLeaderboard(){
 
  // leaderboard (classmates' submitted+graded attempts)
  const classAttempts=await getDocs(query(collection(db,"attempts"),where("classId","==",profile.classId),where("status","==","submitted")));
- cachedClassAttempts=classAttempts.docs.map(d=>({id:d.id,...d.data()}));
  const byUid={};
- cachedClassAttempts.forEach(a=>{
-  if(a.percentage==null)return;
+ classAttempts.docs.forEach(d=>{
+  const a=d.data();if(a.percentage==null)return;
   if(!byUid[a.uid])byUid[a.uid]={name:a.studentName||"Student",sum:0,n:0};
   byUid[a.uid].sum+=a.percentage;byUid[a.uid].n++;
  });
  const board=Object.entries(byUid).map(([uid,v])=>({uid,name:v.name,avg:Math.round(v.sum/v.n)})).sort((x,y)=>y.avg-x.avg).slice(0,10);
  $("leaderboard").innerHTML=board.length?board.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${r.name}</span><span class="lb-score">${r.avg}%</span></div>`).join("")
   :"<p class='muted'>এখনো কোনো graded attempt নেই।</p>";
- renderRecentLeaderboards();
-}
-
-function renderRecentLeaderboards(){
- const recent=[...tests].filter(t=>t.createdAt).sort((a,b)=>(b.createdAt.seconds||0)-(a.createdAt.seconds||0)).slice(0,3);
- if(!recent.length){$("recentLeaderboards").innerHTML="<p class='muted'>এখনো কোনো test publish হয়নি।</p>";return;}
- $("recentLeaderboards").innerHTML=recent.map(t=>{
-  const rows=cachedClassAttempts.filter(a=>a.testId===t.id&&a.percentage!=null).sort((a,b)=>b.percentage-a.percentage).slice(0,5);
-  const body=rows.length?rows.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${r.studentName||"Student"}</span><span class="lb-score">${r.percentage}%</span></div>`).join("")
-   :"<p class='muted' style='margin:6px 0'>এখনো কেউ attend করেনি।</p>";
-  return `<div class="item"><h3>${t.title}</h3>${body}</div>`;
- }).join("");
 }
 
 /* ---------- DOUBTS ---------- */
@@ -479,54 +455,4 @@ function listenMyDoubts(){
   $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${subjectName(x.subjectId)}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${x.question}</p>${x.answer?`<div class="doubt-a">${x.answer}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
  });
 }
-/* ---------- MY PRACTICE TEST (client-only, free, nothing saved) ---------- */
-$("pracPromptBtn").onclick=async()=>{
- const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
- const prompt=`আমার জন্য ${profile.className||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
-
-Q: প্রশ্ন এখানে
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: (A/B/C/D এর একটা)
-TOPIC: sub-topic name`;
- try{await navigator.clipboard.writeText(prompt);alert("Prompt copy হয়েছে। ChatGPT-এ paste করো, উত্তর আসলে সেটা কপি করে নিচের বক্সে paste করো।");window.open("https://chatgpt.com/","_blank");}
- catch{window.prompt("এই prompt copy করো:",prompt);}
-};
-
-function parsePracticeText(text){
- const blocks=text.replace(/\r/g,"").split(/\n---\s*\n|\n---\s*$/).map(b=>b.trim()).filter(Boolean);
- const qs=[];
- blocks.forEach(b=>{
-  const vals={};
-  b.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
-  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans[0]);
-  if(vals.Q&&opts.every(x=>x)&&ai>=0)qs.push({q:vals.Q,o:opts,answer:ai,topic:vals.TOPIC||""});
- });
- return qs;
-}
-
-let pracQs=[],pracAnswers={};
-$("pracStart").onclick=()=>{
- pracQs=parsePracticeText($("pracPaste").value);
- if(!pracQs.length){alert("প্রশ্ন পড়া যায়নি — format ঠিক আছে কিনা দেখো (Q/A/B/C/D/ANSWER)।");return;}
- pracAnswers={};
- $("pracQuiz").innerHTML=pracQs.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Practice"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="prac${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("")
-  +`<button id="pracCheck" class="secondary">✅ Check Answers</button><p id="pracResult" class="muted"></p>`;
- $("pracQuiz").onchange=e=>{if(e.target.name&&e.target.name.startsWith("prac"))pracAnswers[e.target.name]=Number(e.target.value);};
- $("pracCheck").onclick=()=>{
-  let score=0;
-  pracQs.forEach((x,i)=>{
-   const chosen=pracAnswers["prac"+i];
-   $("pracQuiz").querySelectorAll(`input[name="prac${i}"]`).forEach((inp,j)=>{
-    const lbl=inp.parentElement;
-    if(j===x.answer)lbl.style.background="#dcfce7";
-    else if(j===chosen)lbl.style.background="#fee2e2";
-   });
-   if(chosen===x.answer)score++;
-  });
-  $("pracResult").textContent=`তোমার স্কোর: ${score} / ${pracQs.length}`;
- };
-};
 </script></body></html>
