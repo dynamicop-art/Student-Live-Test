@@ -614,6 +614,11 @@ $("testSearch").oninput=renderTests;
 
 async function startTest(id){
  activeTest=tests.find(t=>t.id===id);answers={};
+ if(timerHandle)clearInterval(timerHandle);
+ $("submitTest").disabled=false;
+ $("submitTest").textContent="Final Submit";
+ $("testStatus").textContent="";
+ $("printPaperBtn").classList.add("hidden");
  $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
  $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
  const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
@@ -629,12 +634,42 @@ function tick(){
  $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
  if(left<=0){clearInterval(timerHandle);finishTest(true);}
 }
-$("submitTest").onclick=()=>{if(confirm("Final submit করতে নিশ্চিত?"))finishTest(false);};
+let submittingTest=false;
+$("submitTest").onclick=async()=>{
+ if(submittingTest)return;
+ if(!activeTest||!activeAttempt){
+   $("testStatus").textContent="⚠️ Test session পাওয়া যাচ্ছে না। Testটি আবার Start করো।";
+   return;
+ }
+ if(confirm("Final submit করতে নিশ্চিত?"))await finishTest(false);
+};
 
 async function finishTest(auto){
- clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
- await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
- $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ if(submittingTest)return;
+ submittingTest=true;
+ const submitBtn=$("submitTest");
+ clearInterval(timerHandle);
+ submitBtn.disabled=true;
+ submitBtn.textContent=auto?"Auto submitting...":"Submitting...";
+ $("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
+ $("testStatus").textContent="⏳ Answer submit হচ্ছে...";
+ try{
+   if(!activeAttempt)throw new Error("Missing active attempt");
+   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
+   submitBtn.textContent="✅ Submitted";
+   $("testStatus").textContent="✅ Successfully submitted. Progress update হচ্ছে...";
+   await loadProgressAndLeaderboard().catch(()=>{});
+ }catch(err){
+   console.error("Final submit failed:",err);
+   submittingTest=false;
+   submitBtn.disabled=false;
+   submitBtn.textContent="Final Submit";
+   $("testForm").querySelectorAll("input").forEach(x=>x.disabled=false);
+   $("testStatus").textContent="❌ Submit হয়নি। Internet/Firebase connection check করে আবার Final Submit চাপো।";
+   if(!auto)alert("Submit হয়নি। আবার চেষ্টা করো।");
+   return;
+ }
+ submittingTest=false;
  $("printPaperBtn").classList.remove("hidden");
  $("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
