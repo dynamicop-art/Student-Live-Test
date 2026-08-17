@@ -49,9 +49,10 @@
 
 <div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
 <script type="module">
-import {mountBlobs} from "./effects.js";
+import {mountBlobs,mountHeroSparkle} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 mountBlobs();
+mountHeroSparkle();
 import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";

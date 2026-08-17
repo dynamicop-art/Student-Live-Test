@@ -157,13 +157,14 @@
 </div>
 
 <script type="module">
-import {mountBlobs,confettiBurst,playChime,toast,isSoundOn,setSoundOn} from "./effects.js";
+import {mountBlobs,mountHeroSparkle,confettiBurst,playChime,toast,isSoundOn,setSoundOn} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 mountBlobs();
+mountHeroSparkle();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
 let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
 
@@ -370,6 +371,48 @@ async function toggleBookmark(noteId){
  renderNotes();
 }
 
+/* ---------- SHARED: ChatGPT prompt copy + open (popup-safe) ---------- */
+function isBengaliText(str){return /[\u0980-\u09FF]/.test(str||"");}
+function copyPromptAndOpenChatGPT(promptText,bengali){
+ // Open the tab FIRST, synchronously, inside the click handler — this preserves the
+ // browser's "user gesture" so the popup isn't blocked. Only THEN copy to clipboard
+ // (which is async and would otherwise happen after the gesture window closes).
+ const w=window.open("https://chatgpt.com/","_blank");
+ navigator.clipboard.writeText(promptText).then(()=>{
+  toast(bengali?"Prompt copy হয়েছে — ChatGPT ট্যাবে paste করো":"Prompt copied — paste it in the ChatGPT tab","🤖");
+ }).catch(()=>{
+  window.prompt(bengali?"Clipboard access পাওয়া যায়নি — এই prompt-টা manually copy করো:":"Clipboard access unavailable — copy this prompt manually:",promptText);
+ });
+ if(!w)toast(bengali?"Pop-up blocked হয়েছে — ব্রাউজার settings থেকে allow করো":"Pop-up was blocked — please allow pop-ups for this site","⚠️");
+}
+
+function askAiAboutWeakTopic(topic,pct){
+ const bengali=isBengaliText(topic)||isBengaliText(profile.className||"");
+ const prompt=bengali?
+`আমি "${topic}" বিষয়ে দুর্বল — গত টেস্টগুলোতে আমার এই topic-এ accuracy মাত্র ${pct}%। আমি একজন ${profile.className||""} student, বাংলা মাধ্যমে পড়ি।
+
+আমাকে "${topic}" বিষয়টা শুরু থেকে সহজ বাংলায় শেখাও, এই sequence-এ:
+1) সহজ ভাষায় মূল concept
+2) একটা real-life example
+3) ধাপে ধাপে সমাধান করার পদ্ধতি
+4) students সাধারণত যে ভুলগুলো করে সেগুলো
+5) আমার practice করার জন্য সহজ থেকে কঠিন ৫টা প্রশ্ন, উত্তরসহ
+
+আমি মুখস্থ না করে concept বুঝে শিখতে চাই।`
+:
+`I am weak in the topic "${topic}" — my accuracy on this topic in recent tests is only ${pct}%. I am a ${profile.className||""} student.
+
+Please teach me "${topic}" from the basics, in this order:
+1) A simple explanation of the core concept
+2) One real-life example
+3) A step-by-step method to solve problems on this topic
+4) Common mistakes students make here
+5) 5 practice questions (easy to hard) with answers, so I can test myself
+
+I want to actually understand the concept, not just memorize it.`;
+ copyPromptAndOpenChatGPT(prompt,bengali);
+}
+
 async function aiHelp(title,content){
  const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
 
@@ -386,8 +429,7 @@ Context/Notes: ${content}
 7) 3টা practice question
 
 আমি মুখস্থ না করে concept বুঝতে চাই।`;
- try{await navigator.clipboard.writeText(promptText);alert("Prompt copy হয়েছে। এখন ChatGPT খুলছে—paste করো।");window.open("https://chatgpt.com/","_blank");}
- catch{window.prompt("এই prompt copy করো:",promptText);}
+ copyPromptAndOpenChatGPT(promptText,true);
 }
 
 /* ---------- FLASHCARDS ---------- */
@@ -529,9 +571,13 @@ async function loadProgressAndLeaderboard(){
  const byTopic={};
  mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;});});
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
- $("topicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ $("topicBars").innerHTML=topicRows.length?topicRows.map((r,i)=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span style="display:flex;gap:8px;align-items:center;flex-shrink:0"><span>${r.pct}%</span><button class="askAiTopic" data-idx="${i}" title="Get ChatGPT help on this topic">🤖 Ask ChatGPT</button></span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
  lastTopicRows=topicRows;
+ document.querySelectorAll(".askAiTopic").forEach(b=>b.onclick=()=>{
+  const r=lastTopicRows[Number(b.dataset.idx)];if(!r)return;
+  askAiAboutWeakTopic(r.label,r.pct);
+ });
 
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
@@ -629,8 +675,7 @@ C: option C
 D: option D
 ANSWER: (A/B/C/D এর একটা)
 TOPIC: sub-topic name`;
- try{await navigator.clipboard.writeText(prompt);alert("Prompt copy হয়েছে। ChatGPT-এ paste করো, উত্তর আসলে সেটা কপি করে নিচের বক্সে paste করো।");window.open("https://chatgpt.com/","_blank");}
- catch{window.prompt("এই prompt copy করো:",prompt);}
+ copyPromptAndOpenChatGPT(prompt,true);
 };
 
 function parsePracticeText(text){

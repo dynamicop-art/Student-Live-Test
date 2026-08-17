@@ -110,13 +110,14 @@
 </div></div>
 
 <script type="module">
-import {mountBlobs,toast} from "./effects.js";
+import {mountBlobs,mountHeroSparkle,toast} from "./effects.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 mountBlobs();
+mountHeroSparkle();
 let adminSubjects=[];
 
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -259,8 +260,13 @@ TOPIC: sub-topic name
 
 আমাকে মোট ${howMany}টা আলাদা TEST দাও (যেমন Test 1, Test 2...), প্রতিটাতে ${count}টা করে আলাদা প্রশ্ন থাকবে, প্রতিটা নতুন TEST: লাইন দিয়ে শুরু হবে ঠিক ওপরের format মেনে। সব কটা টেস্ট এক উত্তরেই একসাথে দাও, যাতে আমি পুরোটা একবারে copy করে নিতে পারি।`;
  }
- try{await navigator.clipboard.writeText(prompt);alert("Prompt copy হয়েছে। ChatGPT-এ paste করে answer আসলে সেটা copy করে নিচের বক্সে paste করো।");window.open("https://chatgpt.com/","_blank");}
- catch{window.prompt("এই prompt copy করো:",prompt);}
+ const w=window.open("https://chatgpt.com/","_blank");
+ navigator.clipboard.writeText(prompt).then(()=>{
+  toast("Prompt copy হয়েছে — ChatGPT ট্যাবে paste করো","🤖");
+ }).catch(()=>{
+  window.prompt("Clipboard access পাওয়া যায়নি — এই prompt-টা manually copy করো:",prompt);
+ });
+ if(!w)toast("Pop-up blocked হয়েছে — ব্রাউজার settings থেকে allow করো","⚠️");
 };
 
 let parsedImportList=[];

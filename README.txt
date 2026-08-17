@@ -14,6 +14,34 @@
 FILES CHANGED: style.css, effects.js, index.html, admin.html, student.html
 (re-upload all six files together so nothing gets out of sync).
 
+⚠️ V8 UPDATE (this update, bug fixes + new features):
+- 🐛 FIXED: "Copy AI Prompt & Open ChatGPT" was unreliable (practice test,
+  note "Explain with ChatGPT", and admin's Import Test AI helper) — on many
+  mobile browsers the ChatGPT tab was getting silently popup-blocked because
+  it was opened AFTER an `await` on the clipboard copy, which breaks the
+  browser's "this was a direct click" permission. Now the tab opens FIRST,
+  synchronously, inside the click — then the prompt is copied. Much more
+  reliable, and if a pop-up still gets blocked you now get a clear on-screen
+  warning instead of nothing happening.
+- 🤖 NEW: every "weak area" row in the student Progress tab now has an
+  "Ask ChatGPT" button. It opens ChatGPT with a ready-made prompt asking it
+  to teach exactly that topic (using the student's live accuracy % on it) —
+  and the prompt is auto-written in Bengali or English depending on the
+  language the topic/class name is in, so it matches how the student
+  actually studies.
+- 🎨 Colour refresh: background is now a warm "cream" tone instead of cool
+  white (cards, inputs, nav etc. all warmed to match), while the hero /
+  pop-up gradient got MUCH more vivid — a multi-colour indigo → electric
+  blue → violet → gold "aurora" gradient instead of the flatter blue/gold
+  one, plus a soft shimmer sweep and a few twinkling sparkle stars drifting
+  across every hero card, a livelier bouncy glow animation on toast pop-ups,
+  and an extra floating background blob for more colour variety. Same
+  layout everywhere — just noticeably more colourful, energetic and
+  "premium-magical" looking.
+FILES CHANGED: style.css, effects.js, index.html, admin.html, student.html
+(re-upload all six files together so nothing gets out of sync). No
+firestore.rules change needed.
+
 STUDENT LEARNING HUB — SETUP
 
 ⚠️ V6 UPDATE (this update): brand-new premium "Emerald & Gold" colour theme
