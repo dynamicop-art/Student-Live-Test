@@ -601,3 +601,19 @@ html,body{overflow-x:hidden}
 .ai-modal-actions button,.ai-modal-actions .btn{flex:1 1 180px;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .ai-modal-hint{margin:10px 0 0;font-size:12.5px}
 html[data-theme="dark"] .ai-modal-x{background:#182a52;border-color:var(--line)}
+
+/* ---------- ANSWER REVIEW MODAL ---------- */
+.review-modal{max-width:640px}
+.review-body{margin-top:10px}
+.review-summary{font-size:14.5px;margin:0 0 14px;padding:10px 14px;background:var(--surface-soft);border-radius:12px;border:1px solid var(--line)}
+.pill.danger-pill{background:#fee2e2;color:#9f1239}
+.rv-q{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.rv-q-correct{border-left:5px solid var(--success)}
+.rv-q-wrong{border-left:5px solid var(--danger)}
+.rv-qhead{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rv-qtext{margin:0 0 10px;font-size:14.5px;line-height:1.5}
+.rv-opt{padding:8px 12px;border-radius:10px;margin-bottom:6px;font-size:13.5px;background:var(--surface-soft);border:1.5px solid var(--line)}
+.rv-opt.rv-correct{background:#dcfce7;border-color:#86efac;color:#14532d;font-weight:700}
+.rv-opt.rv-wrong{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d;font-weight:700}
+html[data-theme="dark"] .rv-opt{background:#182a52}
+html[data-theme="dark"] .review-summary{background:#182a52}
