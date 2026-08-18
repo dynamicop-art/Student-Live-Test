@@ -1,5 +1,20 @@
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
+V3.4 UPDATE
+- Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
+  three published tests, including tie-aware ranks and the current student.
+- Weak-topic ChatGPT Help: topics below 60% now generate and copy a personalized
+  Bengali learning prompt, then open ChatGPT. No API key or paid API is used.
+- Premium Motion: subtle page/card entrances, medal glow, loading skeletons and
+  toast messages, with prefers-reduced-motion support.
+- Privacy fix: students can no longer read classmates' complete attempts.
+  Leaderboards use the sanitized leaderboardEntries collection instead.
+
+IMPORTANT AFTER UPDATING
+Publish the included firestore.rules again. Then open admin.html and log in once;
+the admin dashboard will create sanitized leaderboard entries for existing
+graded attempts as well as all newly graded attempts.
+
 ⚠️ IMPORTANT: RE-PUBLISH firestore.rules AGAIN
 This update adds new collections (announcements, assignments, assignmentStatus,
 doubts) and changes attempt/user permissions. Go to

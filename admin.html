@@ -289,8 +289,13 @@ function listenAttempts(){
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
      }
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,gradedAt:serverTimestamp()});
+     const percentage=Math.round(score/ans.length*100);
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage,topicStats,gradedAt:serverTimestamp()});
+     await setDoc(doc(db,"leaderboardEntries",`${a.testId}_${a.uid}`),{testId:a.testId,classId:a.classId,uid:a.uid,studentName:a.studentName||"Student",score,total:ans.length,percentage,submittedAt:a.submittedAt||serverTimestamp()});
     }
+   }
+   if(a.status==="submitted"&&a.score!=null&&a.total!=null){
+    await setDoc(doc(db,"leaderboardEntries",`${a.testId}_${a.uid}`),{testId:a.testId,classId:a.classId,uid:a.uid,studentName:a.studentName||"Student",score:a.score,total:a.total,percentage:a.percentage,submittedAt:a.submittedAt||serverTimestamp()},{merge:true});
    }
   }
   renderAttempts();

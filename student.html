@@ -109,8 +109,8 @@
 <!-- ================= PROGRESS ================= -->
 <section id="progress" class="tab hidden">
   <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
-  <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
-  <div class="card"><h2>🏆 Class Leaderboard</h2><p class="muted">তোমার class-এর সবার average score-এর ভিত্তিতে র‍্যাঙ্কিং।</p><div id="leaderboard"></div></div>
+  <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><p class="muted">৬০%-এর কম accuracy হলে ChatGPT দিয়ে topic-টি সহজভাবে বুঝে নাও।</p><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
+  <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">তোমার class-এর সর্বশেষ তিনটি পরীক্ষার আলাদা ranking।</p><div id="leaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
   <div class="card"><h2>🗂️ Test History</h2><div id="historyList"></div></div>
 </section>
 
@@ -133,6 +133,8 @@ import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
+const WEAK_TOPIC_THRESHOLD=60;
+const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -314,6 +316,28 @@ Context/Notes: ${content}
  catch{window.prompt("এই prompt copy করো:",promptText);}
 }
 
+async function openChatGPTPrompt(promptText){
+ try{
+  await navigator.clipboard.writeText(promptText);
+  showToast("✅ Prompt copied — ChatGPT খুলছে");
+  window.open("https://chatgpt.com/","_blank","noopener,noreferrer");
+ }catch{
+  window.prompt("এই prompt copy করে ChatGPT-তে paste করো:",promptText);
+ }
+}
+
+function showToast(message){
+ let toast=document.getElementById("appToast");
+ if(!toast){toast=document.createElement("div");toast.id="appToast";toast.className="app-toast";toast.setAttribute("role","status");toast.setAttribute("aria-live","polite");document.body.appendChild(toast);}
+ toast.textContent=message;toast.classList.add("show");
+ clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove("show"),2600);
+}
+
+function weakTopicPrompt(row){
+ const context=[...row.tests].slice(0,3).join(", ")||"Completed tests";
+ return `আমি বাংলা-মাধ্যমের ${profile.className} student। আমার ${row.subjects.size===1?[...row.subjects][0]:"এই subject-এর"} ${row.label} topic-এ ${row.correct}/${row.total} সঠিক হয়েছে (${row.pct}%)।\n\nRelevant tests: ${context}\n\nআমাকে এইভাবে শেখাও:\n1) প্রথমে একটি ছোট diagnostic question করো\n2) সহজ real-life example দাও\n3) basic concept বাংলায় বোঝাও, important terms English-এ রাখো\n4) step-by-step explanation ও ছোট text diagram দাও\n5) common mistakes বোঝাও\n6) দুইটি solved example দাও\n7) easy থেকে hard তিনটি practice question দাও\n8) আমি চেষ্টা করার আগে practice answer দেখাবে না\n\nআমাকে বিচার না করে আমার ভুল ধারণাটি খুঁজে ঠিক করতে সাহায্য করো।`;
+}
+
 /* ---------- FLASHCARDS ---------- */
 let flashDeck=[],flashIdx=0,flashShowBack=false;
 $("flashBtn").onclick=()=>{
@@ -412,10 +436,11 @@ async function loadProgressAndLeaderboard(){
 
  // topic-wise
  const byTopic={};
- mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;});});
- const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
- $("topicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+ mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0,subjects:new Set(),tests:new Set()};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;byTopic[topic].subjects.add(subjectName(a.subjectId));byTopic[topic].tests.add(a.testTitle||"Test");});});
+ const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,correct:v.correct,total:v.total,subjects:v.subjects,tests:v.tests,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
+ $("topicBars").innerHTML=topicRows.length?topicRows.map((r,i)=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.correct}/${r.total} · ${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div>${r.pct<WEAK_TOPIC_THRESHOLD?`<button class="secondary weak-help" data-topic-index="${i}">✨ Solve with ChatGPT</button>`:""}</div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
+ document.querySelectorAll(".weak-help").forEach(b=>b.onclick=()=>openChatGPTPrompt(weakTopicPrompt(topicRows[Number(b.dataset.topicIndex)])));
 
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
@@ -427,17 +452,20 @@ async function loadProgressAndLeaderboard(){
   w.document.close();w.print();
  });
 
- // leaderboard (classmates' submitted+graded attempts)
- const classAttempts=await getDocs(query(collection(db,"attempts"),where("classId","==",profile.classId),where("status","==","submitted")));
- const byUid={};
- classAttempts.docs.forEach(d=>{
-  const a=d.data();if(a.percentage==null)return;
-  if(!byUid[a.uid])byUid[a.uid]={name:a.studentName||"Student",sum:0,n:0};
-  byUid[a.uid].sum+=a.percentage;byUid[a.uid].n++;
+ // Privacy-safe leaderboards for the latest three published tests.
+ const latestTests=[...tests].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,3);
+ const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));
+ const entries=safeEntries.docs.map(d=>d.data());
+ const cards=latestTests.map(test=>{
+  const rows=entries.filter(x=>x.testId===test.id&&Number.isFinite(Number(x.percentage))).sort((a,b)=>Number(b.percentage)-Number(a.percentage)||(a.submittedAt?.seconds||Infinity)-(b.submittedAt?.seconds||Infinity)||String(a.studentName||"").localeCompare(String(b.studentName||"")));
+  let lastPct=null,lastRank=0;
+  rows.forEach((r,i)=>{if(Number(r.percentage)!==lastPct)lastRank=i+1;r.rank=lastRank;lastPct=Number(r.percentage);});
+  const visible=rows.slice(0,10),me=rows.find(r=>r.uid===auth.currentUser.uid);
+  if(me&&!visible.includes(me))visible.push(me);
+  const rowHtml=visible.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""} ${i===10?"lb-separated":""}"><span class="lb-rank ${r.rank===1?"top1":r.rank===2?"top2":r.rank===3?"top3":""}">${r.rank}</span><span class="lb-name">${escapeHTML(r.studentName||"Student")}</span><span class="lb-score">${Number(r.score)}/${Number(r.total)} · ${Number(r.percentage)}%</span></div>`).join("");
+  return `<section class="exam-board"><div class="exam-board-head"><div><span class="pill">${escapeHTML(subjectName(test.subjectId))}</span><h3>${escapeHTML(test.title)}</h3></div><span class="muted">${test.createdAt?.toDate?test.createdAt.toDate().toLocaleDateString("en-IN"):"Recent exam"}</span></div>${rowHtml||"<p class='muted'>এই পরীক্ষার graded result এখনো নেই।</p>"}</section>`;
  });
- const board=Object.entries(byUid).map(([uid,v])=>({uid,name:v.name,avg:Math.round(v.sum/v.n)})).sort((x,y)=>y.avg-x.avg).slice(0,10);
- $("leaderboard").innerHTML=board.length?board.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${r.name}</span><span class="lb-score">${r.avg}%</span></div>`).join("")
-  :"<p class='muted'>এখনো কোনো graded attempt নেই।</p>";
+ $("leaderboard").innerHTML=cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>";
 }
 
 /* ---------- DOUBTS ---------- */

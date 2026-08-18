@@ -50,12 +50,9 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass();
 
-      // Owner can always read their own attempt. Classmates can read each
-      // other's SUBMITTED attempts too (name + score only, used for the
-      // in-class leaderboard) once grading is done.
+      // Full attempts (including saved answers) stay private.
       allow read: if isTeacher()
-        || (signedIn() && resource.data.uid == request.auth.uid)
-        || (signedIn() && resource.data.classId == myClass() && resource.data.status == "submitted");
+        || (signedIn() && resource.data.uid == request.auth.uid);
 
       allow update: if isTeacher() || (
         signedIn()
@@ -67,6 +64,12 @@ service cloud.firestore {
       );
 
       allow delete: if isTeacher();
+    }
+
+    // Sanitized scores for class leaderboards; never contains answers or email.
+    match /leaderboardEntries/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow create, update, delete: if isTeacher();
     }
 
     match /announcements/{id} {

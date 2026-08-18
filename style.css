@@ -430,3 +430,26 @@ html,body{overflow-x:hidden}
   .statgrid{grid-template-columns:repeat(2,1fr);gap:10px}
   .stat b{font-size:24px}
 }
+
+/* ---------- PREMIUM MOTION + RECENT EXAM LEADERBOARDS ---------- */
+@keyframes premiumRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes medalGlow{0%,100%{box-shadow:0 0 0 rgba(245,158,11,0)}50%{box-shadow:0 0 18px rgba(245,158,11,.45)}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes skeletonPulse{0%,100%{opacity:.55}50%{opacity:1}}
+.hero,.nav,.tab>.card{animation:premiumRise .48s cubic-bezier(.2,.8,.2,1) both}
+.tab>.card:nth-child(2){animation-delay:.06s}.tab>.card:nth-child(3){animation-delay:.12s}.tab>.card:nth-child(4){animation-delay:.18s}
+button,.btn,.card,.lb-row{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background-color .18s ease}
+button:active,.btn:active{transform:scale(.97)}
+.recent-leaderboards{display:grid;gap:18px;margin-top:16px}
+.exam-board{padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,var(--surface),var(--surface-soft));box-shadow:0 10px 26px rgba(45,25,90,.07)}
+.exam-board-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.exam-board-head h3{margin:7px 0 0}
+.lb-rank.top1{animation:medalGlow 2.4s ease-in-out infinite}
+.lb-separated{margin-top:18px;border-top:2px dashed var(--primary)}
+.weak-help{margin-top:9px;padding:8px 12px;font-size:13px}
+.app-toast{position:fixed;left:50%;bottom:24px;z-index:2000;max-width:min(90vw,420px);padding:12px 17px;border-radius:999px;background:#17112b;color:#fff;font-weight:700;box-shadow:0 14px 35px rgba(0,0,0,.3);opacity:0;pointer-events:none;transform:translate(-50%,16px)}
+.app-toast.show{opacity:1;animation:toastIn .22s ease both}
+.skeleton{border-radius:14px;background:linear-gradient(90deg,var(--surface-soft),var(--line),var(--surface-soft));background-size:200% 100%;animation:skeletonPulse 1.2s ease-in-out infinite}
+.skeleton-block{height:150px}
+@media(max-width:600px){.exam-board-head{flex-direction:column}.lb-score{width:100%;padding-left:42px}.exam-board{padding:13px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
