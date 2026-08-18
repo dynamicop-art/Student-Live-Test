@@ -208,6 +208,29 @@ import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/fireba
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+// Surface any unexpected JS crash as a visible on-screen message instead of a
+// silent dead button — this is how we caught the confirm()/window.open() bugs
+// earlier, and it's the fastest way to diagnose the next one directly from a
+// student's phone (ask them to screenshot the red banner) without needing
+// remote devtools access.
+function showFatalError(msg){
+ let bar=document.getElementById("fatalErrBar");
+ if(!bar){
+  bar=document.createElement("div");
+  bar.id="fatalErrBar";
+  bar.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e11d48;color:#fff;padding:10px 14px;font-size:12.5px;line-height:1.5;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.25)";
+  document.body.prepend(bar);
+ }
+ bar.textContent="⚠️ Technical error: "+msg+" — এই লেখাটার screenshot নিয়ে rakho আর পাঠিয়ে দাও।";
+}
+window.addEventListener("error",e=>{
+ console.error("Uncaught error:",e.error||e.message);
+ showFatalError(e.message||String(e.error||"unknown error"));
+});
+window.addEventListener("unhandledrejection",e=>{
+ console.error("Unhandled promise rejection:",e.reason);
+ showFatalError((e.reason&&(e.reason.message||String(e.reason)))||"unknown async error");
+});
 // Escapes any dynamic text before it's inserted via innerHTML. Used on
 // doubt/notice/assignment/note/test text and anything else that ultimately
 // comes from Firestore, so untrusted data (e.g. another student's doubt
