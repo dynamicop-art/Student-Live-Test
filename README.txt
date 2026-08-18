@@ -46,6 +46,14 @@ V4.4 NAMEPLATE & GAMES UPDATE
 - Game scores and best scores stay only in localStorage; they never affect
   exams, XP, progress, leaderboards or Firestore usage.
 
+V4.5 MOBILE NAMEPLATE UPDATE
+- Rebuilt the hero specifically for phones: centered layout, safe clearance for
+  floating controls, compact glass brand badge, stronger typography and avatar.
+- Mobile shows only three carefully positioned learning symbols instead of the
+  full desktop decoration, reducing clutter and improving performance.
+- Added animated mobile gradient depth with reduced-motion fallback and an
+  extra compact layout for screens 360px wide or smaller.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.
