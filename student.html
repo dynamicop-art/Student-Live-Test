@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"></head>
 <body>
-<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="fab-row"><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
 <div class="wrap">
 <section class="hero topbar">
   <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
@@ -25,6 +25,7 @@
 
 <!-- ================= HOME ================= -->
 <section id="home" class="tab">
+  <div class="card quote-card"><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
   <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
 
   <div class="card"><h2>🔥 Study Streak</h2>
@@ -34,6 +35,8 @@
     </div>
     <p class="muted">প্রতিদিন hub-এ ঢুকলেই streak বাড়ে — নিয়মিত revision-এর অভ্যাস তৈরি করার জন্য।</p>
   </div>
+
+  <div class="card"><h2>🎮 Learning Level</h2><div class="xp-box"><div class="xp-ring" id="xpRing" data-level="1" style="--xppct:0"></div><div class="xp-info"><h3 id="xpTitle">Level 1 · Starter</h3><div class="xp-track"><div class="xp-fill" id="xpFill"></div></div><div class="muted" id="xpSub">0 XP</div></div></div><p class="muted">XP motivation-এর জন্য; এটি official academic result নয়।</p></div>
 
   <div class="card"><h2>⏱️ Pomodoro Study Timer</h2>
     <div class="pomo-box">
@@ -92,12 +95,13 @@
     <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
     <div id="testsList"></div>
   </div>
+  <div class="card"><h2>🎯 Personal Practice Test</h2><p class="muted">ChatGPT দিয়ে practice questions তৈরি করে এখানে paste করো। এই result Firebase-এ save হবে না।</p><div class="row"><input id="pracTopic" placeholder="Topic"><input id="pracCount" type="number" min="3" max="20" value="5"></div><button id="pracPromptBtn" class="secondary">🤖 Create Prompt</button><textarea id="pracPaste" placeholder="ChatGPT output এখানে paste করো..."></textarea><button id="pracStart">Start Practice</button><div id="pracQuiz"></div></div>
 </section>
 
 <section id="runner" class="card hidden">
 <div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
 <div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
-<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
+<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button> <button id="printPaperBtn" type="button" class="secondary hidden">🖨️ Question Paper</button><p id="testStatus" class="muted"></p>
 </section>
 <section id="resultBox" class="card hidden"></section>
 
@@ -108,11 +112,14 @@
 
 <!-- ================= PROGRESS ================= -->
 <section id="progress" class="tab hidden">
+  <div class="card topbar"><div><h2>📊 Your Progress</h2><p class="muted">সব result একসাথে দেখো।</p></div><button id="printReport" class="secondary">🖨️ Print Full Report</button></div>
   <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
   <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><p class="muted">৬০%-এর কম accuracy হলে ChatGPT দিয়ে topic-টি সহজভাবে বুঝে নাও।</p><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
   <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">তোমার class-এর সর্বশেষ তিনটি পরীক্ষার আলাদা ranking।</p><div id="leaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
   <div class="card"><h2>🗂️ Test History</h2><div id="historyList"></div></div>
 </section>
+
+<div id="reviewOverlay" class="modal-overlay hidden"><div class="modal-card"><div class="topbar"><h3 id="reviewTitle">Answer Review</h3><button id="reviewClose" class="secondary">✕</button></div><div id="reviewBody"></div></div></div>
 
 <!-- ================= DOUBTS ================= -->
 <section id="doubts" class="tab hidden">
@@ -127,6 +134,8 @@
 </div>
 
 <script type="module">
+let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{};
+try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn}=fx);}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -135,6 +144,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
 const WEAK_TOPIC_THRESHOLD=60;
 const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
+let reportSubjects=[],reportTopics=[],reportAttempts=[];
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -145,6 +155,13 @@ $("themeBtn").onclick=()=>{
  else{document.documentElement.setAttribute("data-theme","dark");localStorage.setItem("theme","dark");}
  applyThemeBtn();
 };
+function updateSoundButton(){$("soundBtn").textContent=isSoundOn()?"🔊":"🔇";}
+updateSoundButton();$("soundBtn").onclick=()=>{setSoundOn(!isSoundOn());updateSoundButton();if(isSoundOn())playChime("click");};
+
+const DAILY_QUOTES=[["প্রতিদিনের ছোট revision-ই বড় প্রস্তুতি তৈরি করে।","Study Tip"],["ভুল মানে শেখার পরবর্তী ধাপ।","Daily Motivation"],["বোঝার চেষ্টা করো, শুধু মুখস্থ নয়।","Learning Tip"],["Consistency beats last-minute pressure.","Study Tip"],["আজকের চেষ্টা আগামীকালের আত্মবিশ্বাস।","Daily Motivation"]];
+function renderQuote(){const q=DAILY_QUOTES[Math.floor(Date.now()/86400000)%DAILY_QUOTES.length];$("quoteText").textContent=`“${q[0]}”`;$("quoteBy").textContent=`— ${q[1]}`;}renderQuote();
+
+function renderXP(testCount=0){const xp=((profile?.streak?.count)||0)*5+testCount*20+(profile?.bookmarks||[]).length*2;const level=Math.min(10,Math.floor(xp/100)+1),pct=xp%100;$("xpRing").dataset.level=level;$("xpRing").style.setProperty("--xppct",pct);$("xpFill").style.width=pct+"%";$("xpTitle").textContent=`Level ${level} · ${["Starter","Explorer","Learner","Scholar","Achiever","Champion","Expert","Elite","Master","Legend"][level-1]}`;$("xpSub").textContent=`${xp} XP · ${100-pct} XP to next level`;}
 
 $("logout").onclick=async()=>{
  const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
@@ -169,7 +186,7 @@ document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
 /* ---------- AVATAR ---------- */
 function renderAvatar(){
  const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
- $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${profile.avatarData}" alt="avatar">`:`<span class="avatar-placeholder">${initial}</span>`;
+ $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${escapeHTML(profile.avatarData)}" alt="avatar">`:`<span class="avatar-placeholder">${escapeHTML(initial)}</span>`;
 }
 function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("saveAvatar").onclick=async()=>{
@@ -227,15 +244,15 @@ function subjectName(id){return subjects.find(s=>s.id===id)?.name||"Subject";}
 /* ---------- LOAD ALL DATA ---------- */
 async function loadData(){
  const ss=await getDocs(query(collection(db,"subjects"),where("classId","==",profile.classId)));subjects=ss.docs.map(d=>({id:d.id,...d.data()}));
- $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${s.name}</h3><span class="pill">${profile.className}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
- $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+ $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${escapeHTML(s.name)}</h3><span class="pill">${escapeHTML(profile.className)}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
+ $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${escapeHTML(s.id)}">${escapeHTML(s.name)}</option>`).join("");
 
  // Live: new notes/tests/notices/assignments the teacher publishes appear
  // instantly, no logout/login or manual reload needed.
  onSnapshot(query(collection(db,"notes"),where("classId","==",profile.classId)),snap=>{
   notes=snap.docs.map(d=>({id:d.id,...d.data()}));
   const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
-  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
+  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("");
   renderNotes();
  },err=>console.error("notes listener error:",err));
 
@@ -246,7 +263,7 @@ async function loadData(){
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
   const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${n.title}</b><p class="muted">${n.content}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
+  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${escapeHTML(n.title)}</b><p class="muted">${escapeHTML(n.content)}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
  });
 
  onSnapshot(query(collection(db,"assignments"),where("classId","==",profile.classId)),async snap=>{
@@ -347,7 +364,7 @@ $("flashBtn").onclick=()=>{
 };
 function renderFlash(){
  const n=flashDeck[flashIdx];
- $("flashCard").innerHTML=flashShowBack?`<div>${n.content.replaceAll("\n","<br>")}<div class="hint">Tap to see question</div></div>`:`<div>${n.title}<div class="hint">Tap to reveal answer</div></div>`;
+ $("flashCard").innerHTML=flashShowBack?`<div>${escapeHTML(n.content).replaceAll("\n","<br>")}<div class="hint">Tap to see question</div></div>`:`<div>${escapeHTML(n.title)}<div class="hint">Tap to reveal answer</div></div>`;
  $("flashProgress").textContent=`${flashIdx+1} / ${flashDeck.length}`;
 }
 $("flashCard").onclick=()=>{flashShowBack=!flashShowBack;renderFlash();};
@@ -360,7 +377,7 @@ $("flashClose").onclick=()=>$("flashSection").classList.add("hidden");
 function renderTests(){
  const q=$("testSearch").value.trim().toLowerCase();
  const list=tests.filter(t=>!q||(t.title+" "+(t.chapter||"")).toLowerCase().includes(q));
- $("testsList").innerHTML=list.map(t=>`<div class="item"><span class="pill">${subjectName(t.subjectId)}</span><h3>${t.title}</h3><p class="muted">${t.chapter||""} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${t.id}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
+ $("testsList").innerHTML=list.map(t=>`<div class="item"><span class="pill">${escapeHTML(subjectName(t.subjectId))}</span><h3>${escapeHTML(t.title)}</h3><p class="muted">${escapeHTML(t.chapter||"")} · ${Number(t.questionCount)||0} questions · ${Number(t.durationMinutes)||0} min</p><button class="startTest" data-id="${escapeHTML(t.id)}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
  document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
 }
 $("testSearch").oninput=renderTests;
@@ -368,7 +385,7 @@ $("testSearch").oninput=renderTests;
 async function startTest(id){
  activeTest=tests.find(t=>t.id===id);answers={};
  $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
- $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
+ $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${escapeHTML(x.topic||"Question")}</span><p><b>${i+1}. ${escapeHTML(x.q)}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${escapeHTML(o)}</label>`).join("")}</div>`).join("");
  const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
  activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
  $("testForm").onchange=async e=>{
@@ -388,13 +405,31 @@ async function finishTest(auto){
  clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
  await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
  $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ $("printPaperBtn").classList.remove("hidden");$("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${escapeHTML(activeTest.title)}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><button id="reviewNow" class="secondary">📝 Answer Review</button><div class="notice">Revision-এর জন্য weak-topic ChatGPT help ব্যবহার করতে পারো।</div>`;
+     $("reviewNow").onclick=()=>showReview(activeTest.title,d.review);
+     if(d.percentage>=80){confettiBurst(d.percentage===100?150:90);playChime(d.percentage===100?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
  });
+}
+
+function showReview(title,review=[]){
+ $("reviewTitle").textContent=`${title} — Answer Review`;
+ $("reviewBody").innerHTML=review.length?review.map((r,i)=>`<div class="review-item ${r.isCorrect?"correct":"wrong"}"><b>${i+1}. ${escapeHTML(r.q)}</b><p>${r.isCorrect?"✅ Correct":r.chosenIdx==null?"➖ Not answered":"❌ Needs revision"}</p>${(r.o||[]).map((o,j)=>`<div class="review-option ${j===r.correctIdx?"correct":j===r.chosenIdx?"wrong":""}">${String.fromCharCode(65+j)}. ${escapeHTML(o)}${j===r.correctIdx?" ✓":j===r.chosenIdx?" — your answer":""}</div>`).join("")}</div>`).join(""):"<p class='muted'>এই পুরোনো result-এর review data নেই।</p>";
+ $("reviewOverlay").classList.remove("hidden");
+}
+$("reviewClose").onclick=()=>$("reviewOverlay").classList.add("hidden");
+$("reviewOverlay").onclick=e=>{if(e.target.id==="reviewOverlay")$("reviewOverlay").classList.add("hidden");};
+
+function printQuestionPaper(test){
+ if(!test?.questions?.length)return showToast("Question paper পাওয়া যায়নি");
+ const body=test.questions.map((q,i)=>`<section><b>${i+1}. ${escapeHTML(q.q)}</b>${q.o.map((o,j)=>`<div>${String.fromCharCode(65+j)}. ${escapeHTML(o)}</div>`).join("")}</section>`).join("");
+ const w=window.open("","_blank");if(!w)return showToast("Popup blocked");
+ w.document.write(`<html><head><title>${escapeHTML(test.title)}</title><style>body{font-family:sans-serif;padding:28px;color:#222}header{border-bottom:2px solid #6d28d9;margin-bottom:20px}section{break-inside:avoid;margin:18px 0;line-height:1.6}section div{margin-left:20px}</style></head><body><header><h1>${escapeHTML(test.title)}</h1><p>${escapeHTML(profile.className)} · ${escapeHTML(test.chapter||"")}</p></header>${body}<p>Answer key intentionally excluded.</p></body></html>`);w.document.close();w.print();
 }
 
 /* ---------- ASSIGNMENTS ---------- */
@@ -426,11 +461,13 @@ function barClass(pct){return pct<50?"weak":pct<75?"mid":"strong";}
 async function loadProgressAndLeaderboard(){
  const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
  const mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");
+ renderXP(mine.length);
 
  // subject-wise
  const bySubject={};
  mine.forEach(a=>{if(a.percentage==null)return;const s=subjectName(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
  const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
+ reportSubjects=subjRows;
  $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p>";
 
@@ -438,13 +475,16 @@ async function loadProgressAndLeaderboard(){
  const byTopic={};
  mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0,subjects:new Set(),tests:new Set()};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;byTopic[topic].subjects.add(subjectName(a.subjectId));byTopic[topic].tests.add(a.testTitle||"Test");});});
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,correct:v.correct,total:v.total,subjects:v.subjects,tests:v.tests,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
+ reportTopics=topicRows;
  $("topicBars").innerHTML=topicRows.length?topicRows.map((r,i)=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.correct}/${r.total} · ${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div>${r.pct<WEAK_TOPIC_THRESHOLD?`<button class="secondary weak-help" data-topic-index="${i}">✨ Solve with ChatGPT</button>`:""}</div>`).join("")
   :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
  document.querySelectorAll(".weak-help").forEach(b=>b.onclick=()=>openChatGPTPrompt(weakTopicPrompt(topicRows[Number(b.dataset.topicIndex)])));
 
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ reportAttempts=sortedMine;
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${escapeHTML(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div>${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Review</button> <button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{const a=mine.find(x=>x.id===b.dataset.id);showReview(a.testTitle,a.review);});
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);
   const w=window.open("","_blank");
@@ -468,6 +508,18 @@ async function loadProgressAndLeaderboard(){
  $("leaderboard").innerHTML=cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>";
 }
 
+$("printReport").onclick=()=>{
+ if(!reportAttempts.length)return showToast("এখনো result নেই");
+ const avg=Math.round(reportAttempts.filter(a=>a.percentage!=null).reduce((s,a)=>s+a.percentage,0)/Math.max(1,reportAttempts.filter(a=>a.percentage!=null).length));
+ const rows=x=>x.map(r=>`<tr><td>${escapeHTML(r.label)}</td><td>${r.pct}%</td></tr>`).join("");
+ const history=reportAttempts.map(a=>`<tr><td>${escapeHTML(a.testTitle)}</td><td>${a.score??"—"}/${a.total??"—"} (${a.percentage??"—"}%)</td></tr>`).join("");
+ const w=window.open("","_blank");if(!w)return showToast("Popup blocked");w.document.write(`<html><head><title>Progress Report</title><style>body{font-family:sans-serif;padding:35px;color:#222}h1,h2{color:#6d28d9}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #ddd}</style></head><body><h1>Arpan Learning Suite</h1><p>${escapeHTML(profile.name)} · ${escapeHTML(profile.className)}</p><h2>Overall Average: ${avg}%</h2><h2>Subjects</h2><table>${rows(reportSubjects)}</table><h2>Topics</h2><table>${rows(reportTopics)}</table><h2>Test History</h2><table>${history}</table></body></html>`);w.document.close();w.print();
+};
+
+function parsePractice(text){return text.replace(/\r/g,"").split(/\n---\s*\n/).map(block=>{const v={};block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)v[m[1].toUpperCase()]=m[2].trim();});const o=[v.A,v.B,v.C,v.D],answer="ABCD".indexOf((v.ANSWER||"").toUpperCase()[0]);return v.Q&&o.every(Boolean)&&answer>=0?{q:v.Q,o,answer,topic:v.TOPIC||"Practice"}:null;}).filter(Boolean);}
+$("pracPromptBtn").onclick=()=>{const topic=$("pracTopic").value.trim()||"selected topic",count=Math.min(20,Math.max(3,Number($("pracCount").value)||5));openChatGPTPrompt(`Create ${count} MCQ practice questions for a ${profile.className} Bengali-medium student on ${topic}. Use exactly this format for every question and separate questions with ---:\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}\n\nReturn only the formatted questions.`);};
+$("pracStart").onclick=()=>{const qs=parsePractice($("pracPaste").value);if(!qs.length)return showToast("Valid questions পাওয়া যায়নি");$("pracQuiz").innerHTML=qs.map((q,i)=>`<div class="q"><b>${i+1}. ${escapeHTML(q.q)}</b>${q.o.map((o,j)=>`<label class="opt"><input type="radio" name="practice${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${escapeHTML(o)}</label>`).join("")}</div>`).join("")+`<button id="checkPractice" class="secondary">Check Answers</button><p id="practiceResult"></p>`;$("checkPractice").onclick=()=>{let score=0;qs.forEach((q,i)=>{const chosen=$("pracQuiz").querySelector(`input[name="practice${i}"]:checked`);if(chosen&&Number(chosen.value)===q.answer)score++;});$("practiceResult").textContent=`Score: ${score}/${qs.length}`;};};
+
 /* ---------- DOUBTS ---------- */
 $("sendDoubt").onclick=async()=>{
  const subjectId=$("doubtSubject").value,question=$("doubtText").value.trim();
@@ -480,7 +532,7 @@ function listenMyDoubts(){
  if(doubtsUnsub)doubtsUnsub();
  doubtsUnsub=onSnapshot(query(collection(db,"doubts"),where("uid","==",auth.currentUser.uid)),snap=>{
   const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-  $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${subjectName(x.subjectId)}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${x.question}</p>${x.answer?`<div class="doubt-a">${x.answer}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
+  $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${escapeHTML(subjectName(x.subjectId))}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${escapeHTML(x.question)}</p>${x.answer?`<div class="doubt-a">${escapeHTML(x.answer)}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
  });
 }
 </script></body></html>

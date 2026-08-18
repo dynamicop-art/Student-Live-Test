@@ -31,6 +31,7 @@
 <div class="stat"><b id="stStudents">0</b>Students</div><div class="stat"><b id="stSubjects">0</b>Subjects</div>
 <div class="stat"><b id="stTests">0</b>Tests</div><div class="stat"><b id="stLive">0</b>Live attempts</div>
 <div class="stat"><b id="stDoubts">0</b>Open doubts</div><div class="stat"><b id="stAssign">0</b>Assignments</div>
+<div class="stat"><b id="stAvg">—</b>Class Average</div><div class="stat"><b id="stTop">—</b>Top Performer</div>
 </div>
 <div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন। Notice/Assignment/Doubts যেকোনো সময় manage করা যাবে।</p></div>
 </section>
@@ -56,7 +57,8 @@
 
 <section id="importer" class="tab card hidden">
 <span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
-<p class="muted">ChatGPT থেকে ready block নাও → এখানে paste করো → Preview → Publish.</p>
+<p class="muted">ChatGPT থেকে ready block নাও → এখানে paste করো → Preview → Publish. একাধিক TEST block একসাথে দেওয়া যাবে।</p>
+<div class="item"><h3>🤖 Free Test Prompt Helper</h3><div class="row"><input id="aiClass" placeholder="Class ID"><input id="aiSubject" placeholder="Subject ID"><input id="aiTopic" placeholder="Topic"><input id="aiCount" type="number" min="3" max="30" value="10"></div><button id="aiTestPrompt" class="secondary">Copy Prompt & Open ChatGPT</button></div>
 <textarea id="importBox" style="min-height:360px" placeholder="Paste complete test block here..."></textarea>
 <div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
 <div id="importPreview"></div>
@@ -64,7 +66,7 @@
 </section>
 
 <section id="results" class="tab card hidden"><h2>📊 Live Results</h2>
-<div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
+<div class="filter-bar"><input id="attemptSearch" placeholder="Search student or test"><button id="exportCsv" class="secondary">⬇️ Export CSV</button></div><div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
 
 <section id="announcements" class="tab card hidden"><h2>📣 Notice Board</h2>
 <p class="muted">এখানে যা পাবলিশ করবে সেটা সেই Class-এর সব ছাত্রছাত্রীর Home tab-এ দেখা যাবে।</p>
@@ -198,7 +200,7 @@ ANSWER: B
 TOPIC: Vapour Pressure`;
 
 $("loadSample").onclick=()=>{$("importBox").value=SAMPLE;};
-let parsedImport=null;
+let parsedImports=[];
 
 function parseImport(raw){
  const lines=raw.replace(/\r/g,"").split("\n");
@@ -210,31 +212,32 @@ function parseImport(raw){
  body.forEach((block,idx)=>{
   const vals={};
   block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
-  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").toUpperCase(),ai="ABCD".indexOf(ans);
-  if(!vals.Q||opts.some(x=>!x)||ai<0)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER incomplete.`);
-  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC||""});answers.push(ai);}
+  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").trim().toUpperCase(),ai="ABCD".indexOf(ans[0]||"");
+  if(!vals.Q||opts.some(x=>!x)||ai<0||!vals.TOPIC)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER/TOPIC incomplete.`);
+  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC});answers.push(ai);}
  });
  const data={title:meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
- if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");
+ if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
  return {data,errors};
 }
 
 $("previewImport").onclick=()=>{
- const p=parseImport($("importBox").value);parsedImport=p.errors.length?null:p.data;
- $("importPreview").innerHTML=p.errors.length
- ?`<div class="item preview-bad"><h3>❌ Fix these</h3>${p.errors.map(e=>`<div>${e}</div>`).join("")}</div>`
- :`<div class="item preview-ok"><h3>✅ Import ready</h3><p><b>${p.data.title}</b></p><p>Class: ${p.data.classId} · Chapter: ${p.data.chapter||"—"} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p>${p.data.questions.slice(0,3).map((q,i)=>`<div class="muted">${i+1}. ${q.q}</div>`).join("")}${p.data.questions.length>3?`<div class="muted">...and ${p.data.questions.length-3} more</div>`:""}</div>`;
- $("publishImport").classList.toggle("hidden",!!p.errors.length);
+ const chunks=$("importBox").value.replace(/\r/g,"").split(/\n(?=\s*TEST\s*:)/i).map(x=>x.trim()).filter(Boolean),results=chunks.map(parseImport);
+ parsedImports=results.every(r=>!r.errors.length)?results.map(r=>r.data):[];
+ $("importPreview").innerHTML=results.map((p,i)=>p.errors.length?`<div class="item preview-bad"><h3>❌ Test ${i+1}</h3>${p.errors.map(e=>`<div>${esc(e)}</div>`).join("")}</div>`:`<div class="item preview-ok"><h3>✅ ${esc(p.data.title)}</h3><p>${esc(p.data.classId)} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p></div>`).join("")||"<p class='muted'>No test block found.</p>";
+ $("publishImport").classList.toggle("hidden",!parsedImports.length);
 };
 $("publishImport").onclick=async()=>{
- try{if(!parsedImport)throw new Error("Preview first.");await saveTestData(parsedImport);$("importMsg").textContent="✅ Imported test published successfully.";parsedImport=null;$("publishImport").classList.add("hidden");await loadTests();}
+ try{if(!parsedImports.length)throw new Error("Preview first.");for(const data of parsedImports)await saveTestData(data);$("importMsg").textContent=`✅ ${parsedImports.length} test(s) published.`;parsedImports=[];$("publishImport").classList.add("hidden");await loadTests();}
  catch(e){$("importMsg").textContent=e.message;}
 };
 
-async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b> · ${d.id}<br><span class="muted">${d.data().className} (${d.data().classId})</span></div>`).join("");$("stStudents").textContent=s.size;}
-async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().name}</b><br><span class="muted">SUBJECT ID: ${d.id} · class: ${d.data().classId}</span></div>`).join("");$("stSubjects").textContent=s.size;}
-async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b>${d.data().chapter?` <span class="pill teal">${d.data().chapter}</span>`:""}<br><span class="muted">${d.data().classId} · ${d.data().subjectId}</span></div>`).join("");}
-async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${d.data().title}</b><br><span class="muted">TEST ID: ${d.id} · ${d.data().questionCount} Q · ${d.data().durationMinutes} min</span></div>`).join("");$("stTests").textContent=s.size;}
+$("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=$("aiSubject").value.trim(),topic=$("aiTopic").value.trim(),count=Math.min(30,Math.max(3,Number($("aiCount").value)||10));if(!cls||!subject||!topic)return alert("Class ID, Subject ID এবং Topic দিন।");const prompt=`Create ${count} MCQ questions for ${cls} on ${topic}. Return only this exact website format:\nTEST: ${topic} Test\nCLASS: ${cls}\nSUBJECT_ID: ${subject}\nCHAPTER: ${topic}\nDURATION: 30\n\n---\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}`;try{await navigator.clipboard.writeText(prompt);}catch{window.prompt("Copy this prompt:",prompt);}window.open("https://chatgpt.com/","_blank","noopener,noreferrer");};
+
+async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b> · ${esc(d.id)}<br><span class="muted">${esc(d.data().className)} (${esc(d.data().classId)})</span></div>`).join("");$("stStudents").textContent=s.size;}
+async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b><br><span class="muted">SUBJECT ID: ${esc(d.id)} · class: ${esc(d.data().classId)}</span></div>`).join("");$("stSubjects").textContent=s.size;}
+async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b>${d.data().chapter?` <span class="pill teal">${esc(d.data().chapter)}</span>`:""}<br><span class="muted">${esc(d.data().classId)} · ${esc(d.data().subjectId)}</span></div>`).join("");}
+async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b><br><span class="muted">TEST ID: ${esc(d.id)} · ${Number(d.data().questionCount)||0} Q · ${Number(d.data().durationMinutes)||0} min</span></div>`).join("");$("stTests").textContent=s.size;}
 
 $("addAnn").onclick=async()=>{
  const title=$("annTitle").value.trim(),classId=$("annClassId").value.trim(),content=$("annContent").value.trim();
@@ -242,7 +245,7 @@ $("addAnn").onclick=async()=>{
  await addDoc(collection(db,"announcements"),{title,classId,content,createdAt:serverTimestamp()});
  $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";await loadAnnouncements();
 };
-async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">${d.data().content}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
+async function loadAnnouncements(){const s=await getDocs(collection(db,"announcements"));$("annList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${esc(d.data().classId)}</span><b>${esc(d.data().title)}</b><p class="muted">${esc(d.data().content)}</p></div>`).join("")||"<p class='muted'>No notices yet.</p>";}
 
 $("addAsg").onclick=async()=>{
  const title=$("asgTitle").value.trim(),classId=$("asgClassId").value.trim(),subjectId=$("asgSubjectId").value.trim(),dueDate=$("asgDue").value,description=$("asgDesc").value.trim();
@@ -250,7 +253,7 @@ $("addAsg").onclick=async()=>{
  await addDoc(collection(db,"assignments"),{title,classId,subjectId,dueDate,description,createdAt:serverTimestamp()});
  $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";await loadAssignments();
 };
-async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${d.data().classId}</span><b>${d.data().title}</b><p class="muted">Due: ${d.data().dueDate||"—"} · ${d.data().description||""}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
+async function loadAssignments(){const s=await getDocs(collection(db,"assignments"));$("stAssign").textContent=s.size;$("asgList").innerHTML=s.docs.map(d=>`<div class="item"><span class="pill">${esc(d.data().classId)}</span><b>${esc(d.data().title)}</b><p class="muted">Due: ${esc(d.data().dueDate||"—")} · ${esc(d.data().description||"")}</p></div>`).join("")||"<p class='muted'>No assignments yet.</p>";}
 
 let doubtUnsub=null;
 function listenDoubts(){
@@ -258,7 +261,7 @@ function listenDoubts(){
  doubtUnsub=onSnapshot(collection(db,"doubts"),snap=>{
   const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
   $("stDoubts").textContent=items.filter(x=>x.status==="open").length;
-  $("doubtList").innerHTML=items.map(x=>`<div class="item"><div class="topbar"><div><b>${x.studentName||"Student"}</b> <span class="muted">(${x.classId})</span></div><span class="pill ${x.status==='open'?'gold':''}">${x.status}</span></div><p>${x.question}</p>${x.answer?`<div class="notice">Reply: ${x.answer}</div>`:`<textarea class="replyBox" data-id="${x.id}" placeholder="Reply লিখুন..."></textarea><button class="secondary sendReply" data-id="${x.id}">Send Reply</button>`}</div>`).join("")||"<p class='muted'>No doubts yet.</p>";
+  $("doubtList").innerHTML=items.map(x=>`<div class="item"><div class="topbar"><div><b>${esc(x.studentName||"Student")}</b> <span class="muted">(${esc(x.classId)})</span></div><span class="pill ${x.status==='open'?'gold':''}">${esc(x.status)}</span></div><p>${esc(x.question)}</p>${x.answer?`<div class="notice">Reply: ${esc(x.answer)}</div>`:`<textarea class="replyBox" data-id="${esc(x.id)}" placeholder="Reply লিখুন..."></textarea><button class="secondary sendReply" data-id="${esc(x.id)}">Send Reply</button>`}</div>`).join("")||"<p class='muted'>No doubts yet.</p>";
   document.querySelectorAll(".sendReply").forEach(b=>b.onclick=async()=>{
    const id=b.dataset.id,box=document.querySelector(`.replyBox[data-id="${id}"]`),answer=box.value.trim();
    if(!answer)return;
@@ -280,7 +283,7 @@ function listenAttempts(){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
     const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;const topicStats={};
+     const ans=key.data().answers;let score=0;const topicStats={},review=[];
      const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
      for(let i=0;i<ans.length;i++){
       const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
@@ -288,9 +291,10 @@ function listenAttempts(){
       const topic=(qs[i]&&qs[i].topic)||"General";
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
+      review.push({q:qs[i]?.q||`Question ${i+1}`,o:qs[i]?.o||[],topic,chosenIdx:a.answers?.["q"+i]??null,correctIdx:Number(ans[i]),isCorrect:correct});
      }
      const percentage=Math.round(score/ans.length*100);
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage,topicStats,gradedAt:serverTimestamp()});
+     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage,topicStats,review,gradedAt:serverTimestamp()});
      await setDoc(doc(db,"leaderboardEntries",`${a.testId}_${a.uid}`),{testId:a.testId,classId:a.classId,uid:a.uid,studentName:a.studentName||"Student",score,total:ans.length,percentage,submittedAt:a.submittedAt||serverTimestamp()});
     }
    }
@@ -302,8 +306,12 @@ function listenAttempts(){
  });
 }
 function renderAttempts(){
- $("attemptList").innerHTML=latestAttempts.map(a=>`<div class="item"><div class="topbar"><div><b>${a.studentName||a.uid}</b><br><span class="muted">${a.testTitle||a.testId}</span></div><span class="pill">${a.status}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No attempts yet.</p>";
+ const q=($("attemptSearch")?.value||"").trim().toLowerCase(),list=latestAttempts.filter(a=>!q||`${a.studentName||""} ${a.testTitle||""}`.toLowerCase().includes(q));
+ $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${esc(a.studentName||a.uid)}</b><br><span class="muted">${esc(a.testTitle||a.testId)}</span></div><span class="pill">${esc(a.status)}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No matching attempts.</p>";
+ const graded=latestAttempts.filter(a=>a.status==="submitted"&&a.percentage!=null);$("stAvg").textContent=graded.length?Math.round(graded.reduce((s,a)=>s+a.percentage,0)/graded.length)+"%":"—";const top=[...graded].sort((a,b)=>b.percentage-a.percentage)[0];$("stTop").textContent=top?top.studentName||"Student":"—";
 }
+$("attemptSearch").oninput=renderAttempts;
+$("exportCsv").onclick=()=>{if(!latestAttempts.length)return alert("No results to export.");const rows=[["Student","Test","Class","Status","Score","Total","Percentage"],...latestAttempts.map(a=>[a.studentName,a.testTitle,a.classId,a.status,a.score??"",a.total??"",a.percentage??""])];const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})),link=document.createElement("a");link.href=url;link.download=`results-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $("purgeSubmitted").onclick=async()=>{
  if(!confirm("Delete ALL submitted attempt/result data?"))return;
  const s=await getDocs(query(collection(db,"attempts"),where("status","==","submitted")));for(const d of s.docs)await deleteDoc(d.ref);

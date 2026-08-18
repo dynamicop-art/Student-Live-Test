@@ -1,5 +1,21 @@
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
+V4 SAFE MERGE UPDATE
+- Secure V3.4 was kept as the base; the supplied experimental files were not
+  used as replacements.
+- Added client-only Personal Practice Tests, Answer Review, printable Question
+  Papers, printable Full Progress Reports, XP/Levels, daily study quotes,
+  optional sound, and celebration only for results of 80% or higher.
+- Added Admin CSV export, attempt search, class average/top performer stats,
+  free test-generation prompt helper, and validated multi-test batch import.
+- Strengthened avatar/bookmark/streak/doubt validation in Firestore rules.
+- Full attempts remain private. Latest-three leaderboards still use sanitized
+  leaderboardEntries documents, so classmates cannot read saved answers.
+- effects.js is optional: the core website continues working if effects fail.
+
+DEPLOYMENT: upload every file in this package, including effects.js, and publish
+firestore.rules again from Firebase Console.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.

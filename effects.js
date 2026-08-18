@@ -1,94 +1,101 @@
-/* ---------- Sound (WebAudio, no external files needed) ---------- */
-let audioCtx = null;
-function ctx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-export function isSoundOn() {
-  try { return localStorage.getItem("soundOn") !== "0"; } catch (e) { return true; }
-}
-export function setSoundOn(on) {
-  try { localStorage.setItem("soundOn", on ? "1" : "0"); } catch (e) {}
-}
-function tone(freq, start, dur, type, gainPeak) {
-  const c = ctx();
-  const osc = c.createOscillator();
-  const gain = c.createGain();
-  osc.type = type || "sine";
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0, c.currentTime + start);
-  gain.gain.linearRampToValueAtTime(gainPeak || 0.18, c.currentTime + start + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
-  osc.connect(gain).connect(c.destination);
-  osc.start(c.currentTime + start);
-  osc.stop(c.currentTime + start + dur + 0.05);
-}
-export function playChime(kind) {
-  if (!isSoundOn()) return;
-  try {
-    if (kind === "perfect") { tone(523, 0, .18, "triangle"); tone(659, .12, .18, "triangle"); tone(784, .24, .18, "triangle"); tone(1046, .36, .3, "triangle", .22); }
-    else if (kind === "success") { tone(523, 0, .16, "sine"); tone(784, .1, .22, "sine", .2); }
-    else if (kind === "click") { tone(600, 0, .06, "square", .08); }
-    else if (kind === "wrong") { tone(220, 0, .18, "sawtooth", .12); tone(160, .1, .22, "sawtooth", .12); }
-    else if (kind === "timer") { tone(880, 0, .12, "square", .15); tone(880, .18, .12, "square", .15); }
-    else { tone(700, 0, .1, "sine", .12); }
-  } catch (e) { /* audio may be blocked until a user gesture; fail silently */ }
+// Small shared visual-polish helpers: floating background blobs, confetti burst,
+// tiny synth sound effects (Web Audio, no audio files) and toast notifications.
+// Pure client-side decoration — no data, no network calls, safe to include anywhere.
+
+export function mountBlobs(){
+  if(document.querySelector(".blob-bg"))return;
+  const d=document.createElement("div");
+  d.className="blob-bg";
+  d.innerHTML=`<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div><div class="blob blob4"></div><div class="blob blob5"></div>`;
+  document.body.prepend(d);
 }
 
-/* ---------- Toast ---------- */
-export function toast(message, icon) {
-  let layer = document.querySelector(".toast-layer");
-  if (!layer) {
-    layer = document.createElement("div");
-    layer.className = "toast-layer";
-    document.body.appendChild(layer);
-  }
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = (icon ? icon + " " : "") + message;
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
+/* Adds a shimmering light-sweep + a few twinkling stars to every .hero card
+   for a more "magical", premium feel. Pure CSS-driven decoration. */
+export function mountHeroSparkle(){
+  document.querySelectorAll(".hero").forEach(hero=>{
+    if(hero.querySelector(".sparkle-sweep"))return;
+    const sweep=document.createElement("div");
+    sweep.className="sparkle-sweep";
+    hero.appendChild(sweep);
+    const starGlyphs=["✦","✧","⋆","✨"];
+    const positions=[["10%","18%"],["82%","14%"],["92%","62%"],["6%","70%"],["46%","10%"]];
+    positions.forEach(([left,top],i)=>{
+      const s=document.createElement("span");
+      s.className="star";
+      s.textContent=starGlyphs[i%starGlyphs.length];
+      s.style.left=left;s.style.top=top;
+      s.style.animationDelay=(i*0.45)+"s";
+      hero.appendChild(s);
+    });
+  });
 }
 
-/* ---------- Confetti burst ---------- */
-export function confettiBurst(count) {
-  const n = count || 100;
-  const layer = document.createElement("div");
-  layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99998;overflow:hidden";
+export function confettiBurst(count=90){
+  const colors=["#1d4ed8","#4f46e5","#c8960c","#7c3aed","#16a34a","#f3d477"];
+  const layer=document.createElement("div");
+  layer.className="confetti-layer";
   document.body.appendChild(layer);
-  const colors = ["#6d5cff", "#ff6bb3", "#ffb648", "#4ade80", "#38bdf8", "#f472b6"];
-  for (let i = 0; i < n; i++) {
-    const p = document.createElement("div");
-    const size = 6 + Math.random() * 8;
-    const left = Math.random() * 100;
-    const dur = 2.2 + Math.random() * 1.6;
-    const delay = Math.random() * 0.4;
-    const rot = Math.random() * 720 - 360;
-    const drift = (Math.random() * 160 - 80);
-    p.style.cssText = `position:absolute;top:-5%;left:${left}%;width:${size}px;height:${size * 0.4}px;background:${colors[i % colors.length]};opacity:.95;border-radius:2px;transform:rotate(${Math.random() * 360}deg);animation:confettiFall ${dur}s cubic-bezier(.22,.6,.4,1) ${delay}s forwards;--rot:${rot}deg;--drift:${drift}px`;
+  for(let i=0;i<count;i++){
+    const p=document.createElement("div");
+    p.className="confetti-piece";
+    const size=6+Math.random()*7;
+    p.style.left=Math.random()*100+"vw";
+    p.style.width=size+"px";
+    p.style.height=size*0.4+"px";
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    const duration=2.2+Math.random()*1.6;
+    const delay=Math.random()*0.5;
+    p.style.animationDuration=duration+"s";
+    p.style.animationDelay=delay+"s";
     layer.appendChild(p);
   }
-  setTimeout(() => layer.remove(), 4200);
+  setTimeout(()=>layer.remove(),4200);
 }
 
-/* ---------- Ambient background blobs ---------- */
-export function mountBlobs() {
-  if (document.querySelector(".blob-bg")) return;
-  const bg = document.createElement("div");
-  bg.className = "blob-bg";
-  bg.innerHTML = `<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>`;
-  document.body.prepend(bg);
+/* ---------- SOUND (tiny synth chimes, no external audio files) ---------- */
+function soundOn(){try{return localStorage.getItem("sound")==="on";}catch(e){return false;}}
+export function isSoundOn(){return soundOn();}
+export function setSoundOn(on){try{localStorage.setItem("sound",on?"on":"off");}catch(e){}}
+
+let _actx=null;
+function ctx(){
+  if(!soundOn())return null;
+  try{_actx=_actx||new (window.AudioContext||window.webkitAudioContext)();if(_actx.state==="suspended")_actx.resume();return _actx;}
+  catch(e){return null;}
+}
+function tone(freq,start,dur,type="sine",gainPeak=0.16){
+  const c=ctx();if(!c)return;
+  const osc=c.createOscillator(),gain=c.createGain();
+  osc.type=type;osc.frequency.value=freq;
+  osc.connect(gain);gain.connect(c.destination);
+  const t0=c.currentTime+start;
+  gain.gain.setValueAtTime(0,t0);
+  gain.gain.linearRampToValueAtTime(gainPeak,t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  osc.start(t0);osc.stop(t0+dur+0.02);
+}
+// kind: "success" | "perfect" | "click" | "notify" | "timer"
+export function playChime(kind="success"){
+  if(!soundOn())return;
+  if(kind==="perfect"){tone(523.25,0,.16,"triangle");tone(659.25,.13,.16,"triangle");tone(783.99,.26,.28,"triangle");}
+  else if(kind==="success"){tone(587.33,0,.14,"sine");tone(880,.11,.22,"sine");}
+  else if(kind==="click"){tone(660,0,.06,"square",.08);}
+  else if(kind==="notify"){tone(740,0,.1,"sine",.12);tone(988,.09,.14,"sine",.1);}
+  else if(kind==="timer"){tone(440,0,.18,"triangle");tone(440,.22,.18,"triangle");tone(440,.44,.3,"triangle");}
 }
 
-/* ---------- Hero sparkle accents ---------- */
-export function mountHeroSparkle(target) {
-  const el = typeof target === "string" ? document.querySelector(target) : target;
-  if (!el || el.querySelector(".sparkle")) return;
-  for (let i = 0; i < 3; i++) {
-    const s = document.createElement("span");
-    s.className = "sparkle";
-    s.textContent = "✨";
-    s.style.cssText = `position:absolute;left:${10 + Math.random() * 80}%;top:${10 + Math.random() * 70}%;animation-delay:${Math.random() * 2}s`;
-    el.appendChild(s);
-  }
+/* ---------- TOASTS ---------- */
+// Escapes the message before inserting into innerHTML. Every current call
+// site passes a static/trusted string, but this keeps the helper itself safe
+// by default if a future call ever passes through user-typed text.
+function escapeToastMsg(s){return String(s==null?"":s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+export function toast(message,icon="✅"){
+  let layer=document.querySelector(".toast-layer");
+  if(!layer){layer=document.createElement("div");layer.className="toast-layer";document.body.appendChild(layer);}
+  const t=document.createElement("div");
+  t.className="toast";
+  t.innerHTML=`<span>${icon}</span><span>${escapeToastMsg(message)}</span>`;
+  layer.appendChild(t);
+  setTimeout(()=>t.remove(),2800);
 }
