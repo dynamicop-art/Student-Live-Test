@@ -1,36 +1,23 @@
-This is a reference for the question format used internally by admin.html when you
-publish a test (for your own notes — you don't need to paste this anywhere, the
-"➕ নতুন Test" form in admin.html builds it for you automatically).
+TEST: Chemistry Unit 1 - Test 2
+CLASS: class12
+SUBJECT_ID: PASTE_THE_CHEMISTRY_SUBJECT_ID_HERE
+CHAPTER: Liquid State
+DURATION: 30
 
-Each question is stored as:
-{
-  "q": "প্রশ্নের লেখা",
-  "o": ["Option A", "Option B", "Option C", "Option D"],
-  "topic": "Optional sub-topic label — shown on the student's review screen"
-}
+---
+Q: Henry-এর সূত্র অনুযায়ী নির্দিষ্ট তাপমাত্রায় তরলে গ্যাসের দ্রাব্যতা কোনটির সঙ্গে সমানুপাতিক?
+A: গ্যাসের আংশিক চাপ
+B: তরলের আয়তন
+C: দ্রাবকের ভর
+D: পাত্রের আকৃতি
+ANSWER: A
+TOPIC: Henry's Law
 
-The correct answer index (0=A, 1=B, 2=C, 3=D) is stored SEPARATELY in the
-`answerKeys` collection, never inside the `tests` document itself — this is what
-keeps students from being able to read the correct answers directly from Firestore
-before grading.
-
-EXAMPLE (5 questions) — just for reference:
---------------------------------------------
-1. Q: দুধ সাধারণত কোন ধরনের ইমালশনের উদাহরণ?
-   A: জলের মধ্যে তেল
-   B: তেলের মধ্যে জল
-   C: কঠিনের মধ্যে গ্যাস
-   D: গ্যাসের মধ্যে তরল
-   Answer: A
-   Topic: ইমালশনের প্রকারভেদ
-
-2. Q: pH স্কেলের সর্বোচ্চ মান কত?
-   A: 7
-   B: 10
-   C: 14
-   D: 0
-   Answer: C
-   Topic: pH স্কেল
-
-(...and so on — enter each of these directly into the admin.html "নতুন Test" form,
-one question at a time, using the "➕ প্রশ্ন যোগ করো" button to add more rows.)
+---
+Q: অউদ্বায়ী দ্রব পদার্থ যোগ করলে দ্রাবকের বাষ্পচাপ কী হয়?
+A: বাড়ে
+B: কমে
+C: অপরিবর্তিত থাকে
+D: শূন্য হয়
+ANSWER: B
+TOPIC: Vapour Pressure

@@ -1,105 +1,74 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Exam Suite — Login</title>
+<!doctype html><html lang="bn"><head>
+<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Learning Hub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
-</head>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
 <body>
-<div class="wrap" style="max-width:420px;margin-top:6vh">
-  <div class="hero" style="text-align:center">
-    <div style="font-size:40px">🎓</div>
-    <h1>Exam Suite</h1>
-    <p>Exam দাও, তাৎক্ষণিক result দেখো, নিজেকে ছাড়িয়ে যাও।</p>
-  </div>
-
-  <div class="card">
-    <div class="nav" style="margin-top:0">
-      <button id="tabLogin" class="active">Login</button>
-      <button id="tabSignup">Sign Up</button>
-    </div>
-
-    <div id="loginPane" style="margin-top:16px">
-      <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
-      <div style="height:10px"></div>
-      <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
-      <div style="height:14px"></div>
-      <button id="loginBtn" style="width:100%">Login করো</button>
-      <p id="loginMsg" class="muted" style="margin-top:10px"></p>
-    </div>
-
-    <div id="signupPane" class="hidden" style="margin-top:16px">
-      <input id="suName" type="text" placeholder="তোমার নাম">
-      <div style="height:10px"></div>
-      <input id="suEmail" type="email" placeholder="Email" autocomplete="email">
-      <div style="height:10px"></div>
-      <input id="suPass" type="password" placeholder="Password (কমপক্ষে ৬ অক্ষর)" autocomplete="new-password">
-      <div style="height:10px"></div>
-      <input id="suClass" type="text" placeholder="Class (যেমন: Class X)">
-      <div style="height:10px"></div>
-      <select id="suRole">
-        <option value="student">আমি একজন Student</option>
-        <option value="teacher">আমি একজন Teacher</option>
-      </select>
-      <div style="height:14px"></div>
-      <button id="signupBtn" style="width:100%">Account বানাও</button>
-      <p id="signupMsg" class="muted" style="margin-top:10px"></p>
-    </div>
-  </div>
-</div>
-
+<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
+<div class="wrap">
+<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
+<div class="grid">
+  <section class="card login-card"><div class="section-kicker">🔑 Student Access</div><h2>Welcome back</h2>
+    <input id="lemail" type="email" placeholder="Email">
+    <input id="lpass" type="password" placeholder="Password">
+    <button id="login">Enter Learning Hub</button><p id="lmsg" class="muted"></p>
+  </section>
+  <section class="card login-card"><div class="section-kicker">✨ First Time Setup</div><h2>Create Student Account</h2>
+    <p class="muted">Teacher আগে তোমার email allow করলে তবেই account তৈরি হবে।</p>
+    <input id="semail" type="email" placeholder="Teacher-approved email">
+    <input id="spass" type="password" placeholder="Create password (6+ characters)">
+    <button id="signup">Create Account</button><p id="smsg" class="muted"></p>
+  </section>
+  <section class="card login-card"><div class="section-kicker">🎓 Teacher Workspace</div><h2>Admin Console</h2>
+    <p class="muted">Students, subjects, notes, tests এবং live results manage করুন।</p>
+    <a class="btn" href="admin.html">Open Admin Panel</a>
+  </section>
+</div><div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { firebaseConfig } from "./config.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);
 
-const $ = id => document.getElementById(id);
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
-
-$("tabLogin").onclick = () => { $("tabLogin").classList.add("active"); $("tabSignup").classList.remove("active"); $("loginPane").classList.remove("hidden"); $("signupPane").classList.add("hidden"); };
-$("tabSignup").onclick = () => { $("tabSignup").classList.add("active"); $("tabLogin").classList.remove("active"); $("signupPane").classList.remove("hidden"); $("loginPane").classList.add("hidden"); };
-
-async function routeByRole(uid) {
-  const p = await getDoc(doc(db, "users", uid));
-  if (!p.exists()) { $("loginMsg").textContent = "⚠️ Profile পাওয়া যায়নি।"; return; }
-  location.href = p.data().role === "teacher" ? "admin.html" : "student.html";
-}
-
-$("loginBtn").onclick = async () => {
-  const email = $("loginEmail").value.trim(), pass = $("loginPass").value;
-  if (!email || !pass) { $("loginMsg").textContent = "Email আর password দাও।"; return; }
-  $("loginBtn").disabled = true; $("loginMsg").textContent = "Login হচ্ছে...";
-  try {
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    await routeByRole(cred.user.uid);
-  } catch (e) {
-    $("loginMsg").textContent = "❌ Login fail হয়েছে: " + (e.message || "Email/password check করো।");
-  } finally { $("loginBtn").disabled = false; }
+function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
+applyThemeBtn();
+$("themeBtn").onclick=()=>{
+ const dark=document.documentElement.getAttribute("data-theme")==="dark";
+ if(dark){document.documentElement.removeAttribute("data-theme");localStorage.setItem("theme","light");}
+ else{document.documentElement.setAttribute("data-theme","dark");localStorage.setItem("theme","dark");}
+ applyThemeBtn();
 };
 
-$("signupBtn").onclick = async () => {
-  const name = $("suName").value.trim(), email = $("suEmail").value.trim(), pass = $("suPass").value;
-  const className = $("suClass").value.trim(), role = $("suRole").value;
-  if (!name || !email || !pass || !className) { $("signupMsg").textContent = "সব field পূরণ করো।"; return; }
-  if (pass.length < 6) { $("signupMsg").textContent = "Password কমপক্ষে ৬ অক্ষর হতে হবে।"; return; }
-  $("signupBtn").disabled = true; $("signupMsg").textContent = "Account বানানো হচ্ছে...";
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const classId = className.toLowerCase().replace(/\s+/g, "-");
-    await setDoc(doc(db, "users", cred.user.uid), {
-      uid: cred.user.uid, name, email, role, classId, className, createdAt: serverTimestamp()
-    });
-    location.href = role === "teacher" ? "admin.html" : "student.html";
-  } catch (e) {
-    $("signupMsg").textContent = "❌ Account বানানো যায়নি: " + (e.message || "আবার চেষ্টা করো।");
-  } finally { $("signupBtn").disabled = false; }
+$("login").onclick=async()=>{
+ try{
+   const c=await signInWithEmailAndPassword(auth,$("lemail").value.trim(),$("lpass").value);
+   location.href=(c.user.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase()?"admin.html":"student.html";
+ }catch(e){$("lmsg").textContent="Login failed: "+e.message;}
 };
 
-onAuthStateChanged(auth, u => { if (u) routeByRole(u.uid); });
-</script>
-</body>
-</html>
+$("signup").onclick=async()=>{
+ let cred=null;
+ try{
+   const email=$("semail").value.trim().toLowerCase();
+   if(!email||$("spass").value.length<6)throw new Error("Valid email এবং 6+ character password দিন।");
+   cred=await createUserWithEmailAndPassword(auth,email,$("spass").value);
+   const inv=await getDoc(doc(db,"invites",email));
+   if(!inv.exists()||inv.data().active!==true){
+     await deleteUser(cred.user);
+     throw new Error("এই email teacher allow করেননি।");
+   }
+   const d=inv.data();
+   await setDoc(doc(db,"users",cred.user.uid),{
+     uid:cred.user.uid,email,name:d.name,classId:d.classId,className:d.className,
+     role:"student",createdAt:serverTimestamp()
+   });
+   location.href="student.html";
+ }catch(e){$("smsg").textContent=e.message;}
+};
+</script></body></html>

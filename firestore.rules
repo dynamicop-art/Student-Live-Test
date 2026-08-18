@@ -1,73 +1,108 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn(){ return request.auth != null; }
+    function isTeacher(){ return signedIn() && request.auth.token.email == "arpanalaps64@gmail.com"; }
+    function myProfile(){ return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function myClass(){ return myProfile().data.classId; }
 
-    function isSignedIn() { return request.auth != null; }
-    function myUid() { return request.auth.uid; }
-    function myProfile() { return get(/databases/$(database)/documents/users/$(myUid())).data; }
-    function myRole() { return myProfile().role; }
-    function isTeacher() { return isSignedIn() && myRole() == "teacher"; }
-    function isStudent() { return isSignedIn() && myRole() == "student"; }
-    function myClass() { return myProfile().classId; }
+    match /invites/{email} {
+      allow read: if isTeacher() || (signedIn() && request.auth.token.email == email);
+      allow create, update, delete: if isTeacher();
+    }
 
-    // ---------- users ----------
     match /users/{uid} {
-      allow read: if isSignedIn() && (uid == myUid() || isTeacher());
-      allow create: if isSignedIn() && uid == request.auth.uid
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.role in ["student","teacher"];
-      allow update: if isSignedIn() && uid == myUid()
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.uid == resource.data.uid;
-      allow delete: if false;
+      allow read: if isTeacher() || (signedIn() && uid == request.auth.uid) || (signedIn() && get(/databases/$(database)/documents/users/$(uid)).data.classId == myClass());
+      allow create: if signedIn() && uid == request.auth.uid
+        && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "student";
+      // Students may only ever touch their OWN doc, and only these three
+      // self-service fields. Every other field (name/class/role/etc) stays teacher-only.
+      allow update: if isTeacher() || (
+        signedIn() && uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatarData','bookmarks','streak'])
+      );
+      allow delete: if isTeacher();
     }
 
-    // ---------- classes ----------
-    match /classes/{id} {
-      allow read: if isSignedIn();
+    match /subjects/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
       allow write: if isTeacher();
     }
 
-    // ---------- tests (question text + options are public to the class; the
-    // correct-answer index lives in a separate teacher-only collection) ----------
+    match /notes/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow write: if isTeacher();
+    }
+
     match /tests/{id} {
-      allow read: if isSignedIn() && (isTeacher() || (isStudent() && resource.data.classId == myClass() && resource.data.published == true));
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass() && resource.data.published == true);
       allow write: if isTeacher();
     }
 
-    // ---------- answerKeys (teacher-only, never readable by students) ----------
-    match /answerKeys/{testId} {
+    match /answerKeys/{id} {
       allow read, write: if isTeacher();
     }
 
-    // ---------- attempts ----------
     match /attempts/{id} {
-      // Full read of your own attempt (including in-progress); teachers can
-      // read everything; classmates can read each other's *submitted*
-      // attempts only (needed to build the leaderboard client-side, since
-      // this app has no backend/Cloud Functions to aggregate scores
-      // privately — an in_progress attempt stays private to its owner).
-      allow read: if isSignedIn() && (
-        isTeacher()
-        || resource.data.uid == myUid()
-        || (isStudent() && resource.data.classId == myClass() && resource.data.status == "submitted")
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.classId == myClass();
+
+      // Owner can always read their own attempt. Classmates can read each
+      // other's SUBMITTED attempts too (name + score only, used for the
+      // in-class leaderboard) once grading is done.
+      allow read: if isTeacher()
+        || (signedIn() && resource.data.uid == request.auth.uid)
+        || (signedIn() && resource.data.classId == myClass() && resource.data.status == "submitted");
+
+      allow update: if isTeacher() || (
+        signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.testId == resource.data.testId
+        && request.resource.data.classId == resource.data.classId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats'])
       );
-      allow create: if isStudent()
-        && request.resource.data.uid == myUid()
+
+      allow delete: if isTeacher();
+    }
+
+    match /announcements/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow write: if isTeacher();
+    }
+
+    match /assignments/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow write: if isTeacher();
+    }
+
+    // Doc id convention: {assignmentId}_{uid} so a student can only ever
+    // create/update the completion record that matches their own uid.
+    match /assignmentStatus/{id} {
+      allow read: if isTeacher() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass()
-        && request.resource.data.status == "in_progress"
-        && request.resource.data.score == null;
-      allow update: if isSignedIn() && (
-        // Student can update their own attempt, but never the graded fields —
-        // those are teacher-only, set during grading.
-        (resource.data.uid == myUid()
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.testId == resource.data.testId
-          && request.resource.data.classId == resource.data.classId
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats','review']))
-        || isTeacher()
-      );
-      allow delete: if false;
+        && id == (request.resource.data.assignmentId + '_' + request.auth.uid);
+      allow delete: if isTeacher();
+    }
+
+    match /doubts/{id} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.classId == myClass()
+        && request.resource.data.status == "open";
+      allow read: if isTeacher() || (signedIn() && resource.data.uid == request.auth.uid);
+      // Only the teacher may answer / change status.
+      allow update: if isTeacher();
+      allow delete: if isTeacher();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

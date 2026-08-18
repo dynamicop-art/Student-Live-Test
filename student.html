@@ -1,488 +1,458 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Exam Suite — Student</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
+<!doctype html><html lang="bn"><head>
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
-</head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
 <body>
+<button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
+<section class="hero topbar">
+  <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
+  <button id="logout" class="secondary">Logout</button>
+</section>
+<nav class="nav">
+  <button class="active" data-tab="home">🏠 Home</button>
+  <button data-tab="notes">📝 Notes</button>
+  <button data-tab="tests">🧪 Tests</button>
+  <button data-tab="assignments">📌 Assignments</button>
+  <button data-tab="progress">📊 Progress</button>
+  <button data-tab="doubts">💬 Doubts</button>
+</nav>
 
-  <div class="hero" id="hero">
-    <div class="top-actions">
-      <button id="soundBtn" class="icon-btn" title="Sound on/off">🔊</button>
-      <button id="themeBtn" class="icon-btn" title="Dark/Light">🌙</button>
+<!-- ================= HOME ================= -->
+<section id="home" class="tab">
+  <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
+
+  <div class="card"><h2>🔥 Study Streak</h2>
+    <div class="streak-box">
+      <div class="streak-num">🔥 <span id="streakCount">0</span> days</div>
+      <div class="badge-row" id="badgeRow"></div>
     </div>
-    <div class="hero-top">
-      <div class="avatar" style="display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,.25)">🎓</div>
+    <p class="muted">প্রতিদিন hub-এ ঢুকলেই streak বাড়ে — নিয়মিত revision-এর অভ্যাস তৈরি করার জন্য।</p>
+  </div>
+
+  <div class="card"><h2>⏱️ Pomodoro Study Timer</h2>
+    <div class="pomo-box">
+      <div class="pomo-ring" id="pomoRing" data-time="25:00" style="--pct:0"></div>
       <div>
-        <span class="pill" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35)">EXAM SUITE</span>
+        <div class="row" style="max-width:280px">
+          <select id="pomoMode"><option value="25">Focus 25 min</option><option value="5">Short break 5 min</option><option value="15">Long break 15 min</option></select>
+        </div>
+        <div class="pomo-actions">
+          <button id="pomoStart" class="secondary">▶️ Start</button>
+          <button id="pomoPause" class="secondary">⏸️ Pause</button>
+          <button id="pomoReset" class="secondary">🔄 Reset</button>
+        </div>
       </div>
     </div>
-    <h1 id="heroName">Hi 👋</h1>
-    <p id="heroMeta" class="muted" style="color:rgba(255,255,255,.85)"></p>
-    <button id="logoutBtn" class="secondary" style="background:rgba(255,255,255,.9);color:#3a2a7a;margin-top:6px">Logout</button>
   </div>
 
-  <div class="nav">
-    <button id="tabTestsBtn" class="active">📝 Tests</button>
-    <button id="tabLbBtn">🏆 Leaderboard</button>
+  <div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">ছোট একটা ছবি (150 KB এর কম) আপলোড করো, নিজের প্রোফাইলে দেখা যাবে।</p>
+    <div class="row"><input id="avatarFile" type="file" accept="image/*"><button id="saveAvatar" class="secondary">Save Picture</button></div>
+    <p id="avatarMsg" class="muted"></p>
   </div>
 
-  <!-- ================= TESTS TAB ================= -->
-  <section id="tests">
-    <div class="card"><h2>📝 Available Tests</h2><div id="testsList"><p class="muted">Loading...</p></div></div>
+  <div class="card"><h2>📚 My Subjects</h2><div id="subjects" class="grid"></div></div>
+</section>
 
-    <section id="runner" class="card hidden">
-      <div class="row" style="align-items:center">
-        <h2 id="testName" style="margin:0"></h2>
-        <div class="timer" id="timer" style="text-align:right">⏱ --:--</div>
+<!-- ================= NOTES ================= -->
+<section id="notes" class="tab hidden">
+  <div class="card">
+    <h2>📝 Notes</h2>
+    <div class="filter-bar">
+      <input id="noteSearch" placeholder="🔍 Search notes...">
+      <select id="chapterFilter"><option value="">All chapters</option></select>
+      <label class="chip-toggle"><input id="bookmarkOnly" type="checkbox"> ⭐ Bookmarked only</label>
+      <button id="flashBtn" class="secondary">🎴 Flashcard revision</button>
+    </div>
+    <div id="notesList"></div>
+  </div>
+  <div id="flashSection" class="card hidden">
+    <h2>🎴 Flashcards</h2>
+    <div class="flash-stage">
+      <div class="flash-card-wrap"><div class="flash-card" id="flashCard"></div></div>
+      <div class="flash-progress" id="flashProgress"></div>
+      <div class="flash-controls">
+        <button id="flashPrev" class="secondary">◀ Prev</button>
+        <button id="flashShuffle" class="secondary">🔀 Shuffle</button>
+        <button id="flashNext" class="secondary">Next ▶</button>
+        <button id="flashClose" class="danger">✖ Close</button>
       </div>
-      <div class="progressbar"><div id="progressFill" style="width:0%"></div></div>
-      <form id="testForm"></form>
-      <button id="submitTest" type="button" class="gold-btn" style="width:100%;margin-top:10px">✅ Final Submit</button>
-      <p id="testStatus" class="muted"></p>
-    </section>
-
-    <section id="resultBox" class="card hidden"></section>
-  </section>
-
-  <!-- ================= LEADERBOARD TAB ================= -->
-  <section id="leaderboard" class="hidden">
-    <div class="card">
-      <h2>🏆 Class Leaderboard</h2>
-      <p class="muted">সব submit করা test মিলিয়ে average score-এর ভিত্তিতে র‍্যাঙ্কিং।</p>
-      <div id="lbList"><p class="muted">Loading...</p></div>
-    </div>
-  </section>
-
-</div>
-
-<!-- ================= CONFIRM MODAL ================= -->
-<div id="confirmOverlay" class="modal-overlay hidden">
-  <div class="modal confirm-modal">
-    <p id="confirmMsg" class="confirm-msg"></p>
-    <div class="modal-actions">
-      <button id="confirmYes" type="button">✅ হ্যাঁ</button>
-      <button id="confirmNo" class="secondary" type="button">✖ না</button>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ================= AI PROMPT MODAL ================= -->
-<div id="aiPromptOverlay" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>🤖 তোমার AI Tutor Prompt রেডি</h3>
-      <button id="aiPromptClose" class="modal-x" type="button">✖</button>
-    </div>
-    <p class="muted modal-sub">নিচের prompt-টা ChatGPT-তে paste করলেই ও ধাপে ধাপে পড়াবে। Button-এ চাপলে auto-copy হবে — না হলে নিজে বেছে copy করো।</p>
-    <textarea id="aiPromptText" class="modal-textarea" readonly></textarea>
-    <div class="modal-actions">
-      <button id="aiPromptCopyBtn" type="button">📋 Prompt Copy করো</button>
-      <a id="aiPromptOpenLink" class="btn secondary" href="https://chatgpt.com/" target="_system" rel="noopener noreferrer">🚀 ChatGPT খোলো</a>
-    </div>
-    <p id="aiPromptHint" class="muted" style="margin-top:10px"></p>
+<!-- ================= TESTS ================= -->
+<section id="tests" class="tab hidden">
+  <div class="card"><h2>🧪 Available Tests</h2>
+    <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
+    <div id="testsList"></div>
   </div>
-</div>
+</section>
 
-<!-- ================= ANSWER REVIEW MODAL ================= -->
-<div id="reviewOverlay" class="modal-overlay hidden">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-head">
-      <h3 id="reviewTitle">📝 Answer Review</h3>
-      <button id="reviewClose" class="modal-x" type="button">✖</button>
-    </div>
-    <p class="muted modal-sub">সবুজ = সঠিক উত্তর। লাল = তোমার ভুল উত্তর।</p>
-    <div id="reviewBody"></div>
+<section id="runner" class="card hidden">
+<div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
+<div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
+<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
+</section>
+<section id="resultBox" class="card hidden"></section>
+
+<!-- ================= ASSIGNMENTS ================= -->
+<section id="assignments" class="tab hidden">
+  <div class="card"><h2>📌 Homework / Assignments</h2><div id="asgList"></div></div>
+</section>
+
+<!-- ================= PROGRESS ================= -->
+<section id="progress" class="tab hidden">
+  <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
+  <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
+  <div class="card"><h2>🏆 Class Leaderboard</h2><p class="muted">তোমার class-এর সবার average score-এর ভিত্তিতে র‍্যাঙ্কিং।</p><div id="leaderboard"></div></div>
+  <div class="card"><h2>🗂️ Test History</h2><div id="historyList"></div></div>
+</section>
+
+<!-- ================= DOUBTS ================= -->
+<section id="doubts" class="tab hidden">
+  <div class="card"><h2>💬 Ask a Doubt</h2>
+    <div class="row"><select id="doubtSubject"><option value="">Subject বেছে নাও</option></select></div>
+    <textarea id="doubtText" placeholder="তোমার প্রশ্নটা লিখো..."></textarea>
+    <button id="sendDoubt">Send to Teacher</button><p id="doubtMsg" class="muted"></p>
   </div>
+  <div class="card"><h2>📜 My Doubts</h2><div id="myDoubts"></div></div>
+</section>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { firebaseConfig } from "./config.js";
-import { mountBlobs, mountHeroSparkle, confettiBurst, playChime, toast, isSoundOn, setSoundOn } from "./effects.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {firebaseConfig} from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
 
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
-const $ = id => document.getElementById(id);
-
-/* ---------- Escape untrusted text before innerHTML ---------- */
-function esc(s) { return String(s == null ? "" : s).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
-
-/* ---------- State (declared up-front — never mid-file — so async
-   Firebase callbacks can never race a `let` before it's initialized) ---------- */
-let profile = null, tests = [], myAttempts = [], activeTest = null, activeAttempt = null;
-let timerHandle = null, startMs = 0, submittingTest = false;
-let testsUnsub = null, attemptsUnsub = null;
-
-/* ---------- Fatal-error visibility net: never fail silently ---------- */
-function showFatalError(msg) {
-  let bar = document.getElementById("fatalErrBar");
-  if (!bar) {
-    bar = document.createElement("div");
-    bar.id = "fatalErrBar";
-    bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#e11d48;color:#fff;padding:10px 14px;font-size:12.5px;line-height:1.5;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.25)";
-    document.body.prepend(bar);
-  }
-  bar.textContent = "⚠️ Technical error: " + msg + " — এই লেখাটার screenshot নিয়ে rakho আর পাঠিয়ে দাও।";
-}
-window.addEventListener("error", e => { console.error("Uncaught error:", e.error || e.message); showFatalError(e.message || String(e.error || "unknown error")); });
-window.addEventListener("unhandledrejection", e => { console.error("Unhandled rejection:", e.reason); showFatalError((e.reason && (e.reason.message || String(e.reason))) || "unknown async error"); });
-
-/* ---------- In-app replacements for confirm()/alert() (native dialogs
-   are unreliable inside WebView-wrapper apps) ---------- */
-function showConfirm(message) {
-  return new Promise(resolve => {
-    $("confirmMsg").textContent = message;
-    $("confirmOverlay").classList.remove("hidden");
-    const cleanup = r => { $("confirmOverlay").classList.add("hidden"); $("confirmYes").onclick = null; $("confirmNo").onclick = null; resolve(r); };
-    $("confirmYes").onclick = () => cleanup(true);
-    $("confirmNo").onclick = () => cleanup(false);
-  });
-}
-function notify(message, icon) { toast(message, icon || "⚠️"); }
-
-mountBlobs();
-mountHeroSparkle("#hero");
-$("soundBtn").textContent = isSoundOn() ? "🔊" : "🔇";
-$("soundBtn").onclick = () => { const on = !isSoundOn(); setSoundOn(on); $("soundBtn").textContent = on ? "🔊" : "🔇"; playChime("click"); };
-$("themeBtn").onclick = () => {
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
-  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
-  try { localStorage.setItem("theme", dark ? "light" : "dark"); } catch (e) {}
+/* ---------- THEME ---------- */
+function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
+applyThemeBtn();
+$("themeBtn").onclick=()=>{
+ const dark=document.documentElement.getAttribute("data-theme")==="dark";
+ if(dark){document.documentElement.removeAttribute("data-theme");localStorage.setItem("theme","light");}
+ else{document.documentElement.setAttribute("data-theme","dark");localStorage.setItem("theme","dark");}
+ applyThemeBtn();
 };
-$("logoutBtn").onclick = async () => { if (await showConfirm("Logout করতে চাও?")) { await signOut(auth); location.href = "index.html"; } };
 
-/* ---------- Tabs ---------- */
-function showTab(name) {
-  $("tests").classList.toggle("hidden", name !== "tests");
-  $("leaderboard").classList.toggle("hidden", name !== "leaderboard");
-  $("tabTestsBtn").classList.toggle("active", name === "tests");
-  $("tabLbBtn").classList.toggle("active", name === "leaderboard");
-  if (name === "leaderboard") renderLeaderboard();
-}
-$("tabTestsBtn").onclick = () => showTab("tests");
-$("tabLbBtn").onclick = () => showTab("leaderboard");
-
-/* ================= AUTH + LOAD ================= */
-onAuthStateChanged(auth, async u => {
-  if (!u) { location.href = "index.html"; return; }
-  const p = await getDoc(doc(db, "users", u.uid));
-  if (!p.exists() || p.data().role !== "student") { await signOut(auth); location.href = "index.html"; return; }
-  profile = p.data();
-  $("heroName").textContent = `Hi, ${esc(profile.name)} 👋`;
-  $("heroMeta").textContent = `${profile.className} · ${profile.email}`;
-  loadData();
+$("logout").onclick=async()=>{
+ const btn=$("logout");if(btn.disabled)return;btn.disabled=true;btn.textContent="Logging out...";
+ const forceRedirect=setTimeout(()=>{location.href="index.html";},4000);
+ try{await signOut(auth);}
+ catch(e){console.error("logout error:",e);}
+ finally{clearTimeout(forceRedirect);location.href="index.html";}
+};
+onAuthStateChanged(auth,async u=>{
+ if(!u){location.href="index.html";return;}
+ const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
+ profile=p.data();$("welcome").textContent=`Hi, ${profile.name} 👋`;$("who").textContent=`${profile.className} · ${profile.email}`;
+ renderAvatar();await updateStreak();renderBadges();
+ await loadData();
 });
 
-function loadData() {
-  testsUnsub = onSnapshot(
-    query(collection(db, "tests"), where("classId", "==", profile.classId), where("published", "==", true)),
-    snap => { tests = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTests(); },
-    err => { console.error("tests listener error:", err); $("testsList").innerHTML = "<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>"; }
-  );
-  attemptsUnsub = onSnapshot(
-    query(collection(db, "attempts"), where("uid", "==", auth.currentUser.uid)),
-    snap => { myAttempts = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTests(); },
-    err => console.error("attempts listener error:", err)
-  );
-}
-
-/* ================= TESTS LIST ================= */
-function renderTests() {
-  if (!tests.length) { $("testsList").innerHTML = "<p class='muted'>এখনো কোনো test publish হয়নি।</p>"; return; }
-  $("testsList").innerHTML = tests.map(t => {
-    const mine = myAttempts.filter(a => a.testId === t.id).sort((a, b) => (b.startedAt?.seconds || 0) - (a.startedAt?.seconds || 0))[0];
-    let statusHtml;
-    if (mine && mine.status === "submitted") {
-      statusHtml = mine.score != null
-        ? `<span class="pill teal">✅ সম্পন্ন — ${mine.score}/${mine.total} (${mine.percentage}%)</span> <button class="secondary viewResultBtn" data-id="${esc(mine.id)}" style="margin-top:8px">📄 Result দেখো</button>`
-        : `<span class="pill gold">⏳ Grading হচ্ছে...</span>`;
-    } else if (mine && mine.status === "in_progress") {
-      statusHtml = `<button class="resumeBtn gold-btn" data-id="${esc(t.id)}">▶ Continue Test</button>`;
-    } else {
-      statusHtml = `<button class="startBtn" data-id="${esc(t.id)}">▶ Start Test</button>`;
-    }
-    return `<div class="test-item"><b>${esc(t.title)}</b><br><span class="muted">${esc(t.subjectName || "")} · ${t.questionCount || (t.questions || []).length} questions · ${t.durationMinutes || 30} min</span><div style="margin-top:10px">${statusHtml}</div></div>`;
-  }).join("");
-
-  document.querySelectorAll(".startBtn,.resumeBtn").forEach(b => b.onclick = () => startTest(tests.find(t => t.id === b.dataset.id)));
-  document.querySelectorAll(".viewResultBtn").forEach(b => b.onclick = () => {
-    const a = myAttempts.find(x => x.id === b.dataset.id);
-    if (a) showResult(a, tests.find(t => t.id === a.testId));
-  });
-}
-
-/* ================= TAKE TEST ================= */
-async function startTest(test) {
-  if (!test) { notify("Test পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।"); return; }
-  try {
-    let existing = myAttempts.find(a => a.testId === test.id && a.status === "in_progress");
-    if (!existing) {
-      const ref = await addDoc(collection(db, "attempts"), {
-        uid: auth.currentUser.uid, studentName: profile.name, classId: profile.classId,
-        testId: test.id, testTitle: test.title, status: "in_progress", answers: {},
-        startedAt: serverTimestamp(), score: null, total: null, percentage: null
-      });
-      activeAttempt = ref.id;
-    } else {
-      activeAttempt = existing.id;
-    }
-    activeTest = test;
-    $("resultBox").classList.add("hidden"); $("resultBox").innerHTML = "";
-    $("runner").classList.remove("hidden");
-    $("testName").textContent = test.title;
-    const savedAnswers = (existing && existing.answers) || {};
-    $("testForm").innerHTML = (test.questions || []).map((q, i) => `
-      <div class="qcard"><b>${i + 1}. ${esc(q.q)}</b>
-        ${(q.o || []).map((o, j) => `<label class="opt"><input type="radio" name="q${i}" value="${j}" ${String(savedAnswers["q" + i]) === String(j) ? "checked" : ""}> ${String.fromCharCode(65 + j)}. ${esc(o)}</label>`).join("")}
-      </div>`).join("");
-    $("testForm").oninput = () => { updateProgress(); autosaveAnswers(); };
-    updateProgress();
-    startMs = (existing && existing.startedAt && existing.startedAt.seconds) ? existing.startedAt.seconds * 1000 : Date.now();
-    clearInterval(timerHandle);
-    tick(); timerHandle = setInterval(tick, 1000);
-    $("testStatus").textContent = "";
-    playChime("click");
-    document.getElementById("runner").scrollIntoView({ behavior: "smooth", block: "start" });
-  } catch (err) {
-    console.error("startTest failed", err);
-    const denied = String(err && err.code || "").includes("permission");
-    notify(denied ? "Test শুরু করা যায়নি: Firebase permission denied। Admin-কে firestore.rules deploy করতে হবে।" : "Test শুরু করা যায়নি। Internet check করে আবার চেষ্টা করো।");
-  }
-}
-
-function updateProgress() {
-  const total = (activeTest.questions || []).length;
-  const answered = new Set([...new FormData($("testForm")).keys()]).size;
-  $("progressFill").style.width = total ? Math.round(answered / total * 100) + "%" : "0%";
-}
-
-let autosaveTimer = null, answerSavePromise = Promise.resolve();
-function autosaveAnswers() {
-  clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(() => {
-    if (!activeAttempt) return;
-    const fd = new FormData($("testForm"));
-    const answers = {}; for (const [k, v] of fd.entries()) answers[k] = v;
-    answerSavePromise = updateDoc(doc(db, "attempts", activeAttempt), { answers }).catch(err => console.error("autosave failed", err));
-  }, 600);
-}
-
-function tick() {
-  if (!activeTest) return;
-  const total = (activeTest.durationMinutes || 30) * 60, used = Math.floor((Date.now() - startMs) / 1000), left = Math.max(0, total - used);
-  $("timer").textContent = `⏱ ${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
-  if (left <= 30 && left > 0 && left % 10 === 0) playChime("timer");
-  if (left <= 0) { clearInterval(timerHandle); finishTest(true); }
-}
-
-$("submitTest").addEventListener("click", async event => {
-  event.preventDefault(); event.stopPropagation();
-  if (submittingTest) return;
-  if (!activeTest || !activeAttempt) { $("testStatus").textContent = "⚠️ Test session পাওয়া যাচ্ছে না। আবার Start করো।"; return; }
-  const confirmed = await showConfirm("Final submit করতে নিশ্চিত? এরপর উত্তর বদলানো যাবে না।");
-  if (confirmed) await finishTest(false);
-  else $("testStatus").textContent = "Submit বাতিল করা হয়েছে।";
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");
 });
 
-async function finishTest(auto) {
-  if (submittingTest) return;
-  submittingTest = true;
-  clearInterval(timerHandle);
-  $("submitTest").disabled = true;
-  $("testForm").querySelectorAll("input").forEach(x => x.disabled = true);
-  $("testStatus").textContent = auto ? "⏰ সময় শেষ — জমা দেওয়া হচ্ছে..." : "জমা দেওয়া হচ্ছে...";
-  try {
-    await answerSavePromise;
-    const fd = new FormData($("testForm"));
-    const answers = {}; for (const [k, v] of fd.entries()) answers[k] = v;
-    await updateDoc(doc(db, "attempts", activeAttempt), { answers, status: "submitted", submittedAt: serverTimestamp(), autoSubmitted: !!auto });
-  } catch (err) {
-    console.error("submit failed", err);
-    submittingTest = false;
-    $("submitTest").disabled = false;
-    $("testForm").querySelectorAll("input").forEach(x => x.disabled = false);
-    const denied = String(err && err.code || "").includes("permission");
-    notify(denied ? "Submit হয়নি: Firebase permission denied। Admin-কে firestore.rules deploy করতে হবে।" : "Submit হয়নি। আবার চেষ্টা করো।");
-    $("testStatus").textContent = "❌ Submit fail হয়েছে — আবার Final Submit চাপো।";
-    return;
-  }
-  submittingTest = false;
-  const finishedTest = activeTest, finishedAttemptId = activeAttempt;
-  $("runner").classList.add("hidden");
-  $("resultBox").classList.remove("hidden");
-  $("resultBox").innerHTML = `<span class="pill">RESULT</span><h2>${esc(finishedTest.title)}</h2><p class="muted">⏳ Grading হচ্ছে... একটু পরে score দেখা যাবে।</p><div class="row" style="margin-top:10px"><button id="backToTestsBtn" class="secondary">🏠 Test List-এ ফিরে যাও</button></div>`;
-  $("backToTestsBtn").onclick = () => backToTests();
-  const unsub = onSnapshot(doc(db, "attempts", finishedAttemptId), s => {
-    const d = s.data();
-    if (d && d.score != null) { unsub(); showResult({ id: finishedAttemptId, ...d }, finishedTest, true); }
-  });
+/* ---------- AVATAR ---------- */
+function renderAvatar(){
+ const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
+ $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${profile.avatarData}" alt="avatar">`:`<span class="avatar-placeholder">${initial}</span>`;
+}
+function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+$("saveAvatar").onclick=async()=>{
+ try{
+   const f=$("avatarFile").files[0];
+   if(!f)throw new Error("প্রথমে একটা ছবি বেছে নাও।");
+   if(f.size>150*1024)throw new Error("ছবি 150 KB এর মধ্যে হতে হবে।");
+   const dataUrl=await fileToDataUrl(f);
+   await updateDoc(doc(db,"users",auth.currentUser.uid),{avatarData:dataUrl});
+   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";
+ }catch(e){$("avatarMsg").textContent=e.message;}
+};
+
+/* ---------- STREAK ---------- */
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
+async function updateStreak(){
+ const streak=profile.streak||{count:0,lastDate:""};
+ const today=todayStr();
+ if(streak.lastDate===today){/* already counted today */}
+ else if(streak.lastDate===yesterdayStr()){streak.count=(streak.count||0)+1;streak.lastDate=today;await updateDoc(doc(db,"users",auth.currentUser.uid),{streak});profile.streak=streak;}
+ else{streak.count=1;streak.lastDate=today;await updateDoc(doc(db,"users",auth.currentUser.uid),{streak});profile.streak=streak;}
+ $("streakCount").textContent=streak.count||0;
+}
+function renderBadges(){
+ const c=(profile.streak&&profile.streak.count)||0;
+ const levels=[["🔥 3-day",3],["🥉 7-day",7],["🥈 14-day",14],["🥇 30-day",30]];
+ $("badgeRow").innerHTML=levels.map(([label,n])=>`<span class="badge ${c>=n?"":"locked"}">${label}</span>`).join("");
 }
 
-function backToTests() {
-  $("resultBox").classList.add("hidden"); $("resultBox").innerHTML = "";
-  activeTest = null; activeAttempt = null;
-  document.getElementById("tests").scrollIntoView({ behavior: "smooth", block: "start" });
+/* ---------- POMODORO ---------- */
+let pomoTotal=25*60,pomoLeft=25*60,pomoHandle=null;
+function renderPomo(){
+ const m=Math.floor(pomoLeft/60),s=pomoLeft%60;
+ $("pomoRing").setAttribute("data-time",`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`);
+ $("pomoRing").style.setProperty("--pct",Math.round((1-pomoLeft/pomoTotal)*100));
+}
+$("pomoMode").onchange=()=>{clearInterval(pomoHandle);pomoHandle=null;pomoTotal=pomoLeft=Number($("pomoMode").value)*60;renderPomo();};
+$("pomoStart").onclick=()=>{
+ if(pomoHandle)return;
+ pomoHandle=setInterval(()=>{
+  pomoLeft--;renderPomo();
+  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
+ },1000);
+};
+$("pomoPause").onclick=()=>{clearInterval(pomoHandle);pomoHandle=null;};
+$("pomoReset").onclick=()=>{clearInterval(pomoHandle);pomoHandle=null;pomoLeft=pomoTotal;renderPomo();};
+renderPomo();
+
+/* ---------- HELPERS ---------- */
+function subjectClass(name){const n=(name||"").toLowerCase();if(n.includes("math"))return"math";if(n.includes("phys"))return"physics";if(n.includes("chem"))return"chemistry";if(n.includes("bio"))return"biology";return"default";}
+function subjectIcon(name){const n=(name||"").toLowerCase();if(n.includes("math"))return"➗";if(n.includes("phys"))return"⚡";if(n.includes("chem"))return"🧪";if(n.includes("bio"))return"🧬";return"📘";}
+function subjectName(id){return subjects.find(s=>s.id===id)?.name||"Subject";}
+
+/* ---------- LOAD ALL DATA ---------- */
+async function loadData(){
+ const ss=await getDocs(query(collection(db,"subjects"),where("classId","==",profile.classId)));subjects=ss.docs.map(d=>({id:d.id,...d.data()}));
+ $("subjects").innerHTML=subjects.map(s=>`<div class="card subject-card ${subjectClass(s.name)}"><div class="subject-icon">${subjectIcon(s.name)}</div><div><h3>${s.name}</h3><span class="pill">${profile.className}</span></div></div>`).join("")||"<p>No subjects yet.</p>";
+ $("doubtSubject").innerHTML=`<option value="">Subject বেছে নাও</option>`+subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+
+ // Live: new notes/tests/notices/assignments the teacher publishes appear
+ // instantly, no logout/login or manual reload needed.
+ onSnapshot(query(collection(db,"notes"),where("classId","==",profile.classId)),snap=>{
+  notes=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const chapters=[...new Set(notes.map(n=>n.chapter).filter(Boolean))];
+  $("chapterFilter").innerHTML=`<option value="">All chapters</option>`+chapters.map(c=>`<option value="${c}">${c}</option>`).join("");
+  renderNotes();
+ },err=>console.error("notes listener error:",err));
+
+ onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
+  tests=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderTests();
+ },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
+
+ onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
+  const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("noticeList").innerHTML=notices.map(n=>`<div class="notice-item"><b>${n.title}</b><p class="muted">${n.content}</p></div>`).join("")||"<p class='muted'>এখনো কোনো notice নেই।</p>";
+ });
+
+ onSnapshot(query(collection(db,"assignments"),where("classId","==",profile.classId)),async snap=>{
+  assignments=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const statusS=await getDocs(query(collection(db,"assignmentStatus"),where("uid","==",auth.currentUser.uid)));
+  doneAssignmentIds=new Set(statusS.docs.filter(d=>d.data().done).map(d=>d.data().assignmentId));
+  renderAssignments();
+ });
+
+ await loadProgressAndLeaderboard();
+ listenMyDoubts();
 }
 
-function showResult(attempt, test, celebrate) {
-  $("runner").classList.add("hidden");
-  $("resultBox").classList.remove("hidden");
-  const perfect = attempt.percentage >= 100;
-  $("resultBox").innerHTML = `<span class="pill">RESULT</span><h2>${esc((test && test.title) || attempt.testTitle)}</h2><h1>${attempt.score}/${attempt.total}</h1><p><b>${attempt.percentage}%</b></p>${perfect ? `<div class="trophy-badge">🏆 Perfect Score!</div>` : ""}<div id="testLbMini" style="margin:14px 0"></div><div class="row" style="margin-top:6px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button><button id="askAiBtn" class="secondary">🤖 দুর্বল Topic-এ ChatGPT সাহায্য</button><button id="backToTestsBtn2" class="secondary">🏠 Test List-এ ফিরে যাও</button></div>`;
-  $("reviewNowBtn").onclick = () => renderReviewModal((test && test.title) || attempt.testTitle, attempt.review);
-  $("askAiBtn").onclick = () => askAiAboutAttempt((test && test.title) || attempt.testTitle, attempt.review);
-  $("backToTestsBtn2").onclick = () => backToTests();
-  renderTestLeaderboardMini(attempt.testId);
-  if (celebrate) {
-    if (attempt.percentage >= 40) { confettiBurst(perfect ? 160 : (attempt.percentage >= 80 ? 130 : 70)); playChime(perfect ? "perfect" : "success"); }
-    else playChime("wrong");
-  }
+/* ---------- NOTES + SEARCH + BOOKMARK + FLASHCARDS ---------- */
+function filteredNotes(){
+ const q=$("noteSearch").value.trim().toLowerCase();
+ const chap=$("chapterFilter").value;
+ const bmOnly=$("bookmarkOnly").checked;
+ const bookmarks=profile.bookmarks||[];
+ return notes.filter(n=>{
+  if(chap&&n.chapter!==chap)return false;
+  if(bmOnly&&!bookmarks.includes(n.id))return false;
+  if(q){const hay=(n.title+" "+(n.content||"")+" "+(n.chapter||"")).toLowerCase();if(!hay.includes(q))return false;}
+  return true;
+ });
+}
+function renderNotes(){
+ const list=filteredNotes();const bookmarks=profile.bookmarks||[];
+ $("notesList").innerHTML=list.map(n=>{
+  const isBm=bookmarks.includes(n.id);
+  return `<div class="item"><div class="topbar"><span class="pill">${subjectName(n.subjectId)}</span><button class="bookmark-btn ${isBm?"active":""}" data-id="${n.id}" title="Bookmark">${isBm?"★":"☆"}</button></div>
+  ${n.chapter?`<span class="pill teal">${n.chapter}</span>`:""}
+  <h3>${n.title}</h3><div>${(n.content||"").replaceAll("\n","<br>")}</div>
+  ${n.attachmentData?`<p><a class="btn secondary" download="${n.attachmentName||"note"}" href="${n.attachmentData}">📎 Open attachment</a></p>`:""}
+  <button class="ai" data-title="${encodeURIComponent(n.title)}" data-content="${encodeURIComponent(n.content||"")}">✨ Explain with ChatGPT</button></div>`;
+ }).join("")||"<p>কোনো note পাওয়া যায়নি।</p>";
+ document.querySelectorAll(".ai").forEach(b=>b.onclick=()=>aiHelp(decodeURIComponent(b.dataset.title),decodeURIComponent(b.dataset.content)));
+ document.querySelectorAll(".bookmark-btn").forEach(b=>b.onclick=()=>toggleBookmark(b.dataset.id));
+}
+$("noteSearch").oninput=renderNotes;$("chapterFilter").onchange=renderNotes;$("bookmarkOnly").onchange=renderNotes;
+
+async function toggleBookmark(noteId){
+ const bookmarks=new Set(profile.bookmarks||[]);
+ if(bookmarks.has(noteId))bookmarks.delete(noteId);else bookmarks.add(noteId);
+ profile.bookmarks=[...bookmarks];
+ await updateDoc(doc(db,"users",auth.currentUser.uid),{bookmarks:profile.bookmarks});
+ renderNotes();
 }
 
-async function renderTestLeaderboardMini(testId) {
-  try {
-    const snap = await getDocs(query(collection(db, "attempts"), where("testId", "==", testId), where("status", "==", "submitted")));
-    const rows = snap.docs.map(d => d.data()).filter(a => a.score != null).sort((a, b) => b.percentage - a.percentage).slice(0, 5);
-    const box = $("testLbMini");
-    if (!box) return;
-    if (!rows.length) { box.innerHTML = ""; return; }
-    box.innerHTML = `<p class="muted" style="margin-bottom:8px">🏆 এই Test-এর Leaderboard</p>` + rows.map((r, i) => `<div class="lb-row ${i === 0 ? "top1" : i === 1 ? "top2" : i === 2 ? "top3" : ""}"><div class="lb-rank">${i + 1}</div><div class="lb-name">${esc(r.studentName)}</div><div class="lb-score">${r.score}/${r.total}</div></div>`).join("");
-  } catch (err) { console.error("test leaderboard failed", err); }
+async function aiHelp(title,content){
+ const promptText=`আমি বাংলা-মাধ্যমের ${profile.className} student। নিচের topic-টা আমি বুঝতে পারছি না।
+
+Topic: ${title}
+Context/Notes: ${content}
+
+আমাকে এই sequence-এ শেখাও:
+1) খুব সহজ real-life example
+2) basic concept
+3) visual imagination/ছোট diagram
+4) step-by-step explanation
+5) important English terms-এর বাংলা মানে
+6) common mistakes
+7) 3টা practice question
+
+আমি মুখস্থ না করে concept বুঝতে চাই।`;
+ try{await navigator.clipboard.writeText(promptText);alert("Prompt copy হয়েছে। এখন ChatGPT খুলছে—paste করো।");window.open("https://chatgpt.com/","_blank");}
+ catch{window.prompt("এই prompt copy করো:",promptText);}
 }
 
-/* ================= LEADERBOARD TAB ================= */
-async function renderLeaderboard() {
-  $("lbList").innerHTML = "<p class='muted'>Loading...</p>";
-  try {
-    const snap = await getDocs(query(collection(db, "attempts"), where("classId", "==", profile.classId), where("status", "==", "submitted")));
-    const byUid = {};
-    snap.docs.forEach(d => {
-      const a = d.data(); if (a.score == null) return;
-      if (!byUid[a.uid]) byUid[a.uid] = { name: a.studentName, sumPct: 0, count: 0 };
-      byUid[a.uid].sumPct += a.percentage; byUid[a.uid].count++;
-    });
-    const rows = Object.values(byUid).map(r => ({ name: r.name, avg: Math.round(r.sumPct / r.count), tests: r.count })).sort((a, b) => b.avg - a.avg).slice(0, 30);
-    if (!rows.length) { $("lbList").innerHTML = "<p class='muted'>এখনো কোনো submitted test নেই।</p>"; return; }
-    $("lbList").innerHTML = rows.map((r, i) => `<div class="lb-row ${i === 0 ? "top1" : i === 1 ? "top2" : i === 2 ? "top3" : ""}"><div class="lb-rank">${i + 1}</div><div class="lb-name">${esc(r.name)}<br><span class="muted" style="font-size:12px">${r.tests}টা test</span></div><div class="lb-score">${r.avg}%</div></div>`).join("");
-  } catch (err) {
-    console.error("leaderboard failed", err);
-    $("lbList").innerHTML = "<p class='muted'>Leaderboard load করা যায়নি।</p>";
-  }
+/* ---------- FLASHCARDS ---------- */
+let flashDeck=[],flashIdx=0,flashShowBack=false;
+$("flashBtn").onclick=()=>{
+ flashDeck=filteredNotes().filter(n=>n.content);
+ if(!flashDeck.length){alert("Flashcard বানানোর মতো কোনো note নেই (filter change করে দেখো)।");return;}
+ flashIdx=0;flashShowBack=false;$("flashSection").classList.remove("hidden");renderFlash();$("flashSection").scrollIntoView({behavior:"smooth"});
+};
+function renderFlash(){
+ const n=flashDeck[flashIdx];
+ $("flashCard").innerHTML=flashShowBack?`<div>${n.content.replaceAll("\n","<br>")}<div class="hint">Tap to see question</div></div>`:`<div>${n.title}<div class="hint">Tap to reveal answer</div></div>`;
+ $("flashProgress").textContent=`${flashIdx+1} / ${flashDeck.length}`;
+}
+$("flashCard").onclick=()=>{flashShowBack=!flashShowBack;renderFlash();};
+$("flashNext").onclick=()=>{flashIdx=(flashIdx+1)%flashDeck.length;flashShowBack=false;renderFlash();};
+$("flashPrev").onclick=()=>{flashIdx=(flashIdx-1+flashDeck.length)%flashDeck.length;flashShowBack=false;renderFlash();};
+$("flashShuffle").onclick=()=>{for(let i=flashDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[flashDeck[i],flashDeck[j]]=[flashDeck[j],flashDeck[i]];}flashIdx=0;flashShowBack=false;renderFlash();};
+$("flashClose").onclick=()=>$("flashSection").classList.add("hidden");
+
+/* ---------- TESTS ---------- */
+function renderTests(){
+ const q=$("testSearch").value.trim().toLowerCase();
+ const list=tests.filter(t=>!q||(t.title+" "+(t.chapter||"")).toLowerCase().includes(q));
+ $("testsList").innerHTML=list.map(t=>`<div class="item"><span class="pill">${subjectName(t.subjectId)}</span><h3>${t.title}</h3><p class="muted">${t.chapter||""} · ${t.questionCount} questions · ${t.durationMinutes} min</p><button class="startTest" data-id="${t.id}">Start Test</button></div>`).join("")||"<p>No tests yet.</p>";
+ document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
+}
+$("testSearch").oninput=renderTests;
+
+async function startTest(id){
+ activeTest=tests.find(t=>t.id===id);answers={};
+ $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
+ $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${x.topic||"Question"}</span><p><b>${i+1}. ${x.q}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")}</div>`).join("");
+ const r=await addDoc(collection(db,"attempts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:activeTest.title,subjectId:activeTest.subjectId,status:"in_progress",progress:0,answers:{},startedAt:serverTimestamp()});
+ activeAttempt=r.id;startMs=Date.now();timerHandle=setInterval(tick,1000);$("runner").scrollIntoView({behavior:"smooth"});
+ $("testForm").onchange=async e=>{
+   if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
+   const n=Object.keys(answers).length;$("prog").style.width=(n/activeTest.questions.length*100)+"%";$("progText").textContent=`Answered ${n}/${activeTest.questions.length}`;
+   await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:n,lastUpdated:serverTimestamp()});
+ };
+}
+function tick(){
+ const total=activeTest.durationMinutes*60,used=Math.floor((Date.now()-startMs)/1000),left=Math.max(0,total-used);
+ $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
+ if(left<=0){clearInterval(timerHandle);finishTest(true);}
+}
+$("submitTest").onclick=()=>{if(confirm("Final submit করতে নিশ্চিত?"))finishTest(false);};
+
+async function finishTest(auto){
+ clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input").forEach(x=>x.disabled=true);
+ await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});
+ $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
+ const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
+   const d=s.data();if(d?.score!=null){
+     $("resultBox").classList.remove("hidden");
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${activeTest.title}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     unsub();loadProgressAndLeaderboard();
+   }
+ });
 }
 
-/* ================= ANSWER REVIEW (green/red) ================= */
-function renderReviewModal(title, review) {
-  $("reviewTitle").textContent = `📝 ${title} — Answer Review`;
-  if (!review || !review.length) {
-    $("reviewBody").innerHTML = "<p class='muted'>এই test-এর জন্য review data পাওয়া যায়নি।</p>";
-  } else {
-    const correctCount = review.filter(r => r.isCorrect).length;
-    $("reviewBody").innerHTML =
-      `<p class="review-summary">✅ ঠিক: <b>${correctCount}</b> &nbsp; ❌ ভুল: <b>${review.length - correctCount}</b> &nbsp; মোট: <b>${review.length}</b></p>`
-      + review.map((r, i) => {
-        const optsHtml = (r.o || []).map((o, j) => {
-          let cls = "rv-opt";
-          if (j === r.correctIdx) cls += " rv-correct";
-          if (j === r.chosenIdx && !r.isCorrect) cls += " rv-wrong";
-          let tag = "";
-          if (j === r.chosenIdx && j === r.correctIdx) tag = " ✅ (তোমার উত্তর)";
-          else if (j === r.chosenIdx) tag = " ❌ (তোমার উত্তর)";
-          else if (j === r.correctIdx) tag = " ✅ (সঠিক উত্তর)";
-          return `<div class="${cls}">${String.fromCharCode(65 + j)}. ${esc(o)}${tag}</div>`;
-        }).join("");
-        const unanswered = r.chosenIdx == null;
-        return `<div class="rv-q ${r.isCorrect ? "rv-q-correct" : "rv-q-wrong"}"><div class="rv-qhead"><span class="pill ${r.isCorrect ? "" : "danger-pill"}">${r.isCorrect ? "✅ ঠিক" : unanswered ? "➖ উত্তর দাওনি" : "❌ ভুল"}</span>${r.topic ? `<span class="pill teal">${esc(r.topic)}</span>` : ""}</div><p class="rv-qtext"><b>${i + 1}. ${esc(r.q)}</b></p>${optsHtml}</div>`;
-      }).join("");
-  }
-  $("reviewOverlay").classList.remove("hidden");
+/* ---------- ASSIGNMENTS ---------- */
+function dueTag(dueDate){
+ if(!dueDate)return"";
+ const today=todayStr();
+ if(dueDate<today)return`<span class="due-tag due-late">Overdue</span>`;
+ const soon=new Date();soon.setDate(soon.getDate()+2);
+ if(dueDate<=soon.toISOString().slice(0,10))return`<span class="due-tag due-soon">Due soon</span>`;
+ return`<span class="due-tag due-ok">Due ${dueDate}</span>`;
 }
-$("reviewClose").onclick = () => $("reviewOverlay").classList.add("hidden");
-$("reviewOverlay").onclick = e => { if (e.target.id === "reviewOverlay") $("reviewOverlay").classList.add("hidden"); };
+function renderAssignments(){
+ const sorted=[...assignments].sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+ $("asgList").innerHTML=sorted.map(a=>{
+  const done=doneAssignmentIds.has(a.id);
+  return `<div class="item assign-item ${done?"done":""}"><input type="checkbox" class="asgCheck" data-id="${a.id}" ${done?"checked":""}>
+  <div style="flex:1"><span class="pill">${subjectName(a.subjectId)}</span> ${dueTag(a.dueDate)}<h3>${a.title}</h3><p class="muted">${a.description||""}</p></div></div>`;
+ }).join("")||"<p class='muted'>এখনো কোনো assignment নেই।</p>";
+ document.querySelectorAll(".asgCheck").forEach(cb=>cb.onchange=async()=>{
+  const id=cb.dataset.id,done=cb.checked;
+  await setDoc(doc(db,"assignmentStatus",`${id}_${auth.currentUser.uid}`),{uid:auth.currentUser.uid,assignmentId:id,classId:profile.classId,done,doneAt:serverTimestamp()});
+  if(done)doneAssignmentIds.add(id);else doneAssignmentIds.delete(id);
+  renderAssignments();
+ });
+}
 
-/* ================= CHATGPT INTEGRATION ================= */
-function isBengaliText(str) { return /[\u0980-\u09FF]/.test(str || ""); }
-function fallbackCopy(text) {
-  const ta = $("aiPromptText");
-  ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
-  try { return document.execCommand("copy"); } catch (e) { return false; }
-}
-async function tryCopy(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
-  }
-  return fallbackCopy(text);
-}
-function copyPromptAndOpenChatGPT(promptText, bengali) {
-  try {
-    $("aiPromptText").value = promptText;
-    $("aiPromptHint").textContent = "";
-    $("aiPromptOverlay").classList.remove("hidden");
-    tryCopy(promptText).then(ok => {
-      toast(ok ? (bengali ? "Prompt copy হয়েছে — ChatGPT-তে paste করো" : "Prompt copied — paste it in ChatGPT")
-                : (bengali ? "Auto-copy হয়নি — নিচের বক্স থেকে copy করো" : "Auto-copy failed — copy it manually"), ok ? "🤖" : "⚠️");
-      if (!ok) $("aiPromptHint").textContent = bengali ? "👆 প্রম্পটের লেখায় ট্যাপ করে সব select করে copy করো।" : "👆 Tap the text above, select all, copy.";
-    });
-  } catch (err) {
-    console.error("copyPromptAndOpenChatGPT failed", err);
-    toast(bengali ? "কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করো" : "Something went wrong — try again", "⚠️");
-  }
-}
-$("aiPromptClose").onclick = () => $("aiPromptOverlay").classList.add("hidden");
-$("aiPromptOverlay").onclick = e => { if (e.target.id === "aiPromptOverlay") $("aiPromptOverlay").classList.add("hidden"); };
-$("aiPromptCopyBtn").onclick = async () => { const ok = await tryCopy($("aiPromptText").value); toast(ok ? "Prompt copy হয়েছে" : "Copy করা যায়নি — নিজে select করে copy করো", ok ? "📋" : "⚠️"); };
-const CHATGPT_URL = "https://chatgpt.com/";
-$("aiPromptOpenLink").addEventListener("click", e => {
-  // Never let the raw <a> navigation run: many WebView "app wrapper" builders
-  // navigate the SAME webview away to chatgpt.com on a plain click, wiping
-  // this app with no way back. Route through window.open() instead —
-  // "_system" is the convention those wrappers watch for to hand the link to
-  // the phone's real browser, leaving this app untouched underneath.
-  e.preventDefault();
-  let opened = null;
-  try { opened = window.open(CHATGPT_URL, "_system"); } catch (err) {}
-  if (!opened) { try { opened = window.open(CHATGPT_URL, "_blank", "noopener"); } catch (err) {} }
-  if (opened) setTimeout(() => toast("ChatGPT খোলা হয়েছে — prompt paste করে দাও", "🤖"), 400);
-  else { toast("ChatGPT automatic খোলা যায়নি — নিজে ChatGPT app/browser খুলে prompt-টা paste করো", "⚠️"); $("aiPromptHint").textContent = "👆 উপরের বক্স থেকে prompt copy করে নিজে ChatGPT app-এ গিয়ে paste করো।"; }
-});
+/* ---------- PROGRESS + LEADERBOARD + HISTORY ---------- */
+function barClass(pct){return pct<50?"weak":pct<75?"mid":"strong";}
+async function loadProgressAndLeaderboard(){
+ const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
+ const mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");
 
-function buildTutorPrompt({ topic, context, bengali }) {
-  const cls = (profile && profile.className) || "";
-  if (bengali) {
-    return `তুমি আমার personal শিক্ষক, mentor, আর দাদার মতো (elder-brother-style) tutor। আমি ${cls}-এর student।
+ // subject-wise
+ const bySubject={};
+ mine.forEach(a=>{if(a.percentage==null)return;const s=subjectName(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
+ const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
+ $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+  :"<p class='muted'>টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p>";
 
-Topic: ${topic}
-${context ? `যেসব প্রশ্নে আমি ভুল করেছি:\n${context}\n` : ""}
-আমাকে বাংলায় শেখাও এই নিয়মে:
-1) ধরে নাও আমি প্রায় কিছুই জানি না — পুরো chapter একসাথে না দিয়ে ছোট ছোট chunk-এ শেখাও, প্রতিটা concept-এর পর থেমে আমার সাথে interact করো।
-2) প্রথমে একটা সহজ real-life গল্প/উদাহরণ দিয়ে শুরু করো, তারপর সহজ ভাষায় মূল idea বোঝাও, তারপর proper term শেখাও।
-3) প্রতিটা concept তিন layer-এ দাও: সহজ ব্যাখ্যা → proper concept → exam-ready answer।
-4) একটা example ধাপে ধাপে সমাধান করে দেখাও (কী দেওয়া আছে → কী বের করতে হবে → কোন concept → কেন → সমাধান)।
-5) তারপর আমাকে একটা ছোট প্রশ্ন দাও, উত্তরের জন্য অপেক্ষা করো, ভুল হলে ঠিক কোথায় ভুল হয়েছে সেটা ধরে অন্য উদাহরণ দিয়ে আবার বোঝাও।
-6) সহজ থেকে কঠিন — 🟢 Basic → 🟡 Conceptual → 🟠 Application → 🔴 Challenging — ধাপে ধাপে যাও।
-7) শেষে exam-important points আর common ভুলগুলো বলে দাও।
-গতির চেয়ে বোঝাটা জরুরি। এখন "${topic}" basics থেকে শুরু করো — একটা real-life গল্প দিয়ে শুরু করো, প্রথম message-এই পুরো lesson দিও না।`;
-  }
-  return `You are my personal teacher and elder-brother-style tutor. I am a ${cls} student.
+ // topic-wise
+ const byTopic={};
+ mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;});});
+ const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
+ $("topicBars").innerHTML=topicRows.length?topicRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
+  :"<p class='muted'>টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p>";
 
-Topic: ${topic}
-${context ? `Questions I got wrong:\n${context}\n` : ""}
-Teach me step by step: start with a real-life story, explain simply first then formally, use easy→proper→exam-ready layers, walk through one example slowly, ask me a question and wait for my answer before continuing, and ramp difficulty from Basic to Challenging. Understanding matters more than speed — teach one chunk at a time. Start "${topic}" from the basics now with a real-life story; don't dump the whole lesson in your first message.`;
+ // history + print
+ const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
+ $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${a.testTitle}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div>${a.score!=null?`<button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
+  const a=mine.find(x=>x.id===b.dataset.id);
+  const w=window.open("","_blank");
+  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
+  w.document.close();w.print();
+ });
+
+ // leaderboard (classmates' submitted+graded attempts)
+ const classAttempts=await getDocs(query(collection(db,"attempts"),where("classId","==",profile.classId),where("status","==","submitted")));
+ const byUid={};
+ classAttempts.docs.forEach(d=>{
+  const a=d.data();if(a.percentage==null)return;
+  if(!byUid[a.uid])byUid[a.uid]={name:a.studentName||"Student",sum:0,n:0};
+  byUid[a.uid].sum+=a.percentage;byUid[a.uid].n++;
+ });
+ const board=Object.entries(byUid).map(([uid,v])=>({uid,name:v.name,avg:Math.round(v.sum/v.n)})).sort((x,y)=>y.avg-x.avg).slice(0,10);
+ $("leaderboard").innerHTML=board.length?board.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""}"><span class="lb-rank ${i===0?"top1":i===1?"top2":i===2?"top3":""}">${i+1}</span><span class="lb-name">${r.name}</span><span class="lb-score">${r.avg}%</span></div>`).join("")
+  :"<p class='muted'>এখনো কোনো graded attempt নেই।</p>";
 }
-function askAiAboutAttempt(testTitle, review) {
-  const wrong = (review || []).filter(r => !r.isCorrect);
-  const bengali = isBengaliText(testTitle) || isBengaliText((profile && profile.className) || "");
-  const context = wrong.slice(0, 8).map((r, i) => `${i + 1}. ${r.q}${r.topic ? ` (Topic: ${r.topic})` : ""}`).join("\n");
-  const prompt = buildTutorPrompt({ topic: testTitle, context, bengali });
-  copyPromptAndOpenChatGPT(prompt, bengali);
+
+/* ---------- DOUBTS ---------- */
+$("sendDoubt").onclick=async()=>{
+ const subjectId=$("doubtSubject").value,question=$("doubtText").value.trim();
+ if(!question)return $("doubtMsg").textContent="প্রশ্ন লিখো আগে।";
+ await addDoc(collection(db,"doubts"),{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,subjectId,question,status:"open",createdAt:serverTimestamp()});
+ $("doubtText").value="";$("doubtMsg").textContent="✅ পাঠানো হয়েছে। টিচার শীঘ্রই reply দেবেন।";
+};
+let doubtsUnsub=null;
+function listenMyDoubts(){
+ if(doubtsUnsub)doubtsUnsub();
+ doubtsUnsub=onSnapshot(query(collection(db,"doubts"),where("uid","==",auth.currentUser.uid)),snap=>{
+  const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${subjectName(x.subjectId)}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${x.question}</p>${x.answer?`<div class="doubt-a">${x.answer}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
+ });
 }
-</script>
-</body>
-</html>
+</script></body></html>
