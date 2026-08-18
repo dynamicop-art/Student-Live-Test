@@ -16,6 +16,21 @@ V4 SAFE MERGE UPDATE
 DEPLOYMENT: upload every file in this package, including effects.js, and publish
 firestore.rules again from Firebase Console.
 
+V4.1 HOME UPDATE
+- Latest-three-exam leaderboards are now also visible on the Home tab.
+- Added a Home Performance Snapshot: completed tests, average, best score and
+  the student's rank in the latest exam.
+- Added an automatic Home revision-focus card with weak-topic ChatGPT help.
+- Added an animated gradient profile ring, online pulse and optional tap sparkle.
+- All effects respect reduced-motion preferences; sound remains off by default.
+
+V4.2 NAVIGATION & PROGRESS UPDATE
+- Test History is now a separate navigation tab, so students no longer need to
+  scroll through the full Progress page to reach results and answer reviews.
+- Progress now has separate Subject and Unit/Chapter filters.
+- Subject accuracy and weak-topic calculations update from the selected scope
+  without downloading attempts again, reducing unnecessary Firestore reads.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.

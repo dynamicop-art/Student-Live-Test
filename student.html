@@ -11,7 +11,7 @@
 <div class="fab-row"><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
 <div class="wrap">
 <section class="hero topbar">
-  <div class="avatar-row"><span id="avatarBox"></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
+  <div class="avatar-row"><span class="profile-orbit" id="profileEffect"><span id="avatarBox"></span><i class="online-dot" title="Online"></i></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
   <button id="logout" class="secondary">Logout</button>
 </section>
 <nav class="nav">
@@ -20,6 +20,7 @@
   <button data-tab="tests">🧪 Tests</button>
   <button data-tab="assignments">📌 Assignments</button>
   <button data-tab="progress">📊 Progress</button>
+  <button data-tab="history">🗂️ Test History</button>
   <button data-tab="doubts">💬 Doubts</button>
 </nav>
 
@@ -27,6 +28,10 @@
 <section id="home" class="tab">
   <div class="card quote-card"><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
   <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
+
+  <div class="card home-performance"><div class="topbar"><div><h2>📊 Performance Snapshot</h2><p class="muted">তোমার graded results-এর দ্রুত summary।</p></div><button class="secondary" id="openProgress">View Details</button></div><div class="home-stat-grid"><div class="mini-stat"><b id="homeTests">0</b><span>Tests</span></div><div class="mini-stat"><b id="homeAvg">—</b><span>Average</span></div><div class="mini-stat"><b id="homeBest">—</b><span>Best</span></div><div class="mini-stat"><b id="homeRank">—</b><span>Latest Rank</span></div></div><div id="homeFocus" class="focus-tip muted">একটি graded test-এর পরে revision focus এখানে দেখা যাবে।</div></div>
+
+  <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">সর্বশেষ তিনটি পরীক্ষার class ranking।</p><div id="homeLeaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
 
   <div class="card"><h2>🔥 Study Streak</h2>
     <div class="streak-box">
@@ -113,11 +118,13 @@
 <!-- ================= PROGRESS ================= -->
 <section id="progress" class="tab hidden">
   <div class="card topbar"><div><h2>📊 Your Progress</h2><p class="muted">সব result একসাথে দেখো।</p></div><button id="printReport" class="secondary">🖨️ Print Full Report</button></div>
+  <div class="card"><h2>🔎 Subject & Unit Progress</h2><div class="filter-bar"><select id="progressSubject"><option value="">All Subjects</option></select><select id="progressUnit"><option value="">All Units / Chapters</option></select></div><p id="progressScope" class="muted">সব subject এবং unit-এর result দেখানো হচ্ছে।</p></div>
   <div class="card"><h2>📊 Subject-wise Accuracy</h2><div id="subjectBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে subject অনুযায়ী performance দেখা যাবে।</p></div></div>
   <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><p class="muted">৬০%-এর কম accuracy হলে ChatGPT দিয়ে topic-টি সহজভাবে বুঝে নাও।</p><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
-  <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">তোমার class-এর সর্বশেষ তিনটি পরীক্ষার আলাদা ranking।</p><div id="leaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
-  <div class="card"><h2>🗂️ Test History</h2><div id="historyList"></div></div>
 </section>
+
+<!-- ================= TEST HISTORY ================= -->
+<section id="history" class="tab hidden"><div class="card topbar"><div><h2>🗂️ Test History</h2><p class="muted">সব submitted test, score, review এবং printable result এক জায়গায়।</p></div><button id="historyToProgress" class="secondary">📊 Open Progress</button></div><div class="card"><div id="historyList"></div></div></section>
 
 <div id="reviewOverlay" class="modal-overlay hidden"><div class="modal-card"><div class="topbar"><h3 id="reviewTitle">Answer Review</h3><button id="reviewClose" class="secondary">✕</button></div><div id="reviewBody"></div></div></div>
 
@@ -145,6 +152,7 @@ let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=
 const WEAK_TOPIC_THRESHOLD=60;
 const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
 let reportSubjects=[],reportTopics=[],reportAttempts=[];
+let progressMine=[],cachedLeaderboardEntries=[];
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -188,6 +196,9 @@ function renderAvatar(){
  const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
  $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${escapeHTML(profile.avatarData)}" alt="avatar">`:`<span class="avatar-placeholder">${escapeHTML(initial)}</span>`;
 }
+$("profileEffect").onclick=()=>{confettiBurst(24);playChime("click");toast("Profile sparkle!","✨");};
+$("openProgress").onclick=()=>document.querySelector('.nav button[data-tab="progress"]').click();
+$("historyToProgress").onclick=()=>document.querySelector('.nav button[data-tab="progress"]').click();
 function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("saveAvatar").onclick=async()=>{
  try{
@@ -259,6 +270,7 @@ async function loadData(){
  onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
   tests=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderTests();
+  clearTimeout(loadData.testRefresh);loadData.testRefresh=setTimeout(()=>loadProgressAndLeaderboard().catch(e=>console.error("home leaderboard refresh error:",e)),150);
  },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
@@ -294,10 +306,10 @@ function renderNotes(){
  const list=filteredNotes();const bookmarks=profile.bookmarks||[];
  $("notesList").innerHTML=list.map(n=>{
   const isBm=bookmarks.includes(n.id);
-  return `<div class="item"><div class="topbar"><span class="pill">${subjectName(n.subjectId)}</span><button class="bookmark-btn ${isBm?"active":""}" data-id="${n.id}" title="Bookmark">${isBm?"★":"☆"}</button></div>
-  ${n.chapter?`<span class="pill teal">${n.chapter}</span>`:""}
-  <h3>${n.title}</h3><div>${(n.content||"").replaceAll("\n","<br>")}</div>
-  ${n.attachmentData?`<p><a class="btn secondary" download="${n.attachmentName||"note"}" href="${n.attachmentData}">📎 Open attachment</a></p>`:""}
+  return `<div class="item"><div class="topbar"><span class="pill">${escapeHTML(subjectName(n.subjectId))}</span><button class="bookmark-btn ${isBm?"active":""}" data-id="${escapeHTML(n.id)}" title="Bookmark">${isBm?"★":"☆"}</button></div>
+  ${n.chapter?`<span class="pill teal">${escapeHTML(n.chapter)}</span>`:""}
+  <h3>${escapeHTML(n.title)}</h3><div>${escapeHTML(n.content||"").replaceAll("\n","<br>")}</div>
+  ${n.attachmentData?`<p><a class="btn secondary" download="${escapeHTML(n.attachmentName||"note")}" href="${escapeHTML(n.attachmentData)}">📎 Open attachment</a></p>`:""}
   <button class="ai" data-title="${encodeURIComponent(n.title)}" data-content="${encodeURIComponent(n.content||"")}">✨ Explain with ChatGPT</button></div>`;
  }).join("")||"<p>কোনো note পাওয়া যায়নি।</p>";
  document.querySelectorAll(".ai").forEach(b=>b.onclick=()=>aiHelp(decodeURIComponent(b.dataset.title),decodeURIComponent(b.dataset.content)));
@@ -458,14 +470,22 @@ function renderAssignments(){
 
 /* ---------- PROGRESS + LEADERBOARD + HISTORY ---------- */
 function barClass(pct){return pct<50?"weak":pct<75?"mid":"strong";}
-async function loadProgressAndLeaderboard(){
- const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
- const mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");
+function testUnit(testId){return tests.find(t=>t.id===testId)?.chapter||"Uncategorized";}
+function fillProgressUnits(){const subjectId=$("progressSubject").value,current=$("progressUnit").value,units=[...new Set(progressMine.filter(a=>!subjectId||a.subjectId===subjectId).map(a=>testUnit(a.testId)))].sort();$("progressUnit").innerHTML=`<option value="">All Units / Chapters</option>`+units.map(u=>`<option value="${escapeHTML(u)}">${escapeHTML(u)}</option>`).join("");if(units.includes(current))$("progressUnit").value=current;}
+$("progressSubject").onchange=()=>{fillProgressUnits();$("progressUnit").value="";loadProgressAndLeaderboard(true);};
+$("progressUnit").onchange=()=>loadProgressAndLeaderboard(true);
+
+async function loadProgressAndLeaderboard(useCache=false){
+ let mine=progressMine;
+ if(!useCache){const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));mine=myAttempts.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.status==="submitted");progressMine=mine;const selected=$("progressSubject").value;$("progressSubject").innerHTML=`<option value="">All Subjects</option>`+subjects.map(s=>`<option value="${escapeHTML(s.id)}">${escapeHTML(s.name)}</option>`).join("");if(subjects.some(s=>s.id===selected))$("progressSubject").value=selected;fillProgressUnits();}
+ const selectedSubject=$("progressSubject").value,selectedUnit=$("progressUnit").value;
+ const filteredMine=mine.filter(a=>(!selectedSubject||a.subjectId===selectedSubject)&&(!selectedUnit||testUnit(a.testId)===selectedUnit));
+ const scopeSubject=selectedSubject?subjectName(selectedSubject):"All Subjects",scopeUnit=selectedUnit||"All Units";$("progressScope").textContent=`Showing: ${scopeSubject} · ${scopeUnit} · ${filteredMine.length} submitted test(s)`;
  renderXP(mine.length);
 
  // subject-wise
  const bySubject={};
- mine.forEach(a=>{if(a.percentage==null)return;const s=subjectName(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
+ filteredMine.forEach(a=>{if(a.percentage==null)return;const s=subjectName(a.subjectId);if(!bySubject[s])bySubject[s]={sum:0,n:0};bySubject[s].sum+=a.percentage;bySubject[s].n++;});
  const subjRows=Object.entries(bySubject).map(([s,v])=>({label:s,pct:Math.round(v.sum/v.n)})).sort((a,b)=>a.pct-b.pct);
  reportSubjects=subjRows;
  $("subjectBars").innerHTML=subjRows.length?subjRows.map(r=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div></div>`).join("")
@@ -473,7 +493,7 @@ async function loadProgressAndLeaderboard(){
 
  // topic-wise
  const byTopic={};
- mine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0,subjects:new Set(),tests:new Set()};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;byTopic[topic].subjects.add(subjectName(a.subjectId));byTopic[topic].tests.add(a.testTitle||"Test");});});
+ filteredMine.forEach(a=>{if(!a.topicStats)return;Object.entries(a.topicStats).forEach(([topic,st])=>{if(!byTopic[topic])byTopic[topic]={correct:0,total:0,subjects:new Set(),tests:new Set()};byTopic[topic].correct+=st.correct;byTopic[topic].total+=st.total;byTopic[topic].subjects.add(subjectName(a.subjectId));byTopic[topic].tests.add(a.testTitle||"Test");});});
  const topicRows=Object.entries(byTopic).map(([t,v])=>({label:t,correct:v.correct,total:v.total,subjects:v.subjects,tests:v.tests,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);
  reportTopics=topicRows;
  $("topicBars").innerHTML=topicRows.length?topicRows.map((r,i)=>`<div class="barrow"><div class="barlabel"><span>${r.label}</span><span>${r.correct}/${r.total} · ${r.pct}%</span></div><div class="bartrack"><div class="barfill ${barClass(r.pct)}" style="width:${r.pct}%"></div></div>${r.pct<WEAK_TOPIC_THRESHOLD?`<button class="secondary weak-help" data-topic-index="${i}">✨ Solve with ChatGPT</button>`:""}</div>`).join("")
@@ -494,8 +514,8 @@ async function loadProgressAndLeaderboard(){
 
  // Privacy-safe leaderboards for the latest three published tests.
  const latestTests=[...tests].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,3);
- const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));
- const entries=safeEntries.docs.map(d=>d.data());
+ if(!useCache){const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));cachedLeaderboardEntries=safeEntries.docs.map(d=>d.data());}
+ const entries=cachedLeaderboardEntries;
  const cards=latestTests.map(test=>{
   const rows=entries.filter(x=>x.testId===test.id&&Number.isFinite(Number(x.percentage))).sort((a,b)=>Number(b.percentage)-Number(a.percentage)||(a.submittedAt?.seconds||Infinity)-(b.submittedAt?.seconds||Infinity)||String(a.studentName||"").localeCompare(String(b.studentName||"")));
   let lastPct=null,lastRank=0;
@@ -505,7 +525,13 @@ async function loadProgressAndLeaderboard(){
   const rowHtml=visible.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""} ${i===10?"lb-separated":""}"><span class="lb-rank ${r.rank===1?"top1":r.rank===2?"top2":r.rank===3?"top3":""}">${r.rank}</span><span class="lb-name">${escapeHTML(r.studentName||"Student")}</span><span class="lb-score">${Number(r.score)}/${Number(r.total)} · ${Number(r.percentage)}%</span></div>`).join("");
   return `<section class="exam-board"><div class="exam-board-head"><div><span class="pill">${escapeHTML(subjectName(test.subjectId))}</span><h3>${escapeHTML(test.title)}</h3></div><span class="muted">${test.createdAt?.toDate?test.createdAt.toDate().toLocaleDateString("en-IN"):"Recent exam"}</span></div>${rowHtml||"<p class='muted'>এই পরীক্ষার graded result এখনো নেই।</p>"}</section>`;
  });
- $("leaderboard").innerHTML=cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>";
+ const leaderboardHTML=cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>";
+ $("homeLeaderboard").innerHTML=leaderboardHTML;
+
+ const graded=mine.filter(a=>Number.isFinite(Number(a.percentage))),avg=graded.length?Math.round(graded.reduce((s,a)=>s+Number(a.percentage),0)/graded.length):null,best=graded.length?Math.max(...graded.map(a=>Number(a.percentage))):null;
+ $("homeTests").textContent=mine.length;$("homeAvg").textContent=avg==null?"—":avg+"%";$("homeBest").textContent=best==null?"—":best+"%";
+ const newest=latestTests[0],latestRows=newest?entries.filter(x=>x.testId===newest.id).sort((a,b)=>Number(b.percentage)-Number(a.percentage)):[];let rank="—",last=null,currentRank=0;latestRows.forEach((r,i)=>{if(Number(r.percentage)!==last)currentRank=i+1;if(r.uid===auth.currentUser.uid)rank="#"+currentRank;last=Number(r.percentage);});$("homeRank").textContent=rank;
+ const weakest=topicRows[0];$("homeFocus").innerHTML=weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD?`<div><b>🎯 Revision focus: ${escapeHTML(weakest.label)} (${weakest.pct}%)</b><button id="homeWeakHelp" class="secondary">✨ Solve with ChatGPT</button></div>`:"<span>✅ কোনো topic 60%-এর নিচে নেই—নিয়মিত revision চালিয়ে যাও।</span>";if(weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD)$("homeWeakHelp").onclick=()=>openChatGPTPrompt(weakTopicPrompt(weakest));
 }
 
 $("printReport").onclick=()=>{
