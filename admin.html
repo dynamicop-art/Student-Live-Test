@@ -86,7 +86,7 @@
 </div></div>
 
 <script type="module">
-let mountCardTilt=()=>{},mountButtonRipples=()=>{};try{const fx=await import("./effects.js");({mountCardTilt,mountButtonRipples}=fx);mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
+let mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};try{const fx=await import("./effects.js");({mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";

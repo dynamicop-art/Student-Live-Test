@@ -28,6 +28,8 @@ export function mountHeroSparkle(){
       s.style.animationDelay=(i*0.45)+"s";
       hero.appendChild(s);
     });
+    const symbols=[["π","14%","72%"],["∑","74%","18%"],["⚛","88%","70%"],["F=ma","58%","76%"],["√x","32%","14%"]];
+    symbols.forEach(([text,left,top],i)=>{const s=document.createElement("span");s.className="learn-symbol";s.textContent=text;s.style.left=left;s.style.top=top;s.style.animationDelay=`${i*-.8}s`;hero.appendChild(s);});
   });
 }
 

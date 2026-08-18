@@ -21,6 +21,7 @@
   <button data-tab="assignments">📌 Assignments</button>
   <button data-tab="progress">📊 Progress</button>
   <button data-tab="history">🗂️ Test History</button>
+  <button data-tab="games">🎮 Games</button>
   <button data-tab="doubts">💬 Doubts</button>
 </nav>
 
@@ -128,6 +129,12 @@
 <!-- ================= TEST HISTORY ================= -->
 <section id="history" class="tab hidden"><div class="card topbar"><div><h2>🗂️ Test History</h2><p class="muted">সব submitted test, score, review এবং printable result এক জায়গায়।</p></div><button id="historyToProgress" class="secondary">📊 Open Progress</button></div><div class="card"><div id="historyList"></div></div></section>
 
+<!-- ================= LEARNING GAMES ================= -->
+<section id="games" class="tab hidden"><div class="card"><span class="pill">JUST FOR FUN</span><h2>🎮 Learning Games</h2><p class="muted">Practice only—game scores exam result বা leaderboard-এ যোগ হবে না।</p></div><div class="grid2 game-grid">
+  <div class="card game-card math-game"><div class="game-icon">➗</div><h2>Math Sprint</h2><p class="muted">10টি দ্রুত arithmetic challenge solve করো।</p><div class="game-score"><span>Score <b id="mathScore">0</b></span><span>Best <b id="mathBest">0</b></span></div><div id="mathQuestion" class="game-question">Ready?</div><div class="game-answer-row"><input id="mathAnswer" type="number" inputmode="numeric" placeholder="Your answer"><button id="mathCheck">Check</button></div><p id="mathFeedback" class="game-feedback muted">Start চাপো।</p><button id="mathStart" class="secondary">Start Math Sprint</button></div>
+  <div class="card game-card physics-game"><div class="game-icon">⚛️</div><h2>Force Lab</h2><p class="muted">Mass × acceleration ব্যবহার করে force বেছে নাও।</p><div class="game-score"><span>Score <b id="physicsScore">0</b></span><span>Best <b id="physicsBest">0</b></span></div><div class="physics-track"><div id="physicsCart" class="physics-cart">▣</div></div><div id="physicsQuestion" class="game-question">F = m × a</div><div id="physicsOptions" class="physics-options"></div><p id="physicsFeedback" class="game-feedback muted">Start চাপো।</p><button id="physicsStart" class="secondary">Start Force Lab</button></div>
+</div></section>
+
 <div id="reviewOverlay" class="modal-overlay hidden"><div class="modal-card"><div class="topbar"><h3 id="reviewTitle">Answer Review</h3><button id="reviewClose" class="secondary">✕</button></div><div id="reviewBody"></div></div></div>
 
 <!-- ================= DOUBTS ================= -->
@@ -143,8 +150,8 @@
 </div>
 
 <script type="module">
-let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{};
-try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountCardTilt,mountButtonRipples}=fx);mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
+let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};
+try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -551,6 +558,18 @@ $("printReport").onclick=()=>{
 function parsePractice(text){return text.replace(/\r/g,"").split(/\n---\s*\n/).map(block=>{const v={};block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)v[m[1].toUpperCase()]=m[2].trim();});const o=[v.A,v.B,v.C,v.D],answer="ABCD".indexOf((v.ANSWER||"").toUpperCase()[0]);return v.Q&&o.every(Boolean)&&answer>=0?{q:v.Q,o,answer,topic:v.TOPIC||"Practice"}:null;}).filter(Boolean);}
 $("pracPromptBtn").onclick=()=>{const topic=$("pracTopic").value.trim()||"selected topic",count=Math.min(20,Math.max(3,Number($("pracCount").value)||5));openChatGPTPrompt(`Create ${count} MCQ practice questions for a ${profile.className} Bengali-medium student on ${topic}. Use exactly this format for every question and separate questions with ---:\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}\n\nReturn only the formatted questions.`);};
 $("pracStart").onclick=()=>{const qs=parsePractice($("pracPaste").value);if(!qs.length)return showToast("Valid questions পাওয়া যায়নি");$("pracQuiz").innerHTML=qs.map((q,i)=>`<div class="q"><b>${i+1}. ${escapeHTML(q.q)}</b>${q.o.map((o,j)=>`<label class="opt"><input type="radio" name="practice${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${escapeHTML(o)}</label>`).join("")}</div>`).join("")+`<button id="checkPractice" class="secondary">Check Answers</button><p id="practiceResult"></p>`;$("checkPractice").onclick=()=>{let score=0;qs.forEach((q,i)=>{const chosen=$("pracQuiz").querySelector(`input[name="practice${i}"]:checked`);if(chosen&&Number(chosen.value)===q.answer)score++;});$("practiceResult").textContent=`Score: ${score}/${qs.length}`;};};
+
+/* ---------- CLIENT-ONLY LEARNING GAMES ---------- */
+let mathRound=0,mathScore=0,mathCorrect=0,mathPlaying=false,mathLocked=false;
+function nextMath(){mathLocked=false;if(mathRound>=10){mathPlaying=false;const best=Math.max(Number(localStorage.getItem("mathGameBest"))||0,mathScore);localStorage.setItem("mathGameBest",best);$("mathBest").textContent=best;$("mathQuestion").textContent=`Finished: ${mathScore}/10`;$("mathFeedback").textContent="আরেকবার খেললে নতুন questions আসবে।";$("mathStart").textContent="Play Again";if(mathScore>=8)confettiBurst(45);return;}mathRound++;const op=Math.floor(Math.random()*4),b=2+Math.floor(Math.random()*11);let a;if(op===0){a=5+Math.floor(Math.random()*46);mathCorrect=a+b;$("mathQuestion").textContent=`${a} + ${b} = ?`;}else if(op===1){a=b+Math.floor(Math.random()*40);mathCorrect=a-b;$("mathQuestion").textContent=`${a} − ${b} = ?`;}else if(op===2){a=2+Math.floor(Math.random()*11);mathCorrect=a*b;$("mathQuestion").textContent=`${a} × ${b} = ?`;}else{mathCorrect=2+Math.floor(Math.random()*11);a=b*mathCorrect;$("mathQuestion").textContent=`${a} ÷ ${b} = ?`;}$("mathAnswer").value="";$("mathAnswer").focus();$("mathFeedback").textContent=`Question ${mathRound}/10`;}
+$("mathStart").onclick=()=>{mathRound=0;mathScore=0;mathPlaying=true;mathLocked=false;$("mathScore").textContent=0;$("mathStart").textContent="Restart";nextMath();};
+function checkMath(){if(!mathPlaying||mathLocked)return;const value=Number($("mathAnswer").value);if($("mathAnswer").value.trim()==="")return;mathLocked=true;const right=value===mathCorrect;if(right){mathScore++;playChime("success");}$("mathScore").textContent=mathScore;$("mathFeedback").textContent=right?"✅ Correct!":"❌ Answer: "+mathCorrect;setTimeout(nextMath,550);}
+$("mathCheck").onclick=checkMath;$("mathAnswer").onkeydown=e=>{if(e.key==="Enter")checkMath();};$("mathBest").textContent=Number(localStorage.getItem("mathGameBest"))||0;
+
+let physicsRound=0,physicsScore=0,physicsCorrect=0,physicsPlaying=false;
+function nextPhysics(){if(physicsRound>=10){physicsPlaying=false;const best=Math.max(Number(localStorage.getItem("physicsGameBest"))||0,physicsScore);localStorage.setItem("physicsGameBest",best);$("physicsBest").textContent=best;$("physicsQuestion").textContent=`Lab complete: ${physicsScore}/10`;$("physicsOptions").innerHTML="";$("physicsFeedback").textContent="Force unit: newton (N).";$("physicsStart").textContent="Play Again";if(physicsScore>=8)confettiBurst(45);return;}physicsRound++;const m=1+Math.floor(Math.random()*10),a=1+Math.floor(Math.random()*10);physicsCorrect=m*a;$("physicsQuestion").textContent=`m = ${m} kg, a = ${a} m/s² → F = ?`;const values=new Set([physicsCorrect]);while(values.size<4)values.add(Math.max(1,physicsCorrect+(Math.floor(Math.random()*9)-4)));const opts=[...values].sort(()=>Math.random()-.5);$("physicsOptions").innerHTML=opts.map(v=>`<button class="secondary physics-choice" data-value="${v}">${v} N</button>`).join("");document.querySelectorAll(".physics-choice").forEach(b=>b.onclick=()=>checkPhysics(Number(b.dataset.value)));$("physicsFeedback").textContent=`Challenge ${physicsRound}/10 · F = m × a`;}
+function checkPhysics(value){if(!physicsPlaying)return;document.querySelectorAll(".physics-choice").forEach(b=>b.disabled=true);const right=value===physicsCorrect;if(right){physicsScore++;$("physicsCart").classList.remove("boost");void $("physicsCart").offsetWidth;$("physicsCart").classList.add("boost");playChime("success");}$("physicsScore").textContent=physicsScore;$("physicsFeedback").textContent=right?"✅ Correct force!":"❌ Correct answer: "+physicsCorrect+" N";setTimeout(nextPhysics,700);}
+$("physicsStart").onclick=()=>{physicsRound=0;physicsScore=0;physicsPlaying=true;$("physicsScore").textContent=0;$("physicsStart").textContent="Restart";nextPhysics();};$("physicsBest").textContent=Number(localStorage.getItem("physicsGameBest"))||0;
 
 /* ---------- DOUBTS ---------- */
 $("sendDoubt").onclick=async()=>{

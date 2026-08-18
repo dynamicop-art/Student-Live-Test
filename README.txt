@@ -39,6 +39,13 @@ V4.3 VISUAL & GOALS UPDATE
 - Added an admin-only Revision Priority summary derived from existing graded
   results; no new Firestore collection or permission is required.
 
+V4.4 NAMEPLATE & GAMES UPDATE
+- Added drifting maths/physics symbols and sparkle motion to every opening hero.
+- Added a separate student Games tab with a 10-round Math Sprint and a
+  10-round F=ma Force Lab challenge.
+- Game scores and best scores stay only in localStorage; they never affect
+  exams, XP, progress, leaderboards or Firestore usage.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.
