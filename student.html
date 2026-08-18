@@ -126,7 +126,6 @@
 <div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
 <div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
 <form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
-<button id="printPaperBtn" class="secondary hidden">🖨️ Download Question Paper</button>
 </section>
 <section id="resultBox" class="card hidden"></section>
 
@@ -690,8 +689,8 @@ async function startTest(id){
  $("submitTest").disabled=true;
  $("submitTest").textContent="Starting...";
  $("testStatus").textContent="⏳ Test session তৈরি হচ্ছে...";
- $("printPaperBtn").classList.add("hidden");
- $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;
+ $("resultBox").classList.add("hidden");$("resultBox").innerHTML="";
+ $("runner").classList.remove("hidden");$("testName").textContent=activeTest.title;
  $("testForm").innerHTML=activeTest.questions.map((x,i)=>`<div class="q"><span class="pill">${esc(x.topic)||"Question"}</span><p><b>${i+1}. ${esc(x.q)}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("");
  try{
    if(!auth.currentUser||!profile?.classId)throw new Error("Student profile/session is not ready");
@@ -774,14 +773,31 @@ async function finishTest(auto){
    return;
  }
  submittingTest=false;
- $("printPaperBtn").classList.remove("hidden");
- $("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
+ // The exam is truly over now — hide the live question runner (timer, form,
+ // submit button) instead of leaving a disabled question list sitting on
+ // screen. Only the result card remains, so it's clear the session finished.
+ $("runner").classList.add("hidden");
+ $("resultBox").classList.remove("hidden");
+ $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${esc(activeTest.title)}</h2><p class="muted">⏳ Grading হচ্ছে... একটু পরে score দেখা যাবে।</p><div class="row" style="margin-top:10px"><button id="printPaperNow" class="secondary">🖨️ Download Question Paper</button><button id="backToTestsBtn" class="secondary">🏠 Test List-এ ফিরে যাও</button></div>`;
+ $("printPaperNow").onclick=()=>printQuestionPaper(activeTest);
+ $("backToTestsBtn").onclick=()=>{
+  $("resultBox").classList.add("hidden");$("resultBox").innerHTML="";
+  activeTest=null;activeAttempt=null;
+  document.getElementById("tests")?.scrollIntoView({behavior:"smooth",block:"start"});
+ };
+ const finishedTest=activeTest;
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      const perfect=d.percentage>=100;
-     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${esc(activeTest.title)}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="row" style="margin-top:10px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button></div><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
-     $("reviewNowBtn").onclick=()=>renderReviewModal(activeTest.title,d.review);
+     $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${esc(finishedTest.title)}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p>${perfect?`<div class="trophy-badge">🏆 Perfect Score!</div>`:""}<div class="row" style="margin-top:10px"><button id="reviewNowBtn" class="secondary">📝 কোনটা ঠিক, কোনটা ভুল দেখো</button><button id="printPaperNow" class="secondary">🖨️ Download Question Paper</button><button id="backToTestsBtn" class="secondary">🏠 Test List-এ ফিরে যাও</button></div><div class="notice">Revision-এর জন্য Notes section-এর “Explain with ChatGPT” ব্যবহার করতে পারো।</div>`;
+     $("reviewNowBtn").onclick=()=>renderReviewModal(finishedTest.title,d.review);
+     $("printPaperNow").onclick=()=>printQuestionPaper(finishedTest);
+     $("backToTestsBtn").onclick=()=>{
+      $("resultBox").classList.add("hidden");$("resultBox").innerHTML="";
+      activeTest=null;activeAttempt=null;
+      document.getElementById("tests")?.scrollIntoView({behavior:"smooth",block:"start"});
+     };
      if(d.percentage>=40){confettiBurst(perfect?160:(d.percentage>=80?140:80));playChime(perfect?"perfect":"success");}
      unsub();loadProgressAndLeaderboard();
    }
