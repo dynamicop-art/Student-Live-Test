@@ -34,6 +34,7 @@
 <div class="stat"><b id="stAvg">—</b>Class Average</div><div class="stat"><b id="stTop">—</b>Top Performer</div>
 </div>
 <div class="card"><h2>Quick workflow</h2><p>1) Student allow করুন → 2) Subject তৈরি করুন → 3) Notes/Test publish করুন → 4) Live Result দেখুন। Notice/Assignment/Doubts যেকোনো সময় manage করা যাবে।</p></div>
+<div class="card"><h2>🎯 Revision Priority</h2><p class="muted">যাদের graded average 60%-এর নিচে, তাদের জন্য আগে revision support plan করো। এটি student-দের দেখানো হয় না।</p><div id="revisionPriority"><p class="muted">Graded results এলে summary দেখা যাবে।</p></div></div>
 </section>
 
 <section id="students" class="tab card hidden"><h2>👥 Allow Student</h2>
@@ -85,6 +86,7 @@
 </div></div>
 
 <script type="module">
+let mountCardTilt=()=>{},mountButtonRipples=()=>{};try{const fx=await import("./effects.js");({mountCardTilt,mountButtonRipples}=fx);mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -309,6 +311,7 @@ function renderAttempts(){
  const q=($("attemptSearch")?.value||"").trim().toLowerCase(),list=latestAttempts.filter(a=>!q||`${a.studentName||""} ${a.testTitle||""}`.toLowerCase().includes(q));
  $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${esc(a.studentName||a.uid)}</b><br><span class="muted">${esc(a.testTitle||a.testId)}</span></div><span class="pill">${esc(a.status)}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No matching attempts.</p>";
  const graded=latestAttempts.filter(a=>a.status==="submitted"&&a.percentage!=null);$("stAvg").textContent=graded.length?Math.round(graded.reduce((s,a)=>s+a.percentage,0)/graded.length)+"%":"—";const top=[...graded].sort((a,b)=>b.percentage-a.percentage)[0];$("stTop").textContent=top?top.studentName||"Student":"—";
+ const byStudent={};graded.forEach(a=>{if(!byStudent[a.uid])byStudent[a.uid]={name:a.studentName||"Student",sum:0,n:0};byStudent[a.uid].sum+=Number(a.percentage);byStudent[a.uid].n++;});const priority=Object.values(byStudent).map(v=>({name:v.name,avg:Math.round(v.sum/v.n),tests:v.n})).filter(v=>v.avg<60).sort((a,b)=>a.avg-b.avg).slice(0,8);$("revisionPriority").innerHTML=priority.length?priority.map(v=>`<div class="priority-row"><span><b>${esc(v.name)}</b><small>${v.tests} graded test(s)</small></span><strong>${v.avg}%</strong></div>`).join(""):"<p class='muted'>✅ বর্তমানে 60%-এর নিচে কোনো graded average নেই।</p>";
 }
 $("attemptSearch").oninput=renderAttempts;
 $("exportCsv").onclick=()=>{if(!latestAttempts.length)return alert("No results to export.");const rows=[["Student","Test","Class","Status","Score","Total","Percentage"],...latestAttempts.map(a=>[a.studentName,a.testTitle,a.classId,a.status,a.score??"",a.total??"",a.percentage??""])];const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})),link=document.createElement("a");link.href=url;link.download=`results-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};

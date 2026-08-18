@@ -31,6 +31,14 @@ V4.2 NAVIGATION & PROGRESS UPDATE
 - Subject accuracy and weak-topic calculations update from the selected scope
   without downloading attempts again, reducing unnecessary Firestore reads.
 
+V4.3 VISUAL & GOALS UPDATE
+- Added progressive-enhancement glass surfaces, subtle desktop-only 3D card
+  tilt, cursor light response, button ripples and 3D popup entrances.
+- Effects are disabled on touch/low-motion contexts and never tilt the test runner.
+- Added a device-local Weekly Test Goal with current-week completion tracking.
+- Added an admin-only Revision Priority summary derived from existing graded
+  results; no new Firestore collection or permission is required.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.

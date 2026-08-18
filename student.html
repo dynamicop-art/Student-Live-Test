@@ -31,6 +31,8 @@
 
   <div class="card home-performance"><div class="topbar"><div><h2>📊 Performance Snapshot</h2><p class="muted">তোমার graded results-এর দ্রুত summary।</p></div><button class="secondary" id="openProgress">View Details</button></div><div class="home-stat-grid"><div class="mini-stat"><b id="homeTests">0</b><span>Tests</span></div><div class="mini-stat"><b id="homeAvg">—</b><span>Average</span></div><div class="mini-stat"><b id="homeBest">—</b><span>Best</span></div><div class="mini-stat"><b id="homeRank">—</b><span>Latest Rank</span></div></div><div id="homeFocus" class="focus-tip muted">একটি graded test-এর পরে revision focus এখানে দেখা যাবে।</div></div>
 
+  <div class="card weekly-goal-card"><div class="topbar"><div><h2>🎯 Weekly Test Goal</h2><p class="muted">নিজের জন্য একটি realistic weekly target রাখো।</p></div><select id="weeklyGoal" aria-label="Weekly test target"><option value="1">1 test</option><option value="2">2 tests</option><option value="3">3 tests</option><option value="4">4 tests</option><option value="5">5 tests</option><option value="6">6 tests</option><option value="7">7 tests</option></select></div><div class="goal-meter"><div id="weeklyGoalFill"></div></div><div class="goal-copy"><b id="weeklyGoalText">0 / 3 tests</b><span id="weeklyGoalHint" class="muted">Start with one test this week.</span></div></div>
+
   <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">সর্বশেষ তিনটি পরীক্ষার class ranking।</p><div id="homeLeaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
 
   <div class="card"><h2>🔥 Study Streak</h2>
@@ -141,8 +143,8 @@
 </div>
 
 <script type="module">
-let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{};
-try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn}=fx);}catch(e){console.warn("Optional effects unavailable",e);}
+let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{};
+try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountCardTilt,mountButtonRipples}=fx);mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -199,6 +201,9 @@ function renderAvatar(){
 $("profileEffect").onclick=()=>{confettiBurst(24);playChime("click");toast("Profile sparkle!","✨");};
 $("openProgress").onclick=()=>document.querySelector('.nav button[data-tab="progress"]').click();
 $("historyToProgress").onclick=()=>document.querySelector('.nav button[data-tab="progress"]').click();
+function weeklyGoalValue(){const value=Number(localStorage.getItem(`weeklyGoal:${auth.currentUser?.uid||"guest"}`));return value>=1&&value<=7?value:3;}
+function renderWeeklyGoal(attempts=reportAttempts){const goal=weeklyGoalValue(),now=new Date(),day=(now.getDay()+6)%7,start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day);const done=attempts.filter(a=>{const ms=a.submittedAt?.seconds?Number(a.submittedAt.seconds)*1000:0;return ms>=start.getTime();}).length,pct=Math.min(100,Math.round(done/goal*100));$("weeklyGoal").value=goal;$("weeklyGoalFill").style.width=pct+"%";$("weeklyGoalText").textContent=`${done} / ${goal} tests`;$("weeklyGoalHint").textContent=done>=goal?"✅ Weekly goal completed!":`${goal-done} more test${goal-done===1?"":"s"} to reach your goal.`;}
+$("weeklyGoal").onchange=()=>{localStorage.setItem(`weeklyGoal:${auth.currentUser.uid}`,String($("weeklyGoal").value));renderWeeklyGoal();toast("Weekly goal updated","🎯");};
 function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("saveAvatar").onclick=async()=>{
  try{
@@ -503,6 +508,7 @@ async function loadProgressAndLeaderboard(useCache=false){
  // history + print
  const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
  reportAttempts=sortedMine;
+ renderWeeklyGoal(sortedMine);
  $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${escapeHTML(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div>${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Review</button> <button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
  document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{const a=mine.find(x=>x.id===b.dataset.id);showReview(a.testTitle,a.review);});
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{

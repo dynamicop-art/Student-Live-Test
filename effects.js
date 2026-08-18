@@ -99,3 +99,23 @@ export function toast(message,icon="✅"){
   layer.appendChild(t);
   setTimeout(()=>t.remove(),2800);
 }
+
+/* Lightweight 3D polish. It is disabled for touch devices, active tests and
+   people who request reduced motion. */
+export function mountCardTilt(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches||!matchMedia("(hover: hover) and (pointer: fine)").matches)return;
+  const selector=".tab > .card:not(.quote-card):not(.subject-card), .login-card, .exam-board, .stat";
+  const bind=el=>{
+    if(el.dataset.tiltReady)return;el.dataset.tiltReady="1";el.classList.add("fx-3d");
+    let frame=0;
+    el.addEventListener("pointermove",e=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.setProperty("--rx",`${(-y*3).toFixed(2)}deg`);el.style.setProperty("--ry",`${(x*3).toFixed(2)}deg`);el.style.setProperty("--mx",`${(x+.5)*100}%`);el.style.setProperty("--my",`${(y+.5)*100}%`);});});
+    el.addEventListener("pointerleave",()=>{el.style.setProperty("--rx","0deg");el.style.setProperty("--ry","0deg");});
+  };
+  const scan=root=>{if(root.matches?.(selector))bind(root);root.querySelectorAll?.(selector).forEach(bind);};scan(document);
+  new MutationObserver(list=>list.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n);}))).observe(document.body,{childList:true,subtree:true});
+}
+
+export function mountButtonRipples(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  document.addEventListener("pointerdown",e=>{const b=e.target.closest("button,.btn");if(!b||b.disabled)return;const r=b.getBoundingClientRect(),s=document.createElement("span"),size=Math.max(r.width,r.height)*1.5;s.className="fx-ripple";s.style.width=s.style.height=size+"px";s.style.left=e.clientX-r.left-size/2+"px";s.style.top=e.clientY-r.top-size/2+"px";b.appendChild(s);setTimeout(()=>s.remove(),650);});
+}
