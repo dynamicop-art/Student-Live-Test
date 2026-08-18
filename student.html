@@ -125,7 +125,7 @@
 <section id="runner" class="card hidden">
 <div class="topbar"><div><span class="pill">LIVE TEST</span><h2 id="testName"></h2></div><span id="timer" class="pill"></span></div>
 <div class="progress"><div id="prog"></div></div><p id="progText" class="muted"></p>
-<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p><p class="muted" style="font-size:11px">Build: FINAL-SUBMIT-V3</p>
+<form id="testForm"></form><button id="submitTest" type="button">Final Submit</button><p id="testStatus" class="muted"></p>
 <button id="printPaperBtn" class="secondary hidden">🖨️ Download Question Paper</button>
 </section>
 <section id="resultBox" class="card hidden"></section>
@@ -901,13 +901,24 @@ function listenMyDoubts(){
  });
 }
 /* ---------- MY PRACTICE TEST (client-only, free, nothing saved) ---------- */
-// NOTE: the "Copy AI Prompt & Open ChatGPT" button for practice tests is wired
-// up in the small classic <script> at the bottom of this file (the
-// "practice-test safety fallback" block), not here. It used to be bound in
-// both places — since a later `.onclick =` assignment always wins, this
-// block's version was silently dead code and has been removed to avoid two
-// confusing, slightly different implementations. See `buildPracticePrompt()`
-// near the end of the file for the actual logic.
+$("pracPromptBtn").onclick=async()=>{
+ try{
+  const topic=$("pracTopic").value.trim()||"General revision",count=Number($("pracCount").value)||5;
+  const prompt=`আমার জন্য ${(profile&&profile.className)||""}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
+
+Q: প্রশ্ন এখানে
+A: option A
+B: option B
+C: option C
+D: option D
+ANSWER: (A/B/C/D এর একটা)
+TOPIC: sub-topic name`;
+  copyPromptAndOpenChatGPT(prompt,true);
+ }catch(err){
+  console.error("pracPromptBtn failed",err);
+  toast("প্রম্পট বানাতে সমস্যা হয়েছে — আবার চেষ্টা করো","⚠️");
+ }
+};
 
 function parsePracticeText(text){
  const blocks=text.replace(/\r/g,"").split(/\n---\s*\n|\n---\s*$/).map(b=>b.trim()).filter(Boolean);
@@ -944,68 +955,5 @@ $("pracStart").onclick=()=>{
  };
 };
 </script>
-<!-- Practice-test safety fallback: independent of Firebase/module execution. -->
-<script>
-window.addEventListener("DOMContentLoaded",()=>{
- const byId=id=>document.getElementById(id);
- const promptBtn=byId("pracPromptBtn");
- const overlay=byId("aiPromptOverlay");
- const promptBox=byId("aiPromptText");
- const hint=byId("aiPromptHint");
- if(!promptBtn||!overlay||!promptBox)return;
+</body></html>
 
- function classLabel(){
-  const who=(byId("who")?.textContent||"").trim();
-  return who&&who.includes("·")?who.split("·")[0].trim():"তোমার class";
- }
- function buildPracticePrompt(){
-  const topic=(byId("pracTopic")?.value||"").trim()||"General revision";
-  const raw=Number(byId("pracCount")?.value);
-  const count=Number.isFinite(raw)&&raw>0?Math.min(Math.floor(raw),50):5;
-  return `আমার জন্য ${classLabel()}-এর "${topic}" বিষয়ে ${count}টা বাংলা MCQ practice question বানাও। প্রতিটার জন্য এই format-টা হুবহু মেনে output দাও, অন্য কোনো ব্যাখ্যা লিখো না, প্রতিটা প্রশ্নের মাঝে "---" লাইন দিয়ে আলাদা করবে:
-
-Q: প্রশ্ন এখানে
-A: option A
-B: option B
-C: option C
-D: option D
-ANSWER: (A/B/C/D এর একটা)
-TOPIC: sub-topic name`;
- }
- async function copyText(text){
-  if(navigator.clipboard&&window.isSecureContext){
-   try{await navigator.clipboard.writeText(text);return true;}catch(e){}
-  }
-  try{promptBox.focus();promptBox.select();promptBox.setSelectionRange(0,text.length);return document.execCommand("copy");}
-  catch(e){return false;}
- }
-
- promptBtn.onclick=async()=>{
-  const text=buildPracticePrompt();
-  promptBox.value=text;
-  if(hint)hint.textContent="";
-  overlay.classList.remove("hidden");
-  const copied=await copyText(text);
-  if(hint)hint.textContent=copied
-   ?"✅ Prompt copy হয়েছে। এখন ChatGPT খুলে paste করো।"
-   :"👆 Auto-copy না হলে উপরের prompt select করে copy করো।";
-  let opened=null;
-  try{opened=window.open("https://chatgpt.com/","_blank","noopener");}catch(e){}
-  if(!opened&&hint)hint.textContent+=" ChatGPT auto-open block হলে নিচের ‘ChatGPT খোলো’ button চাপো।";
- };
-
- const copyBtn=byId("aiPromptCopyBtn");
- if(copyBtn)copyBtn.onclick=async()=>{
-  const ok=await copyText(promptBox.value);
-  if(hint)hint.textContent=ok?"✅ Prompt copy হয়েছে।":"👆 Prompt select করে manually copy করো।";
- };
- const closeBtn=byId("aiPromptClose");
- if(closeBtn)closeBtn.onclick=()=>overlay.classList.add("hidden");
- const openLink=byId("aiPromptOpenLink");
- if(openLink)openLink.onclick=e=>{
-  e.preventDefault();
-  const w=window.open("https://chatgpt.com/","_blank","noopener");
-  if(!w)location.href="https://chatgpt.com/";
- };
-});
-</script></body></html>
