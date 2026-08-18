@@ -620,3 +620,8 @@ html[data-theme="dark"] .ai-modal-x{background:#182a52;border-color:var(--line)}
 .rv-opt.rv-wrong{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d;font-weight:700}
 html[data-theme="dark"] .rv-opt{background:#182a52}
 html[data-theme="dark"] .review-summary{background:#182a52}
+
+/* ---------- CONFIRM MODAL (in-app replacement for native confirm()) ---------- */
+.confirm-modal{max-width:380px;text-align:center}
+.confirm-msg{font-size:15.5px;line-height:1.6;margin:6px 0 18px}
+.confirm-modal .ai-modal-actions{margin-top:0}

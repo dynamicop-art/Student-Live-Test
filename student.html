@@ -183,6 +183,18 @@
     <div id="reviewBody" class="review-body"></div>
   </div>
 </div>
+<!-- ================= CONFIRM MODAL (replaces native confirm()/alert(), which
+     fail silently inside many WebView-wrapper apps) ================= -->
+<div id="confirmOverlay" class="ai-modal-overlay hidden">
+  <div class="ai-modal confirm-modal">
+    <p id="confirmMsg" class="confirm-msg"></p>
+    <div class="ai-modal-actions">
+      <button id="confirmYes" type="button">✅ হ্যাঁ</button>
+      <button id="confirmNo" class="secondary" type="button">✖ না</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /wrap -->
 
 <script type="module">
@@ -206,6 +218,31 @@ mountHeroSparkle();
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null,cachedClassAttempts=[];
 let answerSavePromise=Promise.resolve();
 let lastSubjRows=[],lastTopicRows=[],lastSortedMine=[];
+
+/* ---------- In-app replacements for confirm()/alert() ----------
+   Native browser dialogs are unreliable inside many WebView-wrapper apps
+   (the same class of issue that broke window.open() earlier) — they can
+   fail to show at all, silently blocking whatever code was waiting on
+   them. showConfirm() and notify() never depend on the browser chrome. */
+function showConfirm(message){
+ return new Promise(resolve=>{
+  $("confirmMsg").textContent=message;
+  $("confirmOverlay").classList.remove("hidden");
+  const cleanup=result=>{
+   $("confirmOverlay").classList.add("hidden");
+   $("confirmYes").onclick=null;$("confirmNo").onclick=null;
+   resolve(result);
+  };
+  $("confirmYes").onclick=()=>cleanup(true);
+  $("confirmNo").onclick=()=>cleanup(false);
+ });
+}
+function notify(message,icon){
+ // alert()'s blocking modal has the same WebView reliability problem as
+ // confirm(); route important one-off messages through the toast system
+ // (already proven to work in this app) instead.
+ toast(message,icon||"⚠️");
+}
 
 /* ---------- THEME ---------- */
 function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
@@ -335,7 +372,7 @@ $("pomoStart").onclick=()=>{
  if(pomoHandle)return;
  pomoHandle=setInterval(()=>{
   pomoLeft--;renderPomo();
-  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;playChime("timer");alert("⏰ সময় শেষ! একটু বিরতি নাও।");}
+  if(pomoLeft<=0){clearInterval(pomoHandle);pomoHandle=null;playChime("timer");notify("⏰ সময় শেষ! একটু বিরতি নাও।","⏰");}
  },1000);
 };
 $("pomoPause").onclick=()=>{clearInterval(pomoHandle);pomoHandle=null;};
@@ -600,7 +637,7 @@ async function aiHelp(title,content){
 let flashDeck=[],flashIdx=0,flashShowBack=false;
 $("flashBtn").onclick=()=>{
  flashDeck=filteredNotes().filter(n=>n.content);
- if(!flashDeck.length){alert("Flashcard বানানোর মতো কোনো note নেই (filter change করে দেখো)।");return;}
+ if(!flashDeck.length){notify("Flashcard বানানোর মতো কোনো note নেই (filter change করে দেখো)।");return;}
  flashIdx=0;flashShowBack=false;$("flashSection").classList.remove("hidden");renderFlash();$("flashSection").scrollIntoView({behavior:"smooth"});
 };
 function renderFlash(){
@@ -625,7 +662,7 @@ $("testSearch").oninput=renderTests;
 
 async function startTest(id){
  activeTest=tests.find(t=>t.id===id);answers={};activeAttempt=null;
- if(!activeTest){alert("Testটি পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।");return;}
+ if(!activeTest){notify("Testটি পাওয়া যায়নি। Page refresh করে আবার চেষ্টা করো।");return;}
  if(timerHandle)clearInterval(timerHandle);
  $("submitTest").disabled=true;
  $("submitTest").textContent="Starting...";
@@ -643,7 +680,7 @@ async function startTest(id){
    console.error("Test session creation failed:",err);
    activeAttempt=null;activeTest=null;$("runner").classList.add("hidden");
    const denied=err?.code==="permission-denied";
-   alert(denied?"Test শুরু করা যায়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Test শুরু করা যায়নি। Internet/Firebase connection check করে আবার চেষ্টা করো।");
+   notify(denied?"Test শুরু করা যায়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Test শুরু করা যায়নি। Internet/Firebase connection check করে আবার চেষ্টা করো।");
    return;
  }
  $("testForm").onchange=async e=>{
@@ -675,7 +712,8 @@ submitTestButton.addEventListener("click",async event=>{
    $("testStatus").textContent="⚠️ Test session পাওয়া যাচ্ছে না। Testটি আবার Start করো।";
    return;
  }
- if(confirm("Final submit করতে নিশ্চিত?"))await finishTest(false);
+ const confirmed=await showConfirm("Final submit করতে নিশ্চিত?");
+ if(confirmed)await finishTest(false);
  else $("testStatus").textContent="Submit বাতিল করা হয়েছে। আবার চাইলে Final Submit চাপো।";
 });
 
@@ -709,7 +747,7 @@ async function finishTest(auto){
    const denied=err?.code==="permission-denied";
    const offline=err?.code==="unavailable"||!navigator.onLine;
    $("testStatus").textContent=denied?"❌ Firebase permission denied — নতুন firestore.rules deploy করতে হবে।":offline?"❌ Internet connection নেই। Connection ফিরলে আবার Final Submit চাপো।":`❌ Submit হয়নি (${err?.code||err?.message||"unknown error"})। আবার চেষ্টা করো।`;
-   if(!auto)alert(denied?"Submit হয়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Submit হয়নি। আবার চেষ্টা করো।");
+   if(!auto)notify(denied?"Submit হয়নি: Firebase permission denied. Admin-কে firestore.rules deploy করতে হবে।":"Submit হয়নি। আবার চেষ্টা করো।");
    return;
  }
  submittingTest=false;
@@ -935,7 +973,7 @@ function parsePracticeText(text){
 let pracQs=[],pracAnswers={};
 $("pracStart").onclick=()=>{
  pracQs=parsePracticeText($("pracPaste").value);
- if(!pracQs.length){alert("প্রশ্ন পড়া যায়নি — format ঠিক আছে কিনা দেখো (Q/A/B/C/D/ANSWER)।");return;}
+ if(!pracQs.length){notify("প্রশ্ন পড়া যায়নি — format ঠিক আছে কিনা দেখো (Q/A/B/C/D/ANSWER)।");return;}
  pracAnswers={};
  $("pracQuiz").innerHTML=pracQs.map((x,i)=>`<div class="q"><span class="pill">${esc(x.topic)||"Practice"}</span><p><b>${i+1}. ${esc(x.q)}</b></p>${x.o.map((o,j)=>`<label class="opt"><input type="radio" name="prac${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("")
   +`<button id="pracCheck" class="secondary">✅ Check Answers</button><p id="pracResult" class="muted"></p>`;
