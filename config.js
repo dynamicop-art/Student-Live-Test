@@ -1,12 +1,10 @@
+// Replace these with YOUR OWN Firebase project's config.
+// Firebase Console → Project settings → General → "Your apps" → SDK setup and configuration → Config
 export const firebaseConfig = {
-  apiKey: "AIzaSyCo4BYFrLMH72P8_4ZA4lcVoOMCQsMUDtQ",
-  authDomain: "student-live-tests.firebaseapp.com",
-  projectId: "student-live-tests",
-  storageBucket: "student-live-tests.firebasestorage.app",
-  messagingSenderId: "449736017165",
-  appId: "1:449736017165:web:ffb5e5880717930f345c44",
-  measurementId: "G-4K9XESXJ9J"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
-
-// IMPORTANT: Replace this once with your exact Firebase teacher login email.
-export const TEACHER_EMAIL = "arpanalaps64@gmail.com";
