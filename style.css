@@ -532,3 +532,58 @@ html[data-theme="dark"] .card:not(.quote-card):not(.subject-card),html[data-them
   .hero .learn-symbol.symbol-3{display:none!important}
 }
 @media(max-width:600px) and (prefers-reduced-motion:reduce){.hero,.hero .brand-line{animation:none!important}}
+
+/* ---------- V4.6 COMPACT MOBILE HEADER FIX ---------- */
+.hero .sparkle-sweep{position:absolute;inset:0;pointer-events:none}.hero .star{position:absolute;pointer-events:none}
+@media(max-width:600px){
+  .hero.topbar{
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;gap:10px!important;
+    min-height:0!important;height:auto!important;
+    padding:64px 15px 17px!important;text-align:left!important;
+    border-radius:22px!important;
+  }
+  .hero.topbar .avatar-row{
+    min-width:0!important;width:100%!important;
+    display:flex!important;flex-direction:row!important;
+    justify-content:flex-start!important;align-items:center!important;
+    gap:11px!important;text-align:left!important;
+  }
+  .hero.topbar .avatar-row>div{min-width:0!important;display:block!important;text-align:left!important}
+  .hero.topbar .profile-orbit{width:62px!important;height:62px!important;flex:0 0 62px!important}
+  .hero.topbar .profile-orbit .avatar,.hero.topbar .profile-orbit .avatar-placeholder{width:52px!important;height:52px!important}
+  .hero.topbar .profile-orbit .online-dot{width:12px;height:12px;right:2px;bottom:4px;border-width:2px}
+  .hero.topbar .brand-line{
+    justify-content:flex-start!important;width:auto!important;max-width:100%!important;
+    margin:0 0 6px!important;padding:0!important;border:0!important;
+    background:none!important;backdrop-filter:none!important;
+    font-size:9px!important;letter-spacing:.075em!important;animation:none!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .hero.topbar .brand-dot{width:7px;height:7px;flex:0 0 7px;box-shadow:0 0 0 4px rgba(245,158,11,.16)}
+  .hero.topbar h1{
+    max-width:100%!important;margin:0 0 4px!important;
+    font-size:clamp(19px,5.7vw,24px)!important;line-height:1.15!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left!important;
+  }
+  .hero.topbar p,#who{
+    max-width:100%!important;margin:0!important;font-size:11.5px!important;line-height:1.35!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left!important;
+  }
+  .hero.topbar>button{
+    align-self:center!important;width:auto!important;min-width:74px!important;
+    padding:10px 11px!important;margin:0!important;border-radius:13px!important;
+    font-size:12px!important;box-shadow:none!important;
+  }
+  .hero .star,.hero .learn-symbol,.hero .sparkle-sweep{display:none!important}
+  .hero:not(.topbar){min-height:0!important;height:auto!important;padding:66px 18px 23px!important;border-radius:22px!important}
+  .hero:not(.topbar) h1{font-size:26px!important}
+  .fab-row{top:12px!important;right:12px!important}
+}
+@media(max-width:380px){
+  .hero.topbar{grid-template-columns:minmax(0,1fr) 66px!important;padding:61px 12px 15px!important;gap:7px!important}
+  .hero.topbar .profile-orbit{width:56px!important;height:56px!important;flex-basis:56px!important}
+  .hero.topbar .profile-orbit .avatar,.hero.topbar .profile-orbit .avatar-placeholder{width:47px!important;height:47px!important}
+  .hero.topbar h1{font-size:18px!important}.hero.topbar p,#who{font-size:10.5px!important}
+  .hero.topbar>button{min-width:66px!important;padding:9px 8px!important;font-size:11px!important}
+}

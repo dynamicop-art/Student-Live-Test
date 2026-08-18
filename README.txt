@@ -54,6 +54,14 @@ V4.5 MOBILE NAMEPLATE UPDATE
 - Added animated mobile gradient depth with reduced-motion fallback and an
   extra compact layout for screens 360px wide or smaller.
 
+V4.6 COMPACT MOBILE HEADER FIX
+- Replaced the tall stacked student header with a compact two-column layout:
+  avatar/name/details on the left and a small Logout action on the right.
+- Removed all floating symbols and sparkle nodes on phones; the animated
+  gradient remains as the lightweight visual effect.
+- Added strict auto-height containment so decorative nodes cannot stretch the
+  nameplate, plus tighter variants for screens below 380px.
+
 V3.4 UPDATE
 - Latest 3 Exam Leaderboards: separate top-10 ranking for each of the newest
   three published tests, including tie-aware ranks and the current student.
