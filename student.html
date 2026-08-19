@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.2">
+<link rel="stylesheet" href="style.css?v=5.3">
 <style>
 /* Critical mobile profile header: kept inline so an old cached stylesheet cannot restore the oversized card. */
 @media(max-width:600px){
@@ -127,7 +127,9 @@
 <!-- ================= TESTS ================= -->
 <section id="tests" class="tab hidden">
   <div class="card"><h2>🧪 Available Tests</h2>
+    <p class="muted">Retake যতবার চাইবে করা যাবে। Official leaderboard-এ শুধু প্রথম submitted attempt গণনা হবে।</p>
     <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
+    <p id="testLoadMsg" class="muted" role="status"></p>
     <div id="testsList"></div>
   </div>
   <div class="card"><h2>🎯 Personal Practice Test</h2><p class="muted">ChatGPT দিয়ে practice questions তৈরি করে এখানে paste করো। এই result Firebase-এ save হবে না।</p><div class="row"><input id="pracTopic" placeholder="Topic"><input id="pracCount" type="number" min="3" max="20" value="5"></div><button id="pracPromptBtn" class="secondary">🤖 Create Prompt</button><textarea id="pracPaste" placeholder="ChatGPT output এখানে paste করো..."></textarea><button id="pracStart">Start Practice</button><div id="pracQuiz"></div></div>
@@ -197,7 +199,7 @@ import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,
 import {firebaseConfig} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let profile=null,subjects=[],notes=[],tests=[],assignments=[],doneAssignmentIds=new Set(),activeAttempt=null,activeTest=null,answers={},startMs=0,timerHandle=null;
-let markedForReview=new Set(),attemptSubmitting=false,attemptSubmitted=false;
+let markedForReview=new Set(),attemptSubmitting=false,attemptSubmitted=false,startingTest=false;
 const WEAK_TOPIC_THRESHOLD=60;
 const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
 let reportSubjects=[],reportTopics=[],reportAttempts=[];
@@ -355,9 +357,10 @@ async function loadData(){
 
  onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
  tests=snap.docs.map(d=>({id:d.id,...d.data()}));
+  $("testLoadMsg").textContent="";
   renderTests();renderSmartDashboard();
   clearTimeout(loadData.testRefresh);loadData.testRefresh=setTimeout(()=>loadProgressAndLeaderboard().catch(e=>console.error("home leaderboard refresh error:",e)),150);
- },err=>{console.error("tests listener error:",err);$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
+ },err=>{console.error("tests listener error:",err);$("testLoadMsg").textContent="⚠️ Published test list load করা যায়নি। Teacher-কে Firestore Rules v5.3 publish করতে বলো।";$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
   const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
@@ -472,10 +475,15 @@ $("flashShuffle").onclick=()=>{for(let i=flashDeck.length-1;i>0;i--){const j=Mat
 $("flashClose").onclick=()=>$("flashSection").classList.add("hidden");
 
 /* ---------- TESTS ---------- */
+function hasValidTestQuestions(test){return Array.isArray(test?.questions)&&test.questions.length>0&&test.questions.every(item=>item&&typeof item.q==="string"&&item.q.trim()&&Array.isArray(item.o)&&item.o.length===4&&item.o.every(option=>typeof option==="string"&&option.trim()));}
 function renderTests(){
  const q=$("testSearch").value.trim().toLowerCase();
  const list=tests.filter(t=>!q||(t.title+" "+(t.chapter||"")).toLowerCase().includes(q));
- $("testsList").innerHTML=list.map(t=>{const done=progressMine.some(a=>a.testId===t.id&&a.status==="submitted"),resumable=studentAttempts.some(a=>a.testId===t.id&&a.status==="in_progress"),start=readableDate(t.startAt||t.startsAt),locked=start&&start>Date.now();return `<div class="item"><span class="pill">${escapeHTML(subjectName(t.subjectId))}</span>${done?` <span class="pill teal">Completed</span>`:resumable?` <span class="pill gold">In progress</span>`:""}<h3>${escapeHTML(t.title)}</h3><p class="muted">${escapeHTML(t.chapter||"")} · ${Number(t.questionCount)||0} questions · ${Number(t.durationMinutes)||0} min${start?` · ${start.toLocaleString("en-IN")}`:""}</p><button class="startTest" data-id="${escapeHTML(t.id)}" ${done||locked?"disabled":""}>${locked?"Not open yet":done?"Attempt completed":resumable?"Resume Test":"Start Test"}</button></div>`;}).join("")||"<p>No tests yet.</p>";
+ $("testsList").innerHTML=list.map(t=>{
+  const submitted=studentAttempts.filter(a=>a.testId===t.id&&a.status==="submitted"),resumable=studentAttempts.some(a=>a.testId===t.id&&a.status==="in_progress"),start=readableDate(t.startAt||t.startsAt),locked=!!start&&start.getTime()>Date.now(),valid=hasValidTestQuestions(t);
+  const label=locked?"Not open yet":!valid?"Test needs correction":resumable?"Resume Test":submitted.length?"Retake Test":"Start Test";
+  return `<div class="item"><span class="pill">${escapeHTML(subjectName(t.subjectId))}</span>${submitted.length?` <span class="pill teal">${submitted.length} submitted</span>`:""}${resumable?` <span class="pill gold">In progress</span>`:""}<h3>${escapeHTML(t.title)}</h3><p class="muted">${escapeHTML(t.chapter||"")} · ${Number(t.questionCount)||t.questions?.length||0} questions · ${Number(t.durationMinutes)||0} min${start?` · ${start.toLocaleString("en-IN")}`:""}</p>${!valid?`<p class="muted">⚠️ এই test-এ valid question নেই—Teacher-কে test-টি ঠিক করতে বলো।</p>`:""}<button class="startTest" data-id="${escapeHTML(t.id)}" ${locked||!valid?"disabled":""}>${label}</button></div>`;
+ }).join("")||"<p>No tests yet.</p>";
  document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
 }
 $("testSearch").oninput=renderTests;
@@ -492,29 +500,40 @@ function renderTestQuestions(){
  document.querySelectorAll(".mark-review").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.index);markedForReview.has(i)?markedForReview.delete(i):markedForReview.add(i);updateTestProgress();queueAttemptSave();});
  updateTestProgress();
 }
-function queueAttemptSave(){clearTimeout(queueAttemptSave.timer);queueAttemptSave.timer=setTimeout(async()=>{if(!activeAttempt||attemptSubmitted)return;try{await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,markedForReview:[...markedForReview],lastUpdated:serverTimestamp()});$("testStatus").textContent="✓ Progress saved";}catch(e){console.error(e);$("testStatus").textContent="⚠️ Save failed—check internet before submitting.";}},450);}
+function queueAttemptSave(){clearTimeout(queueAttemptSave.timer);queueAttemptSave.timer=setTimeout(async()=>{if(!activeAttempt||attemptSubmitted)return;try{await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,markedForReview:[...markedForReview],lastUpdated:serverTimestamp()});$("testStatus").textContent="✓ Progress saved";}catch(e){console.error(e);try{const current=activeAttempt&&await getDoc(doc(db,"attempts",activeAttempt));if(!current||!current.exists()){recoverDeletedAttempt("ℹ️ Teacher এই attempt reset/delete করেছেন। এখন নতুন করে test শুরু করা যাবে।");return;}}catch{}$("testStatus").textContent="⚠️ Save failed—check internet before submitting.";}},450);}
+function attemptTimeMs(value){if(!value)return 0;if(typeof value.toMillis==="function")return value.toMillis();return Number(value.seconds||0)*1000+Number(value.nanoseconds||0)/1000000;}
+function makeAttemptToken(){const uuid=globalThis.crypto?.randomUUID?.();return uuid?uuid.replaceAll("-",""):`${Date.now().toString(36)}${Math.random().toString(36).slice(2,22)}`;}
+function recoverDeletedAttempt(message){const removedId=activeAttempt;clearTimeout(queueAttemptSave.timer);clearInterval(timerHandle);if(removedId)studentAttempts=studentAttempts.filter(a=>a.id!==removedId);activeAttempt=null;activeTest=null;answers={};markedForReview=new Set();attemptSubmitting=false;attemptSubmitted=false;$("runner").classList.add("hidden");$("testStatus").textContent="";$("testLoadMsg").textContent=message;renderTests();loadProgressAndLeaderboard().catch(e=>console.error("attempt reset refresh failed",e));}
 async function startTest(id){
- const selected=tests.find(t=>t.id===id);if(!selected)return;
- if(progressMine.some(a=>a.testId===id&&a.status==="submitted")){showToast("এই test-এর attempt ইতিমধ্যে complete হয়েছে।");openTab("history");return;}
- const start=readableDate(selected.startAt||selected.startsAt);if(start&&start>Date.now()){showToast("Test এখনো open হয়নি।");return;}
- activeTest=selected;answers={};markedForReview=new Set();attemptSubmitting=false;attemptSubmitted=false;$("submitTest").disabled=false;$("printPaperBtn").classList.add("hidden");$("testStatus").textContent="";
- const legacy=studentAttempts.find(a=>a.testId===id&&a.status==="in_progress");activeAttempt=legacy?.id||`${id}_${auth.currentUser.uid}`;
- const ref=doc(db,"attempts",activeAttempt),existing=await getDoc(ref);
- if(existing.exists()){
-   const data=existing.data();if(data.status==="submitted"){showToast("এই test-এর attempt ইতিমধ্যে submit হয়েছে।");openTab("history");return;}
-   answers=data.answers||{};markedForReview=new Set((data.markedForReview||[]).map(Number));startMs=data.startedAt?.seconds?data.startedAt.seconds*1000:Date.now();
- }else{
-   startMs=Date.now();await setDoc(ref,{uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:selected.title,subjectId:selected.subjectId,status:"in_progress",progress:0,answers:{},markedForReview:[],startedAt:serverTimestamp()});
- }
- $("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;renderTestQuestions();
- clearInterval(timerHandle);timerHandle=setInterval(tick,1000);tick();$("runner").scrollIntoView({behavior:"smooth"});
- $("testForm").onchange=async e=>{
-   if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);
-   updateTestProgress();queueAttemptSave();
- };
+ const selected=tests.find(t=>t.id===id);if(!selected||startingTest)return;
+ if(activeAttempt&&!attemptSubmitted){if(activeTest?.id===id){$("runner").scrollIntoView({behavior:"smooth"});return;}showToast("আগের in-progress test আগে submit বা Teacher-এর মাধ্যমে reset করো।");$("runner").scrollIntoView({behavior:"smooth"});return;}
+ if(!hasValidTestQuestions(selected)){$("testLoadMsg").textContent="⚠️ Test-এ valid question/option নেই। Teacher-কে test-টি ঠিক করতে বলো।";return;}
+ const start=readableDate(selected.startAt||selected.startsAt);if(start&&start.getTime()>Date.now()){showToast("Test এখনো open হয়নি।");return;}
+ startingTest=true;$("testLoadMsg").textContent="Starting test...";
+ try{
+  const own=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));
+  studentAttempts=own.docs.map(d=>({id:d.id,...d.data()}));progressMine=studentAttempts.filter(a=>a.status==="submitted");
+  const inProgress=studentAttempts.filter(a=>a.testId===id&&a.status==="in_progress").sort((a,b)=>attemptTimeMs(b.startedAt)-attemptTimeMs(a.startedAt)||String(b.id).localeCompare(String(a.id)))[0];
+  activeTest=selected;answers={};markedForReview=new Set();attemptSubmitting=false;attemptSubmitted=false;$("submitTest").disabled=false;$("printPaperBtn").classList.add("hidden");$("testStatus").textContent="";
+  let existingData=null;
+  if(inProgress){const existing=await getDoc(doc(db,"attempts",inProgress.id));if(existing.exists()&&existing.data().status==="in_progress"){activeAttempt=inProgress.id;existingData=existing.data();}}
+  if(existingData){
+   answers=existingData.answers||{};markedForReview=new Set((existingData.markedForReview||[]).map(Number));startMs=attemptTimeMs(existingData.startedAt)||Date.now();$("testStatus").textContent="↩ Saved attempt resumed.";
+  }else{
+   const token=makeAttemptToken(),sameTest=studentAttempts.filter(a=>a.testId===id),submittedCount=sameTest.filter(a=>a.status==="submitted").length,attemptNumber=sameTest.length+1;
+   activeAttempt=`${id}_${auth.currentUser.uid}_${token}`;startMs=Date.now();
+   const payload={attemptId:activeAttempt,attemptToken:token,attemptNumber,isRetake:submittedCount>0,uid:auth.currentUser.uid,studentName:profile.name,classId:profile.classId,testId:id,testTitle:selected.title,subjectId:selected.subjectId,status:"in_progress",progress:0,answers:{},markedForReview:[],startedAt:serverTimestamp()};
+   await setDoc(doc(db,"attempts",activeAttempt),payload);studentAttempts.push({...payload,id:activeAttempt,startedAt:{seconds:Math.floor(startMs/1000)}});$("testStatus").textContent=submittedCount?`🔁 Retake #${attemptNumber}. Leaderboard-এর প্রথম result বদলাবে না।`:"🏆 First attempt—এই result leaderboard-এর জন্য eligible।";
+  }
+  $("testLoadMsg").textContent="";$("runner").classList.remove("hidden");$("resultBox").classList.add("hidden");$("testName").textContent=activeTest.title;renderTestQuestions();
+  clearInterval(timerHandle);timerHandle=setInterval(tick,1000);tick();$("runner").scrollIntoView({behavior:"smooth"});
+  $("testForm").onchange=e=>{if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);updateTestProgress();queueAttemptSave();};
+ }catch(e){
+  console.error("test start error:",e);activeAttempt=null;activeTest=null;$("testLoadMsg").textContent="⚠️ Test start হয়নি। Teacher-কে website files-এর সঙ্গে Firestore Rules v5.3 publish করতে বলো।";showToast("Test start failed—please inform Teacher.");
+ }finally{startingTest=false;renderTests();}
 }
 function tick(){
- const total=activeTest.durationMinutes*60,used=Math.floor((Date.now()-startMs)/1000),left=Math.max(0,total-used);
+ const total=Math.max(1,Number(activeTest.durationMinutes)||30)*60,used=Math.floor((Date.now()-startMs)/1000),left=Math.max(0,total-used);
  $("timer").textContent=`⏱ ${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;
  if(left<=0){clearInterval(timerHandle);finishTest(true);}
 }
@@ -525,11 +544,15 @@ $("submitTest").onclick=()=>{if(attemptSubmitting||attemptSubmitted)return;const
 
 async function finishTest(auto){
  if(attemptSubmitting||attemptSubmitted||!activeAttempt)return;attemptSubmitting=true;clearTimeout(queueAttemptSave.timer);clearInterval(timerHandle);$("submitTest").disabled=true;$("testForm").querySelectorAll("input,button").forEach(x=>x.disabled=true);
- try{await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,markedForReview:[...markedForReview],status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});attemptSubmitted=true;}
- catch(e){attemptSubmitting=false;$("submitTest").disabled=false;$("testForm").querySelectorAll("input,button").forEach(x=>x.disabled=false);$("testStatus").textContent="⚠️ Submit failed. Internet check করে আবার submit করো।";return;}
+ try{
+  await updateDoc(doc(db,"attempts",activeAttempt),{answers,progress:Object.keys(answers).length,markedForReview:[...markedForReview],status:"submitted",submittedAt:serverTimestamp(),autoSubmitted:auto});attemptSubmitted=true;
+  const local=studentAttempts.find(a=>a.id===activeAttempt);if(local){local.answers={...answers};local.progress=Object.keys(answers).length;local.markedForReview=[...markedForReview];local.status="submitted";local.submittedAt={seconds:Math.floor(Date.now()/1000)};}progressMine=studentAttempts.filter(a=>a.status==="submitted");renderTests();
+ }
+ catch(e){try{const current=activeAttempt&&await getDoc(doc(db,"attempts",activeAttempt));if(!current||!current.exists()){recoverDeletedAttempt("ℹ️ Teacher এই attempt reset/delete করেছেন। এখন নতুন করে test শুরু করা যাবে।");return;}}catch{}attemptSubmitting=false;$("submitTest").disabled=false;$("testForm").querySelectorAll("input,button").forEach(x=>x.disabled=false);$("testStatus").textContent="⚠️ Submit failed. Internet check করে আবার submit করো।";return;}
  $("testStatus").textContent="✅ Submitted. Teacher dashboard grading complete হলে result এখানে আসবে.";
  $("printPaperBtn").classList.remove("hidden");$("printPaperBtn").onclick=()=>printQuestionPaper(activeTest);
  const unsub=onSnapshot(doc(db,"attempts",activeAttempt),s=>{
+   if(!s.exists()){unsub();recoverDeletedAttempt("ℹ️ Teacher এই attempt reset/delete করেছেন। এখন নতুন করে test শুরু করা যাবে।");return;}
    const d=s.data();if(d?.score!=null){
      $("resultBox").classList.remove("hidden");
      $("resultBox").innerHTML=`<span class="pill">RESULT</span><h2>${escapeHTML(activeTest.title)}</h2><h1>${d.score}/${d.total}</h1><p><b>${d.percentage}%</b></p><button id="reviewNow" class="secondary">📝 Answer Review</button><div class="notice">Revision-এর জন্য weak-topic ChatGPT help ব্যবহার করতে পারো।</div>`;
@@ -642,10 +665,11 @@ async function loadProgressAndLeaderboard(useCache=false){
  renderUnitAnalytics(filteredMine);
 
  // history + print
- const sortedMine=[...mine].sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
+ const attemptNumbers=new Map(),attemptCounts=new Map();[...mine].sort((a,b)=>attemptTimeMs(a.submittedAt)-attemptTimeMs(b.submittedAt)||String(a.id).localeCompare(String(b.id))).forEach(a=>{const key=`${a.testId}::${a.uid}`,number=(attemptCounts.get(key)||0)+1;attemptCounts.set(key,number);attemptNumbers.set(a.id,number);});
+ const sortedMine=[...mine].sort((a,b)=>attemptTimeMs(b.submittedAt)-attemptTimeMs(a.submittedAt)||String(b.id).localeCompare(String(a.id)));
  reportAttempts=sortedMine;
  renderWeeklyGoal(sortedMine);
- $("historyList").innerHTML=sortedMine.map(a=>`<div class="item"><div class="topbar"><div><b>${escapeHTML(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div>${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Review</button> <button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div></div>`).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
+ $("historyList").innerHTML=sortedMine.map(a=>{const number=attemptNumbers.get(a.id)||Number(a.attemptNumber)||1;return `<div class="item"><div class="topbar"><div><span class="pill ${number===1?"gold":"teal"}">${number===1?"Official first attempt":`Retake #${number}`}</span><br><b>${escapeHTML(a.testTitle)}</b><br><span class="muted">${a.score!=null?`${a.score}/${a.total} · ${a.percentage}%`:"Grading pending..."}</span></div><div>${a.score!=null?`<button class="secondary reviewBtn" data-id="${a.id}">📝 Review</button> <button class="secondary printBtn" data-id="${a.id}">🖨️ Print</button>`:""}</div></div></div>`;}).join("")||"<p class='muted'>এখনো কোনো test attempt নেই।</p>";
  document.querySelectorAll(".reviewBtn").forEach(b=>b.onclick=()=>{const a=mine.find(x=>x.id===b.dataset.id);showReview(a.testTitle,a.review);});
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);

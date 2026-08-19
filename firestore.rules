@@ -62,10 +62,37 @@ service cloud.firestore {
     }
 
     match /attempts/{id} {
+      // v5.3 uses one immutable document per attempt. The legacy ID remains
+      // accepted during deployment so an already-open v5.2 page does not fail.
+      function validLegacyAttemptCreate(){
+        return id == (request.resource.data.testId + '_' + request.auth.uid)
+          && request.resource.data.keys().hasOnly([
+            'uid','studentName','classId','testId','testTitle','subjectId',
+            'status','progress','answers','markedForReview','startedAt'
+          ]);
+      }
+      function validMultiAttemptCreate(){
+        return request.resource.data.keys().hasAll(['attemptId','attemptToken','attemptNumber','isRetake'])
+          && request.resource.data.keys().hasOnly([
+            'attemptId','attemptToken','attemptNumber','isRetake','uid','studentName',
+            'classId','testId','testTitle','subjectId','status','progress','answers',
+            'markedForReview','startedAt'
+          ])
+          && request.resource.data.attemptId == id
+          && request.resource.data.attemptToken is string
+          && request.resource.data.attemptToken.size() >= 12
+          && request.resource.data.attemptToken.size() <= 64
+          && request.resource.data.attemptToken.matches('^[A-Za-z0-9]+$')
+          && id == (request.resource.data.testId + '_' + request.auth.uid + '_' + request.resource.data.attemptToken)
+          && request.resource.data.attemptNumber is int
+          && request.resource.data.attemptNumber > 0
+          && request.resource.data.attemptNumber < 100000
+          && request.resource.data.isRetake is bool;
+      }
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass()
-        && id == (request.resource.data.testId + '_' + request.auth.uid)
+        && (validLegacyAttemptCreate() || validMultiAttemptCreate())
         && exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
         && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.published == true
         && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.classId == myClass()
@@ -75,8 +102,12 @@ service cloud.firestore {
         && request.resource.data.status == "in_progress"
         && request.resource.data.startedAt == request.time
         && request.resource.data.answers is map
+        && request.resource.data.answers.size() == 0
+        && request.resource.data.markedForReview is list
+        && request.resource.data.markedForReview.size() == 0
+        && request.resource.data.progress is int
         && request.resource.data.progress == 0
-        && !request.resource.data.keys().hasAny(['score','total','percentage','gradedAt','topicStats','review']);
+        && !request.resource.data.keys().hasAny(['score','total','percentage','gradedAt','topicStats','review','submittedAt','autoSubmitted']);
 
       // Full attempts (including saved answers) stay private.
       allow read: if isTeacher()
@@ -87,14 +118,30 @@ service cloud.firestore {
         && resource.data.uid == request.auth.uid
         && resource.data.status == "in_progress"
         && (request.resource.data.status == "in_progress" || request.resource.data.status == "submitted")
-        && (request.resource.data.status != "submitted" || request.resource.data.submittedAt == request.time)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.testId == resource.data.testId
         && request.resource.data.classId == resource.data.classId
         && request.resource.data.studentName == resource.data.studentName
         && request.resource.data.testTitle == resource.data.testTitle
         && request.resource.data.subjectId == resource.data.subjectId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats','review'])
+        && request.resource.data.answers is map
+        && request.resource.data.answers.size() <= 500
+        && request.resource.data.markedForReview is list
+        && request.resource.data.markedForReview.size() <= 500
+        && request.resource.data.progress is int
+        && request.resource.data.progress == request.resource.data.answers.size()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'answers','progress','markedForReview','lastUpdated','status','submittedAt','autoSubmitted'
+        ])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastUpdated'])
+            || request.resource.data.lastUpdated == request.time)
+        && (
+          (request.resource.data.status == "in_progress"
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['submittedAt','autoSubmitted']))
+          || (request.resource.data.status == "submitted"
+            && request.resource.data.submittedAt == request.time
+            && request.resource.data.autoSubmitted is bool)
+        )
       );
 
       allow delete: if isTeacher();

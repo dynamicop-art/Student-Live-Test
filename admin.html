@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.2"></head>
+<link rel="stylesheet" href="style.css?v=5.3"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -71,7 +71,8 @@
 </section>
 
 <section id="results" class="tab card hidden"><h2>📊 Live Results</h2>
-<div class="filter-bar"><input id="attemptSearch" placeholder="Search student or test"><button id="exportCsv" class="secondary">⬇️ Export CSV</button></div><div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempt data</button></section>
+<p class="muted">সব retake এখানে থাকবে; leaderboard ও official summary-তে প্রত্যেক student-এর প্রথম submitted attempt-ই গণনা হবে। Reset করলে সেই student-এর ওই test-এর সব attempts এবং leaderboard row মুছে যাবে।</p>
+<div class="filter-bar"><input id="attemptSearch" placeholder="Search student or test"><select id="attemptStatusFilter" aria-label="Filter attempts by status"><option value="">All statuses</option><option value="in_progress">In progress</option><option value="submitted">Submitted</option></select><button id="exportCsv" class="secondary">⬇️ Export CSV</button></div><p id="attemptActionMsg" class="muted" role="status"></p><div id="attemptList"></div><hr><button id="purgeSubmitted" class="danger">🗑 Delete all submitted attempts + leaderboard rows</button></section>
 
 <section id="announcements" class="tab card hidden"><h2>📣 Notice Board</h2>
 <p class="muted">এখানে যা পাবলিশ করবে সেটা সেই Class-এর সব ছাত্রছাত্রীর Home tab-এ দেখা যাবে।</p>
@@ -95,7 +96,7 @@
 let mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};try{const fx=await import("./effects.js");({mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp,runTransaction,writeBatch} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let adminInvites=[],adminSubjects=[];
@@ -366,49 +367,90 @@ async function loadAll(){
  const rest=await Promise.allSettled([loadNotes(),loadTests(),loadAnnouncements(),loadAssignments()]);rest.filter(x=>x.status==="rejected").forEach(x=>console.error(x.reason));listenDoubts();
 }
 
-let latestAttempts=[],attemptUnsub=null;
-function listenAttempts(){
- if(attemptUnsub)attemptUnsub();
- attemptUnsub=onSnapshot(collection(db,"attempts"),async snap=>{
-  latestAttempts=snap.docs.map(d=>({id:d.id,...d.data()}));
-  $("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;
-  for(const a of latestAttempts){
-   if(a.status==="submitted"&&a.score==null){
-    const key=await getDoc(doc(db,"answerKeys",a.testId));
-    const testDoc=await getDoc(doc(db,"tests",a.testId));
-    if(key.exists()){
-    const ans=key.data().answers,explanations=key.data().explanations||[];let score=0;const topicStats={},review=[];
-     const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
-     for(let i=0;i<ans.length;i++){
-      const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
-      if(correct)score++;
-      const topic=(qs[i]&&qs[i].topic)||"General";
-      if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
-      topicStats[topic].total++;if(correct)topicStats[topic].correct++;
-      review.push({q:qs[i]?.q||`Question ${i+1}`,o:qs[i]?.o||[],topic,explanation:explanations[i]||"",chosenIdx:a.answers?.["q"+i]??null,correctIdx:Number(ans[i]),isCorrect:correct});
-     }
-     const percentage=Math.round(score/ans.length*100);
-     await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage,topicStats,review,gradedAt:serverTimestamp()});
-     await setDoc(doc(db,"leaderboardEntries",`${a.testId}_${a.uid}`),{testId:a.testId,classId:a.classId,uid:a.uid,studentName:a.studentName||"Student",score,total:ans.length,percentage,submittedAt:a.submittedAt||serverTimestamp()});
-    }
-   }
-   if(a.status==="submitted"&&a.score!=null&&a.total!=null){
-    await setDoc(doc(db,"leaderboardEntries",`${a.testId}_${a.uid}`),{testId:a.testId,classId:a.classId,uid:a.uid,studentName:a.studentName||"Student",score:a.score,total:a.total,percentage:a.percentage,submittedAt:a.submittedAt||serverTimestamp()},{merge:true});
-   }
-  }
-  renderAttempts();
+let latestAttempts=[],attemptUnsub=null,attemptProcessing=false,attemptProcessQueued=false;
+const suppressedLeaderboardGroups=new Set();
+function attemptGroupKey(uid,testId){return `${testId}::${uid}`;}
+function timestampParts(value){return [Number(value?.seconds||0),Number(value?.nanoseconds||0)];}
+function compareTimestamp(a,b){const [as,an]=timestampParts(a),[bs,bn]=timestampParts(b);return as-bs||an-bn;}
+function compareSubmittedAttempts(a,b){return compareTimestamp(a.submittedAt,b.submittedAt)||compareTimestamp(a.startedAt,b.startedAt)||String(a.id).localeCompare(String(b.id));}
+function attemptGroups(list,status="submitted"){const groups=new Map();list.filter(a=>a.status===status&&a.uid&&a.testId).forEach(a=>{const key=attemptGroupKey(a.uid,a.testId);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(a);});groups.forEach(items=>items.sort(compareSubmittedAttempts));return groups;}
+function officialSubmittedAttempts(list=latestAttempts){return [...attemptGroups(list).values()].map(items=>items[0]).filter(Boolean);}
+function displayAttemptNumbers(list=latestAttempts){const numbers=new Map(),groups=new Map();list.forEach(a=>{const key=attemptGroupKey(a.uid,a.testId);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(a);});groups.forEach(items=>items.sort((a,b)=>compareTimestamp(a.startedAt,b.startedAt)||String(a.id).localeCompare(String(b.id))).forEach((a,i)=>numbers.set(a.id,i+1)));return numbers;}
+function adminDate(value){const [seconds]=timestampParts(value);return seconds?new Date(seconds*1000).toLocaleString("en-IN"):"—";}
+
+async function gradeAttempt(a){
+ const [key,testDoc]=await Promise.all([getDoc(doc(db,"answerKeys",a.testId)),getDoc(doc(db,"tests",a.testId))]);
+ if(!key.exists()||!testDoc.exists())return false;
+ const ans=Array.isArray(key.data().answers)?key.data().answers:[],explanations=key.data().explanations||[];if(!ans.length)return false;
+ const qs=testDoc.data().questions||[];let score=0;const topicStats={},review=[];
+ for(let i=0;i<ans.length;i++){
+  const correct=Number(a.answers?.["q"+i])===Number(ans[i]);if(correct)score++;
+  const topic=(qs[i]&&qs[i].topic)||"General";if(!topicStats[topic])topicStats[topic]={correct:0,total:0};topicStats[topic].total++;if(correct)topicStats[topic].correct++;
+  review.push({q:qs[i]?.q||`Question ${i+1}`,o:qs[i]?.o||[],topic,explanation:explanations[i]||"",chosenIdx:a.answers?.["q"+i]??null,correctIdx:Number(ans[i]),isCorrect:correct});
+ }
+ const patch={score,total:ans.length,percentage:Math.round(score/ans.length*100),topicStats,review,gradedAt:serverTimestamp()};await updateDoc(doc(db,"attempts",a.id),patch);Object.assign(a,patch);return true;
+}
+async function ensureFirstLeaderboardEntry(group){
+ const first=[...group].sort(compareSubmittedAttempts)[0];if(!first||first.score==null||first.total==null)return;
+ const groupKey=attemptGroupKey(first.uid,first.testId);if(suppressedLeaderboardGroups.has(groupKey))return;
+ const ref=doc(db,"leaderboardEntries",`${first.testId}_${first.uid}`),activeIds=new Set(group.map(a=>a.id));
+ const payload={testId:first.testId,classId:first.classId,uid:first.uid,studentName:first.studentName||"Student",score:first.score,total:first.total,percentage:first.percentage,submittedAt:first.submittedAt||serverTimestamp(),sourceAttemptId:first.id,attemptNumber:1,firstAttemptOnly:true,lockedAt:serverTimestamp()};
+ await runTransaction(db,async transaction=>{
+  const current=await transaction.get(ref);
+  if(!current.exists()){transaction.set(ref,payload);return;}
+  const data=current.data(),source=data.sourceAttemptId;
+  if(source&&!activeIds.has(source)){transaction.set(ref,payload);return;}
+  if(!source&&compareTimestamp(first.submittedAt,data.submittedAt)<0)transaction.set(ref,payload);
  });
 }
-function renderAttempts(){
- const q=($("attemptSearch")?.value||"").trim().toLowerCase(),list=latestAttempts.filter(a=>!q||`${a.studentName||""} ${a.testTitle||""}`.toLowerCase().includes(q));
- $("attemptList").innerHTML=list.map(a=>`<div class="item"><div class="topbar"><div><b>${esc(a.studentName||a.uid)}</b><br><span class="muted">${esc(a.testTitle||a.testId)}</span></div><span class="pill">${esc(a.status)}</span></div><p>Progress: ${a.progress||0}${a.score!=null?` · <b>Score ${a.score}/${a.total} (${a.percentage}%)</b>`:""}</p></div>`).join("")||"<p class='muted'>No matching attempts.</p>";
- const graded=latestAttempts.filter(a=>a.status==="submitted"&&a.percentage!=null);$("stAvg").textContent=graded.length?Math.round(graded.reduce((s,a)=>s+a.percentage,0)/graded.length)+"%":"—";const top=[...graded].sort((a,b)=>b.percentage-a.percentage)[0];$("stTop").textContent=top?top.studentName||"Student":"—";
- const byStudent={};graded.forEach(a=>{if(!byStudent[a.uid])byStudent[a.uid]={name:a.studentName||"Student",sum:0,n:0};byStudent[a.uid].sum+=Number(a.percentage);byStudent[a.uid].n++;});const priority=Object.values(byStudent).map(v=>({name:v.name,avg:Math.round(v.sum/v.n),tests:v.n})).filter(v=>v.avg<60).sort((a,b)=>a.avg-b.avg).slice(0,8);$("revisionPriority").innerHTML=priority.length?priority.map(v=>`<div class="priority-row"><span><b>${esc(v.name)}</b><small>${v.tests} graded test(s)</small></span><strong>${v.avg}%</strong></div>`).join(""):"<p class='muted'>✅ বর্তমানে 60%-এর নিচে কোনো graded average নেই।</p>";
+async function processAttemptLifecycle(){
+ if(attemptProcessing){attemptProcessQueued=true;return;}attemptProcessing=true;
+ try{
+  do{
+   attemptProcessQueued=false;const working=latestAttempts.map(a=>({...a}));
+   for(const a of working.filter(x=>x.status==="submitted"&&x.score==null)){try{await gradeAttempt(a);}catch(e){console.error("grading failed",a.id,e);}}
+   for(const [groupKey,group] of attemptGroups(working)){if(!suppressedLeaderboardGroups.has(groupKey)){try{await ensureFirstLeaderboardEntry(group);}catch(e){console.error("leaderboard sync failed",groupKey,e);}}}
+  }while(attemptProcessQueued);
+ }finally{attemptProcessing=false;renderAttempts();}
 }
-$("attemptSearch").oninput=renderAttempts;
-$("exportCsv").onclick=()=>{if(!latestAttempts.length)return alert("No results to export.");const rows=[["Student","Test","Class","Status","Score","Total","Percentage"],...latestAttempts.map(a=>[a.studentName,a.testTitle,a.classId,a.status,a.score??"",a.total??"",a.percentage??""])];const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})),link=document.createElement("a");link.href=url;link.download=`results-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+function queueAttemptLifecycle(){processAttemptLifecycle().catch(e=>console.error("attempt lifecycle error:",e));}
+async function waitForAttemptProcessor(){for(let i=0;attemptProcessing&&i<200;i++)await new Promise(resolve=>setTimeout(resolve,25));}
+async function deleteReferences(refs){for(let i=0;i<refs.length;i+=400){const batch=writeBatch(db);refs.slice(i,i+400).forEach(ref=>batch.delete(ref));await batch.commit();}}
+
+function listenAttempts(){
+ if(attemptUnsub)attemptUnsub();
+ attemptUnsub=onSnapshot(collection(db,"attempts"),snap=>{latestAttempts=snap.docs.map(d=>({id:d.id,...d.data()}));$("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;renderAttempts();queueAttemptLifecycle();},err=>{$("attemptActionMsg").textContent="⚠️ Attempts load failed: "+err.message;console.error(err);});
+}
+function renderAttempts(){
+ const q=($("attemptSearch")?.value||"").trim().toLowerCase(),status=$("attemptStatusFilter")?.value||"",numbers=displayAttemptNumbers(),officialIds=new Set(officialSubmittedAttempts().map(a=>a.id));
+ const list=[...latestAttempts].filter(a=>(!status||a.status===status)&&(!q||`${a.studentName||""} ${a.testTitle||""} ${a.classId||""}`.toLowerCase().includes(q))).sort((a,b)=>compareTimestamp(b.startedAt,a.startedAt)||String(b.id).localeCompare(String(a.id)));
+ $("attemptList").innerHTML=list.map(a=>{const number=numbers.get(a.id)||Number(a.attemptNumber)||1,official=officialIds.has(a.id),inProgress=a.status==="in_progress";return `<div class="item attempt-admin-card"><div class="topbar"><div><b>${esc(a.studentName||a.uid)}</b><br><span class="muted">${esc(a.testTitle||a.testId)} · ${esc(a.classId||"")}</span></div><div><span class="pill ${inProgress?"gold":"teal"}">${esc(a.status)}</span> <span class="pill ${official?"gold":""}">${official?"Official first":`Attempt #${number}`}</span></div></div><p>Progress: ${Number(a.progress)||0}${a.score!=null?` · <b>Score ${Number(a.score)}/${Number(a.total)} (${Number(a.percentage)}%)</b>`:" · Grading pending"}<br><span class="muted">Started: ${esc(adminDate(a.startedAt))}${a.submittedAt?` · Submitted: ${esc(adminDate(a.submittedAt))}`:""}</span></p><div class="attempt-actions"><button class="danger delete-attempt" data-id="${esc(a.id)}">${inProgress?"🗑 Delete In-progress":"🗑 Delete Attempt"}</button><button class="secondary reset-student-test" data-uid="${esc(a.uid)}" data-test="${esc(a.testId)}">↻ Full Reset Student/Test</button></div></div>`;}).join("")||"<p class='muted'>No matching attempts.</p>";
+ document.querySelectorAll(".delete-attempt").forEach(b=>b.onclick=async()=>{b.disabled=true;await deleteSingleAttempt(b.dataset.id);});
+ document.querySelectorAll(".reset-student-test").forEach(b=>b.onclick=async()=>{b.disabled=true;await resetStudentTest(b.dataset.uid,b.dataset.test);});
+ const graded=officialSubmittedAttempts().filter(a=>a.percentage!=null);$("stAvg").textContent=graded.length?Math.round(graded.reduce((s,a)=>s+Number(a.percentage),0)/graded.length)+"%":"—";const top=[...graded].sort((a,b)=>Number(b.percentage)-Number(a.percentage))[0];$("stTop").textContent=top?top.studentName||"Student":"—";
+ const byStudent={};graded.forEach(a=>{if(!byStudent[a.uid])byStudent[a.uid]={name:a.studentName||"Student",sum:0,n:0};byStudent[a.uid].sum+=Number(a.percentage);byStudent[a.uid].n++;});const priority=Object.values(byStudent).map(v=>({name:v.name,avg:Math.round(v.sum/v.n),tests:v.n})).filter(v=>v.avg<60).sort((a,b)=>a.avg-b.avg).slice(0,8);$("revisionPriority").innerHTML=priority.length?priority.map(v=>`<div class="priority-row"><span><b>${esc(v.name)}</b><small>${v.tests} official test(s)</small></span><strong>${v.avg}%</strong></div>`).join(""):"<p class='muted'>✅ বর্তমানে 60%-এর নিচে কোনো official average নেই।</p>";
+}
+async function deleteSingleAttempt(id){
+ const attempt=latestAttempts.find(a=>a.id===id);if(!attempt)return;if(!confirm(`${attempt.studentName||"Student"}-এর এই ${attempt.status} attempt delete করবেন?`)){renderAttempts();return;}
+ const groupKey=attemptGroupKey(attempt.uid,attempt.testId);suppressedLeaderboardGroups.add(groupKey);$("attemptActionMsg").textContent="Deleting attempt...";
+ try{
+  await waitForAttemptProcessor();const refs=[doc(db,"attempts",id)];
+  if(attempt.status==="submitted"){const entryRef=doc(db,"leaderboardEntries",`${attempt.testId}_${attempt.uid}`),entry=await getDoc(entryRef),first=attemptGroups(latestAttempts).get(groupKey)?.[0];if(entry.exists()&&(entry.data().sourceAttemptId===id||(!entry.data().sourceAttemptId&&first?.id===id)))refs.push(entryRef);}
+  await deleteReferences(refs);latestAttempts=latestAttempts.filter(a=>a.id!==id);$("attemptActionMsg").textContent="✅ Attempt deleted.";
+ }catch(e){$("attemptActionMsg").textContent="⚠️ Delete failed: "+e.message;}finally{suppressedLeaderboardGroups.delete(groupKey);$("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;renderAttempts();queueAttemptLifecycle();}
+}
+async function resetStudentTest(uid,testId){
+ const known=latestAttempts.find(a=>a.uid===uid&&a.testId===testId),label=`${known?.studentName||"Student"} — ${known?.testTitle||testId}`;if(!confirm(`${label}\n\nসব in-progress/submitted attempts, results এবং leaderboard row permanently reset করবেন?`)){renderAttempts();return;}
+ const groupKey=attemptGroupKey(uid,testId);suppressedLeaderboardGroups.add(groupKey);$("attemptActionMsg").textContent="Resetting student/test...";
+ try{
+  await waitForAttemptProcessor();const snapshot=await getDocs(query(collection(db,"attempts"),where("uid","==",uid))),attemptRefs=snapshot.docs.filter(d=>d.data().testId===testId).map(d=>d.ref);await deleteReferences([...attemptRefs,doc(db,"leaderboardEntries",`${testId}_${uid}`)]);latestAttempts=latestAttempts.filter(a=>!(a.uid===uid&&a.testId===testId));$("attemptActionMsg").textContent=`✅ Reset complete. ${attemptRefs.length} attempt(s) removed; next submission will become the official first attempt.`;
+ }catch(e){$("attemptActionMsg").textContent="⚠️ Reset failed: "+e.message;}finally{suppressedLeaderboardGroups.delete(groupKey);$("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;renderAttempts();queueAttemptLifecycle();}
+}
+$("attemptSearch").oninput=renderAttempts;$("attemptStatusFilter").onchange=renderAttempts;
+$("exportCsv").onclick=()=>{if(!latestAttempts.length)return alert("No results to export.");const numbers=displayAttemptNumbers(),official=new Set(officialSubmittedAttempts().map(a=>a.id)),rows=[["Student","Test","Class","Attempt","Official First","Status","Score","Total","Percentage","Started","Submitted"],...latestAttempts.map(a=>[a.studentName,a.testTitle,a.classId,numbers.get(a.id)||a.attemptNumber||1,official.has(a.id)?"Yes":"No",a.status,a.score??"",a.total??"",a.percentage??"",adminDate(a.startedAt),adminDate(a.submittedAt)])];const csv=rows.map(r=>r.map(v=>{let value=String(v??"");if(/^[=+\-@]/.test(value))value="'"+value;return `"${value.replaceAll('"','""')}"`;}).join(",")).join("\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})),link=document.createElement("a");link.href=url;link.download=`results-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $("purgeSubmitted").onclick=async()=>{
- if(!confirm("Delete ALL submitted attempt/result data?"))return;
- const s=await getDocs(query(collection(db,"attempts"),where("status","==","submitted")));for(const d of s.docs)await deleteDoc(d.ref);
+ if(!confirm("Delete ALL submitted attempts/results and their leaderboard rows? In-progress attempts will remain."))return;
+ const snapshot=await getDocs(query(collection(db,"attempts"),where("status","==","submitted"))),docs=snapshot.docs,groups=new Map();docs.forEach(d=>{const a=d.data();groups.set(attemptGroupKey(a.uid,a.testId),{uid:a.uid,testId:a.testId});});groups.forEach((_,key)=>suppressedLeaderboardGroups.add(key));$("attemptActionMsg").textContent="Deleting submitted data...";
+ try{await waitForAttemptProcessor();const leaderboardRefs=[...groups.values()].map(({uid,testId})=>doc(db,"leaderboardEntries",`${testId}_${uid}`));await deleteReferences([...docs.map(d=>d.ref),...leaderboardRefs]);latestAttempts=latestAttempts.filter(a=>a.status!=="submitted");$("attemptActionMsg").textContent=`✅ ${docs.length} submitted attempt(s) and matching leaderboard rows deleted.`;}catch(e){$("attemptActionMsg").textContent="⚠️ Bulk delete failed: "+e.message;}finally{groups.forEach((_,key)=>suppressedLeaderboardGroups.delete(key));renderAttempts();queueAttemptLifecycle();}
 };
 </script></body></html>

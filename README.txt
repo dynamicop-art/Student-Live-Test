@@ -286,3 +286,36 @@ V5.2 TEACHER WORKFLOW UPDATE
 - Class dropdowns are built from the Student/Class list plus classes already
   used by existing subjects. Add/Update a Student first to introduce a new Class.
 - No new paid service, API or Firebase collection was added.
+
+V5.3 ATTEMPT LIFECYCLE FIX
+- Students can submit the same published test repeatedly. Every submission is
+  preserved as a separate attempt for teacher review and student history.
+- Only the earliest remaining submitted attempt for each Student + Test is the
+  official attempt used by the leaderboard, class average, top performer and
+  teacher revision-priority summary. Retakes never overwrite that row.
+- Leaderboard creation now uses an atomic transaction, so two open Admin tabs
+  cannot race and replace the first result with a later retake.
+- Student test cards show Start, Resume or Retake correctly and are no longer
+  disabled merely because a previous attempt was submitted.
+- Test start now validates question data, refreshes the student's attempts from
+  Firestore, resumes a real in-progress attempt, and reports Rules/start errors
+  clearly instead of failing silently.
+- Admin Live Results has All/In-progress/Submitted filtering, per-attempt delete,
+  and Full Reset Student/Test. Full Reset removes all attempts/results plus the
+  leaderboard row; the next submission becomes the new official first attempt.
+- If Admin deletes/resets an attempt while it is still open on a Student device,
+  that page now exits the stale runner cleanly and allows a fresh start.
+- Deleting the official attempt safely promotes the earliest remaining attempt.
+- Bulk submitted-data deletion also removes matching leaderboard rows, avoiding
+  stale scores.
+- Student Test History labels the official first attempt and every retake.
+
+V5.3 CRITICAL DEPLOYMENT ORDER
+1) Upload/replace ALL website files from this package in the GitHub repository root.
+2) Firebase Console -> Firestore Database -> Rules.
+3) Replace the Rules editor with this package's firestore.rules and click Publish.
+4) Wait for GitHub Pages to finish, then hard-refresh Admin and Student pages.
+
+The v5.3 website and v5.3 Firestore Rules must be deployed together. If the old
+rules remain active, new multi-attempt document IDs will correctly be rejected
+and students will see a test-start error.
