@@ -135,10 +135,9 @@ DATA MODEL ADDITIONS (for your reference, no action needed)
 - users/{uid} gained: avatarData, bookmarks (array of note IDs),
   streak {count, lastDate} — students may ONLY self-update these 3 fields,
   enforced by firestore.rules.
-- attempts/{id} gained: topicStats — and classmates can now read each
-  other's SUBMITTED attempts (name + score only) so the leaderboard works.
-  If you'd rather NOT expose scores to classmates, tell me and I'll remove
-  the leaderboard + restrict that read rule back to owner-only.
+- attempts/{id} stores private answers, review and topicStats. A student may
+  read only their own attempt. Class leaderboards read separate sanitized
+  leaderboardEntries documents, which never contain answers or email.
 
 
 FILES TO UPLOAD TO YOUR GITHUB PAGES REPOSITORY ROOT
@@ -240,3 +239,23 @@ Google Cloud OAuth setup (Drive API, consent screen, picker) which is a
 separate, more involved integration than a simple file swap — happy to build
 it as a next step if you want it. For now, small text notes plus attachments
 under 80 KB keep everything on Firebase's free tier with zero extra setup.
+V4.7 GUARANTEED COMPACT LOGGED-IN MOBILE HEADER
+- The logged-in student nameplate now stays compact like the pre-login hero.
+- Critical mobile sizing is included in student.html, preventing stale CSS cache from restoring the oversized card.
+- Stylesheet URLs now use a v4.7 cache-busting query.
+
+V5.0 STUDY-FIRST UPGRADE
+- Compact mobile bottom navigation: Home, Notes, Tests and a More sheet.
+- Smart Dashboard: pending assignment, next available test, weakest area and continue-last-section.
+- Revision Centre with a daily smart plan and carry-forward behaviour.
+- Mistake Notebook generated automatically from graded answer reviews.
+- Students can practise a wrong question again, mark it mastered, request an explanation prompt, or send it to the teacher as a doubt.
+- Subject and unit analytics now include averages, test counts and previous-result trends.
+- Test runner now has a question palette, answered/review states, Mark for Review, next-unanswered jump, full-screen mode, resume support and unload protection.
+- Answer saves are debounced to reduce unnecessary Firestore writes.
+- One deterministic attempt document per student/test prevents accidental duplicate attempts.
+- Test explanations are stored with teacher-only answer keys and become visible only after grading.
+- Firestore rules lock attempt identity, timestamps and the in-progress -> submitted transition.
+
+V5.0 DEPLOYMENT NOTE
+Upload every file to the GitHub repository root. Because the attempt security model changed, also copy firestore.rules into Firebase Rules and click Publish. Deploy the website files and rules together before students start a new test.

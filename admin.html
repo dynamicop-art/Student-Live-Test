@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css"></head>
+<link rel="stylesheet" href="style.css?v=5.0"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -150,7 +150,7 @@ $("addNote").onclick=async()=>{
 let qCount=0;
 function addQuestion(data={}){
  const d=document.createElement("div");d.className="item qedit";
- d.innerHTML=`<b>Question</b><input class="qq" placeholder="Question" value="${esc(data.q||"")}"><input class="topic" placeholder="Topic" value="${esc(data.topic||"")}"><div class="grid2">${[0,1,2,3].map(j=>`<input class="op${j}" placeholder="Option ${String.fromCharCode(65+j)}" value="${esc(data.o?.[j]||"")}">`).join("")}</div><label>Correct</label><select class="ans"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select><button type="button" class="danger rem">Remove</button>`;
+ d.innerHTML=`<b>Question</b><input class="qq" placeholder="Question" value="${esc(data.q||"")}"><input class="topic" placeholder="Topic" value="${esc(data.topic||"")}"><div class="grid2">${[0,1,2,3].map(j=>`<input class="op${j}" placeholder="Option ${String.fromCharCode(65+j)}" value="${esc(data.o?.[j]||"")}">`).join("")}</div><label>Correct</label><select class="ans"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select><textarea class="explanation" placeholder="Short explanation shown after grading (recommended)">${esc(data.explanation||"")}</textarea><button type="button" class="danger rem">Remove</button>`;
  d.querySelector(".ans").value=String(data.a??0);d.querySelector(".rem").onclick=()=>d.remove();$("questionEditor").appendChild(d);
 }
 function esc(s){return String(s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
@@ -160,8 +160,8 @@ $("saveTest").onclick=async()=>{
  try{
   const publicQs=[],answers=[];
   document.querySelectorAll(".qedit").forEach(d=>{
-   const q=d.querySelector(".qq").value.trim(),o=[0,1,2,3].map(j=>d.querySelector(".op"+j).value.trim()),topic=d.querySelector(".topic").value.trim();
-   if(q&&o.every(Boolean)){publicQs.push({q,o,topic});answers.push(Number(d.querySelector(".ans").value));}
+   const q=d.querySelector(".qq").value.trim(),o=[0,1,2,3].map(j=>d.querySelector(".op"+j).value.trim()),topic=d.querySelector(".topic").value.trim(),explanation=d.querySelector(".explanation").value.trim();
+   if(q&&o.every(Boolean)){publicQs.push({q,o,topic,explanation});answers.push(Number(d.querySelector(".ans").value));}
   });
   if(!publicQs.length)throw new Error("At least one complete question required.");
   await saveTestData({title:$("testTitle").value.trim(),classId:$("testClassId").value.trim(),subjectId:$("testSubjectId").value.trim(),durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
@@ -171,8 +171,9 @@ $("saveTest").onclick=async()=>{
 
 async function saveTestData(t){
  if(!t.title||!t.classId||!t.subjectId)throw new Error("Test title, Class ID and Subject ID required.");
- const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter:t.chapter||"",durationMinutes:t.durationMinutes||30,published:true,questionCount:t.questions.length,questions:t.questions,createdAt:serverTimestamp()});
- await setDoc(doc(db,"answerKeys",r.id),{answers:t.answers,createdAt:serverTimestamp()});
+ const publicQuestions=t.questions.map(q=>({q:q.q,o:q.o,topic:q.topic||"General"})),explanations=t.questions.map(q=>q.explanation||"");
+ const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter:t.chapter||"",durationMinutes:t.durationMinutes||30,published:true,questionCount:publicQuestions.length,questions:publicQuestions,createdAt:serverTimestamp()});
+ await setDoc(doc(db,"answerKeys",r.id),{answers:t.answers,explanations,createdAt:serverTimestamp()});
  return r.id;
 }
 
@@ -213,10 +214,10 @@ function parseImport(raw){
  const questions=[];const answers=[];const errors=[];
  body.forEach((block,idx)=>{
   const vals={};
-  block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
+  block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC|EXPLANATION)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
   const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").trim().toUpperCase(),ai="ABCD".indexOf(ans[0]||"");
   if(!vals.Q||opts.some(x=>!x)||ai<0||!vals.TOPIC)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER/TOPIC incomplete.`);
-  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC});answers.push(ai);}
+  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC,explanation:vals.EXPLANATION||""});answers.push(ai);}
  });
  const data={title:meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
  if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
@@ -234,7 +235,7 @@ $("publishImport").onclick=async()=>{
  catch(e){$("importMsg").textContent=e.message;}
 };
 
-$("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=$("aiSubject").value.trim(),topic=$("aiTopic").value.trim(),count=Math.min(30,Math.max(3,Number($("aiCount").value)||10));if(!cls||!subject||!topic)return alert("Class ID, Subject ID এবং Topic দিন।");const prompt=`Create ${count} MCQ questions for ${cls} on ${topic}. Return only this exact website format:\nTEST: ${topic} Test\nCLASS: ${cls}\nSUBJECT_ID: ${subject}\nCHAPTER: ${topic}\nDURATION: 30\n\n---\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}`;try{await navigator.clipboard.writeText(prompt);}catch{window.prompt("Copy this prompt:",prompt);}window.open("https://chatgpt.com/","_blank","noopener,noreferrer");};
+$("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=$("aiSubject").value.trim(),topic=$("aiTopic").value.trim(),count=Math.min(30,Math.max(3,Number($("aiCount").value)||10));if(!cls||!subject||!topic)return alert("Class ID, Subject ID এবং Topic দিন।");const prompt=`Create ${count} MCQ questions for ${cls} on ${topic}. Return only this exact website format:\nTEST: ${topic} Test\nCLASS: ${cls}\nSUBJECT_ID: ${subject}\nCHAPTER: ${topic}\nDURATION: 30\n\n---\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}\nEXPLANATION: one short Bengali explanation of why the answer is correct`;try{await navigator.clipboard.writeText(prompt);}catch{window.prompt("Copy this prompt:",prompt);}window.open("https://chatgpt.com/","_blank","noopener,noreferrer");};
 
 async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b> · ${esc(d.id)}<br><span class="muted">${esc(d.data().className)} (${esc(d.data().classId)})</span></div>`).join("");$("stStudents").textContent=s.size;}
 async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b><br><span class="muted">SUBJECT ID: ${esc(d.id)} · class: ${esc(d.data().classId)}</span></div>`).join("");$("stSubjects").textContent=s.size;}
@@ -285,7 +286,7 @@ function listenAttempts(){
     const key=await getDoc(doc(db,"answerKeys",a.testId));
     const testDoc=await getDoc(doc(db,"tests",a.testId));
     if(key.exists()){
-     const ans=key.data().answers;let score=0;const topicStats={},review=[];
+    const ans=key.data().answers,explanations=key.data().explanations||[];let score=0;const topicStats={},review=[];
      const qs=testDoc.exists()?(testDoc.data().questions||[]):[];
      for(let i=0;i<ans.length;i++){
       const correct=Number(a.answers?.["q"+i])===Number(ans[i]);
@@ -293,7 +294,7 @@ function listenAttempts(){
       const topic=(qs[i]&&qs[i].topic)||"General";
       if(!topicStats[topic])topicStats[topic]={correct:0,total:0};
       topicStats[topic].total++;if(correct)topicStats[topic].correct++;
-      review.push({q:qs[i]?.q||`Question ${i+1}`,o:qs[i]?.o||[],topic,chosenIdx:a.answers?.["q"+i]??null,correctIdx:Number(ans[i]),isCorrect:correct});
+      review.push({q:qs[i]?.q||`Question ${i+1}`,o:qs[i]?.o||[],topic,explanation:explanations[i]||"",chosenIdx:a.answers?.["q"+i]??null,correctIdx:Number(ans[i]),isCorrect:correct});
      }
      const percentage=Math.round(score/ans.length*100);
      await updateDoc(doc(db,"attempts",a.id),{score,total:ans.length,percentage,topicStats,review,gradedAt:serverTimestamp()});

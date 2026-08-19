@@ -65,7 +65,17 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass()
+        && id == (request.resource.data.testId + '_' + request.auth.uid)
+        && exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
+        && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.published == true
+        && get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.classId == myClass()
+        && request.resource.data.subjectId == get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.subjectId
+        && request.resource.data.testTitle == get(/databases/$(database)/documents/tests/$(request.resource.data.testId)).data.title
+        && request.resource.data.studentName == myProfile().data.name
         && request.resource.data.status == "in_progress"
+        && request.resource.data.startedAt == request.time
+        && request.resource.data.answers is map
+        && request.resource.data.progress == 0
         && !request.resource.data.keys().hasAny(['score','total','percentage','gradedAt','topicStats','review']);
 
       // Full attempts (including saved answers) stay private.
@@ -75,9 +85,15 @@ service cloud.firestore {
       allow update: if isTeacher() || (
         signedIn()
         && resource.data.uid == request.auth.uid
+        && resource.data.status == "in_progress"
+        && (request.resource.data.status == "in_progress" || request.resource.data.status == "submitted")
+        && (request.resource.data.status != "submitted" || request.resource.data.submittedAt == request.time)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.testId == resource.data.testId
         && request.resource.data.classId == resource.data.classId
+        && request.resource.data.studentName == resource.data.studentName
+        && request.resource.data.testTitle == resource.data.testTitle
+        && request.resource.data.subjectId == resource.data.subjectId
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['score','total','percentage','gradedAt','topicStats','review'])
       );
 
