@@ -1,12 +1,13 @@
 <!doctype html><html lang="bn"><head>
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4c1d95"><meta name="color-scheme" content="light dark">
 <title>Teacher Admin</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.0"></head>
+<link rel="stylesheet" href="style.css?v=5.2"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -17,13 +18,14 @@
 <button id="doLogin">Login</button><p id="msg" class="muted"></p></section>
 
 <div id="app" class="hidden">
-<nav class="nav">
-<button class="active" data-tab="dashboard">Dashboard</button>
-<button data-tab="students">Students</button><button data-tab="subjects">Subjects</button>
-<button data-tab="notes">Notes</button><button data-tab="tests">Tests</button>
+<nav class="nav admin-nav">
+<button class="active" data-tab="dashboard">📊 Dashboard</button>
+<button data-tab="students">👥 Students</button><button data-tab="subjects">📘 Subjects</button>
+<button data-tab="notes">📝 Notes</button><button data-tab="tests">🧪 Tests</button>
 <button data-tab="importer">⚡ Import Test</button><button data-tab="results">Live Results</button>
 <button data-tab="announcements">📣 Notices</button><button data-tab="assignments">📌 Assignments</button>
 <button data-tab="doubts">💬 Doubts</button>
+<button id="adminMoreNavBtn" class="mobile-more" type="button" aria-controls="adminMoreNavSheet" aria-expanded="false">☰ More</button>
 </nav>
 
 <section id="dashboard" class="tab">
@@ -43,23 +45,25 @@
 <button id="addInvite">Add / Update Student</button><div id="inviteList"></div></section>
 
 <section id="subjects" class="tab card hidden"><h2>📘 Subjects</h2>
-<div class="row"><input id="subName" placeholder="Subject name"><input id="subClassId" placeholder="Class ID e.g. class12"></div>
-<button id="addSubject">Add Subject</button><div id="subjectList"></div></section>
+<p class="muted">একই Class-এ একই Subject name দ্বিতীয়বার save করা যাবে না।</p>
+<div class="row"><input id="subName" placeholder="Subject name"><select id="subClassId" aria-label="Select class for subject"><option value="">Select Class</option></select></div>
+<button id="addSubject">Add Subject</button><p id="subMsg" class="muted"></p><div id="subjectList"></div></section>
 
 <section id="notes" class="tab card hidden"><h2>📝 Notes Publisher</h2>
-<div class="row"><input id="noteTitle" placeholder="Note title"><input id="noteClassId" placeholder="Class ID"><input id="noteSubjectId" placeholder="Subject ID"><input id="noteChapter" placeholder="Chapter (optional)"></div>
+<div class="row"><input id="noteTitle" placeholder="Note title"><select id="noteClassId" aria-label="Select class for note"><option value="">Select Class</option></select><select id="noteSubjectId" aria-label="Select subject for note"><option value="">Select Class first</option></select><input id="noteChapter" placeholder="Chapter (optional)"></div>
 <textarea id="noteContent" placeholder="বাংলায় short note / formula / explanation paste করুন..."></textarea>
 <label class="muted">Optional tiny PDF/image, maximum 80 KB</label><input id="noteFile" type="file" accept=".pdf,image/*">
 <button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p><div id="noteList"></div></section>
 
 <section id="tests" class="tab card hidden"><h2>🧪 Manual Test Creator</h2>
-<div class="row"><input id="testTitle" placeholder="Test title"><input id="testClassId" placeholder="Class ID"><input id="testSubjectId" placeholder="Subject ID"><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
+<div class="row"><input id="testTitle" placeholder="Test title"><select id="testClassId" aria-label="Select class for test"><option value="">Select Class</option></select><select id="testSubjectId" aria-label="Select subject for test"><option value="">Select Class first</option></select><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
 <div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p><div id="testList"></div></section>
 
 <section id="importer" class="tab card hidden">
 <span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
-<p class="muted">ChatGPT থেকে ready block নাও → এখানে paste করো → Preview → Publish. একাধিক TEST block একসাথে দেওয়া যাবে।</p>
-<div class="item"><h3>🤖 Free Test Prompt Helper</h3><div class="row"><input id="aiClass" placeholder="Class ID"><input id="aiSubject" placeholder="Subject ID"><input id="aiTopic" placeholder="Topic"><input id="aiCount" type="number" min="3" max="30" value="10"></div><button id="aiTestPrompt" class="secondary">Copy Prompt & Open ChatGPT</button></div>
+<p class="muted">Class ও Subject এখানে select করলে pasted block-এর CLASS/SUBJECT_ID automatically replace হবে। একাধিক TEST block-এ একই selection apply হবে।</p>
+<div class="item selector-panel"><h3>🎯 Import Destination</h3><div class="row"><select id="importClass" aria-label="Select class for imported test"><option value="">Select Class</option></select><select id="importSubject" aria-label="Select subject for imported test"><option value="">Select Class first</option></select></div></div>
+<div class="item"><h3>🤖 Free Test Prompt Helper</h3><div class="row"><select id="aiClass" aria-label="Select class for AI prompt"><option value="">Select Class</option></select><select id="aiSubject" aria-label="Select subject for AI prompt"><option value="">Select Class first</option></select><input id="aiTopic" placeholder="Topic"><input id="aiCount" type="number" min="3" max="30" value="10"></div><button id="aiTestPrompt" class="secondary">Copy Prompt & Open ChatGPT</button></div>
 <textarea id="importBox" style="min-height:360px" placeholder="Paste complete test block here..."></textarea>
 <div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
 <div id="importPreview"></div>
@@ -71,18 +75,20 @@
 
 <section id="announcements" class="tab card hidden"><h2>📣 Notice Board</h2>
 <p class="muted">এখানে যা পাবলিশ করবে সেটা সেই Class-এর সব ছাত্রছাত্রীর Home tab-এ দেখা যাবে।</p>
-<div class="row"><input id="annTitle" placeholder="Notice title"><input id="annClassId" placeholder="Class ID: class5 / class12"></div>
+<div class="row"><input id="annTitle" placeholder="Notice title"><select id="annClassId" aria-label="Select class for notice"><option value="">Select Class</option></select></div>
 <textarea id="annContent" placeholder="Notice টেক্সট লিখুন..."></textarea>
 <button id="addAnn">Publish Notice</button><p id="annMsg" class="muted"></p><div id="annList"></div></section>
 
 <section id="assignments" class="tab card hidden"><h2>📌 Homework / Assignments</h2>
-<div class="row"><input id="asgTitle" placeholder="Assignment title"><input id="asgClassId" placeholder="Class ID"><input id="asgSubjectId" placeholder="Subject ID"><input id="asgDue" type="date"></div>
+<div class="row"><input id="asgTitle" placeholder="Assignment title"><select id="asgClassId" aria-label="Select class for assignment"><option value="">Select Class</option></select><select id="asgSubjectId" aria-label="Select subject for assignment"><option value="">Select Class first</option></select><input id="asgDue" type="date"></div>
 <textarea id="asgDesc" placeholder="কী করতে হবে তার বিবরণ..."></textarea>
 <button id="addAsg">Publish Assignment</button><p id="asgMsg" class="muted"></p><div id="asgList"></div></section>
 
 <section id="doubts" class="tab card hidden"><h2>💬 Doubt Box</h2>
 <p class="muted">ছাত্রছাত্রীরা যেসব প্রশ্ন পাঠিয়েছে, এখান থেকে reply দিন।</p>
 <div id="doubtList"></div></section>
+
+<div id="adminMoreNavSheet" class="nav-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="adminMoreNavTitle" aria-hidden="true"><button id="closeAdminMoreNav" class="nav-sheet-backdrop" type="button" aria-label="Close menu"></button><div class="nav-sheet-card"><div class="nav-sheet-head"><b id="adminMoreNavTitle">Teacher Tools</b><button id="closeAdminMoreNavTop" type="button" class="secondary" aria-label="Close teacher tools">✕</button></div><div class="nav-sheet-grid"><button data-admin-tab="subjects">📘<span>Subjects</span></button><button data-admin-tab="notes">📝<span>Notes</span></button><button data-admin-tab="importer">⚡<span>Import Test</span></button><button data-admin-tab="results">📈<span>Results</span></button><button data-admin-tab="announcements">📣<span>Notices</span></button><button data-admin-tab="assignments">📌<span>Assignments</span></button><button data-admin-tab="doubts">💬<span>Doubts</span></button></div></div></div>
 </div></div>
 
 <script type="module">
@@ -92,8 +98,66 @@ import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "htt
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+let adminInvites=[],adminSubjects=[];
+const CLASS_SELECT_IDS=["subClassId","noteClassId","testClassId","importClass","aiClass","annClassId","asgClassId"];
+const SUBJECT_LINKS=[["noteClassId","noteSubjectId"],["testClassId","testSubjectId"],["importClass","importSubject"],["aiClass","aiSubject"],["asgClassId","asgSubjectId"]];
 
-function applyThemeBtn(){$("themeBtn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";}
+function normalizedSubjectName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ").toLowerCase();}
+function stableHash(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return (hash>>>0).toString(36);}
+async function deterministicSubjectId(classId,name){
+ const source=`${classId}\u001f${name}`;
+ try{
+  const bytes=new TextEncoder().encode(source),digest=await crypto.subtle.digest("SHA-256",bytes);
+  return "subject_"+[...new Uint8Array(digest)].slice(0,12).map(x=>x.toString(16).padStart(2,"0")).join("");
+ }catch{return `subject_${stableHash(source)}`;}
+}
+function availableClasses(){
+ const classes=new Map();
+ adminInvites.filter(x=>x.active!==false).forEach(x=>{
+  const id=String(x.classId||"").trim();if(!id)return;
+  const name=String(x.className||id).trim()||id;
+  classes.set(id,{value:id,label:name===id?id:`${name} — ${id}`});
+ });
+ adminSubjects.forEach(x=>{
+  const id=String(x.classId||"").trim();if(id&&!classes.has(id))classes.set(id,{value:id,label:id});
+ });
+ return [...classes.values()].sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true,sensitivity:"base"}));
+}
+function replaceSelectOptions(id,placeholder,items){
+ const select=$(id);if(!select)return;
+ const previous=select.value;select.replaceChildren(new Option(placeholder,""));
+ items.forEach(item=>select.add(new Option(item.label,item.value)));
+ if(items.some(item=>item.value===previous))select.value=previous;
+ else if(items.length===1)select.value=items[0].value;
+ else select.value="";
+}
+function refreshSubjectSelect(classSelectId,subjectSelectId){
+ const classId=$(classSelectId)?.value||"";
+ const subjects=adminSubjects.filter(x=>x.classId===classId).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),undefined,{numeric:true,sensitivity:"base"})).map(x=>({value:x.id,label:x.name||x.id}));
+ const placeholder=!classId?"Select Class first":subjects.length?"Select Subject":"No Subject in this Class";
+ replaceSelectOptions(subjectSelectId,placeholder,subjects);
+}
+function refreshAdminSelectors(){
+ const classes=availableClasses(),placeholder=classes.length?"Select Class":"Add a Student/Class first";
+ CLASS_SELECT_IDS.forEach(id=>replaceSelectOptions(id,placeholder,classes));
+ SUBJECT_LINKS.forEach(([classId,subjectId])=>refreshSubjectSelect(classId,subjectId));
+}
+function bindAdminSelectors(){
+ SUBJECT_LINKS.forEach(([classId,subjectId])=>{
+  const select=$(classId);if(select&&!select.dataset.subjectLinkBound){select.dataset.subjectLinkBound="1";select.addEventListener("change",()=>refreshSubjectSelect(classId,subjectId));}
+ });
+}
+function selectedSubjectFor(classId,subjectId){return adminSubjects.find(x=>x.id===subjectId&&x.classId===classId)||null;}
+function requireClassSubject(classId,subjectId){
+ if(!classId)throw new Error("একটি Class select করুন।");
+ if(!subjectId)throw new Error("একটি Subject select করুন।");
+ const subject=selectedSubjectFor(classId,subjectId);
+ if(!subject)throw new Error("এই Class-এর জন্য valid Subject select করুন।");
+ return subject;
+}
+bindAdminSelectors();
+
+function applyThemeBtn(){const dark=document.documentElement.getAttribute("data-theme")==="dark";$("themeBtn").textContent=dark?"☀️":"🌙";const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=dark?"#150f28":"#4c1d95";}
 applyThemeBtn();
 $("themeBtn").onclick=()=>{
  const dark=document.documentElement.getAttribute("data-theme")==="dark";
@@ -114,13 +178,23 @@ $("logout").onclick=async()=>{
 onAuthStateChanged(auth,u=>{
  const ok=!!u&&(u.email||"").toLowerCase()===TEACHER_EMAIL.toLowerCase();
  $("loginCard").classList.toggle("hidden",ok);$("app").classList.toggle("hidden",!ok);
- if(ok){loadAll();listenAttempts();}
+ if(ok){loadAll().catch(console.error);listenAttempts();}
 });
 
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
- document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
- document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");
-});
+const ADMIN_MORE_TABS=new Set(["subjects","notes","importer","results","announcements","assignments","doubts"]);
+function closeAdminMoreNav(){$("adminMoreNavSheet").classList.add("hidden");$("adminMoreNavSheet").setAttribute("aria-hidden","true");$("adminMoreNavBtn").setAttribute("aria-expanded","false");}
+function openAdminTab(tabId,{scroll=true}={}){
+ const panel=$(tabId);if(!panel)return;
+ document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));panel.classList.remove("hidden");
+ document.querySelectorAll(".admin-nav button[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tabId));
+ $("adminMoreNavBtn").classList.toggle("active",ADMIN_MORE_TABS.has(tabId));closeAdminMoreNav();
+ if(scroll)requestAnimationFrame(()=>window.scrollTo({top:Math.max(0,$("app").offsetTop-8),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}));
+}
+document.querySelectorAll(".admin-nav button[data-tab]").forEach(b=>b.onclick=()=>openAdminTab(b.dataset.tab));
+$("adminMoreNavBtn").onclick=()=>{$("adminMoreNavSheet").classList.remove("hidden");$("adminMoreNavSheet").setAttribute("aria-hidden","false");$("adminMoreNavBtn").setAttribute("aria-expanded","true");$("adminMoreNavSheet").querySelector("[data-admin-tab]")?.focus();};
+$("closeAdminMoreNav").onclick=closeAdminMoreNav;$("closeAdminMoreNavTop").onclick=closeAdminMoreNav;
+document.querySelectorAll("[data-admin-tab]").forEach(b=>b.onclick=()=>openAdminTab(b.dataset.adminTab));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAdminMoreNav();});
 
 $("addInvite").onclick=async()=>{
  const email=$("invEmail").value.trim().toLowerCase(),name=$("invName").value.trim(),classId=$("invClassId").value.trim();
@@ -130,15 +204,25 @@ $("addInvite").onclick=async()=>{
 };
 
 $("addSubject").onclick=async()=>{
- const name=$("subName").value.trim(),classId=$("subClassId").value.trim();if(!name||!classId)return;
- await addDoc(collection(db,"subjects"),{name,classId,createdAt:serverTimestamp()});await loadSubjects();
+ const name=$("subName").value.trim(),classId=$("subClassId").value.trim(),message=$("subMsg"),button=$("addSubject");
+ try{
+  if(!name)throw new Error("Subject name লিখুন।");if(!classId)throw new Error("একটি Class select করুন।");
+  button.disabled=true;message.textContent="Checking...";
+  const normalizedName=normalizedSubjectName(name),existing=await getDocs(query(collection(db,"subjects"),where("classId","==",classId)));
+  const duplicate=existing.docs.find(d=>normalizedSubjectName(d.data().name)===normalizedName);
+  if(duplicate)throw new Error(`এই Class-এ “${duplicate.data().name}” আগে থেকেই আছে।`);
+  const subjectId=await deterministicSubjectId(classId,normalizedName),subjectRef=doc(db,"subjects",subjectId),collision=await getDoc(subjectRef);
+  if(collision.exists())throw new Error("Subject ID conflict হয়েছে—নামটি একটু আলাদাভাবে লিখুন।");
+  await setDoc(subjectRef,{name,classId,normalizedName,createdAt:serverTimestamp()});
+  $("subName").value="";message.textContent="✅ Subject added.";await loadSubjects();
+ }catch(e){message.textContent=e.message;}finally{button.disabled=false;}
 };
 
 async function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("addNote").onclick=async()=>{
  try{
   const title=$("noteTitle").value.trim(),classId=$("noteClassId").value.trim(),subjectId=$("noteSubjectId").value.trim(),chapter=$("noteChapter").value.trim();
-  if(!title||!classId||!subjectId)throw new Error("Title, Class ID, Subject ID required.");
+  if(!title)throw new Error("Note title লিখুন।");requireClassSubject(classId,subjectId);
   let attachmentData="",attachmentName="",attachmentType="";
   const f=$("noteFile").files[0];
   if(f){if(f.size>80*1024)throw new Error("Attachment must be 80 KB or smaller.");attachmentData=await fileToDataUrl(f);attachmentName=f.name;attachmentType=f.type;}
@@ -158,19 +242,20 @@ $("addQ").onclick=()=>addQuestion();addQuestion();
 
 $("saveTest").onclick=async()=>{
  try{
+  const classId=$("testClassId").value.trim(),subjectId=$("testSubjectId").value.trim();requireClassSubject(classId,subjectId);
   const publicQs=[],answers=[];
   document.querySelectorAll(".qedit").forEach(d=>{
    const q=d.querySelector(".qq").value.trim(),o=[0,1,2,3].map(j=>d.querySelector(".op"+j).value.trim()),topic=d.querySelector(".topic").value.trim(),explanation=d.querySelector(".explanation").value.trim();
    if(q&&o.every(Boolean)){publicQs.push({q,o,topic,explanation});answers.push(Number(d.querySelector(".ans").value));}
   });
   if(!publicQs.length)throw new Error("At least one complete question required.");
-  await saveTestData({title:$("testTitle").value.trim(),classId:$("testClassId").value.trim(),subjectId:$("testSubjectId").value.trim(),durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
+  await saveTestData({title:$("testTitle").value.trim(),classId,subjectId,durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
   $("testMsg").textContent="✅ Test published.";await loadTests();
  }catch(e){$("testMsg").textContent=e.message;}
 };
 
 async function saveTestData(t){
- if(!t.title||!t.classId||!t.subjectId)throw new Error("Test title, Class ID and Subject ID required.");
+ if(!t.title)throw new Error("Test title required.");requireClassSubject(t.classId,t.subjectId);
  const publicQuestions=t.questions.map(q=>({q:q.q,o:q.o,topic:q.topic||"General"})),explanations=t.questions.map(q=>q.explanation||"");
  const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter:t.chapter||"",durationMinutes:t.durationMinutes||30,published:true,questionCount:publicQuestions.length,questions:publicQuestions,createdAt:serverTimestamp()});
  await setDoc(doc(db,"answerKeys",r.id),{answers:t.answers,explanations,createdAt:serverTimestamp()});
@@ -179,8 +264,8 @@ async function saveTestData(t){
 
 // ---------- SUPER EASY TEST IMPORT ----------
 const SAMPLE=`TEST: Chemistry Unit 1 - Test 2
-CLASS: class12
-SUBJECT_ID: paste-subject-id-here
+CLASS: automatic-from-dropdown
+SUBJECT_ID: automatic-from-dropdown
 CHAPTER: Liquid State
 DURATION: 30
 
@@ -202,10 +287,13 @@ D: শূন্য হয়
 ANSWER: B
 TOPIC: Vapour Pressure`;
 
-$("loadSample").onclick=()=>{$("importBox").value=SAMPLE;};
 let parsedImports=[];
+function invalidateImportPreview(){parsedImports=[];$("publishImport").classList.add("hidden");$("importPreview").innerHTML="";$("importMsg").textContent="";}
+$("loadSample").onclick=()=>{$("importBox").value=SAMPLE;invalidateImportPreview();};
+$("importBox").addEventListener("input",invalidateImportPreview);
+["importClass","importSubject"].forEach(id=>$(id).addEventListener("change",invalidateImportPreview));
 
-function parseImport(raw){
+function parseImport(raw,classId,subjectId){
  const lines=raw.replace(/\r/g,"").split("\n");
  const meta={};let firstSep=lines.findIndex(x=>x.trim()==="---");
  const head=(firstSep<0?lines:lines.slice(0,firstSep));
@@ -219,15 +307,15 @@ function parseImport(raw){
   if(!vals.Q||opts.some(x=>!x)||ai<0||!vals.TOPIC)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER/TOPIC incomplete.`);
   else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC,explanation:vals.EXPLANATION||""});answers.push(ai);}
  });
- const data={title:meta.TEST||"",classId:meta.CLASS||"",subjectId:meta.SUBJECT_ID||"",chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
- if(!data.title)errors.push("TEST missing.");if(!data.classId)errors.push("CLASS missing.");if(!data.subjectId)errors.push("SUBJECT_ID missing.");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
+ const data={title:meta.TEST||"",classId,subjectId,chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
+ if(!data.title)errors.push("TEST missing.");if(!classId)errors.push("Import Destination Class select করুন।");if(!subjectId)errors.push("Import Destination Subject select করুন।");if(classId&&subjectId&&!selectedSubjectFor(classId,subjectId))errors.push("Selected Subject এই Class-এর নয়।");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
  return {data,errors};
 }
 
 $("previewImport").onclick=()=>{
- const chunks=$("importBox").value.replace(/\r/g,"").split(/\n(?=\s*TEST\s*:)/i).map(x=>x.trim()).filter(Boolean),results=chunks.map(parseImport);
+ const classId=$("importClass").value.trim(),subjectId=$("importSubject").value.trim(),chunks=$("importBox").value.replace(/\r/g,"").split(/\n(?=\s*TEST\s*:)/i).map(x=>x.trim()).filter(Boolean),results=chunks.map(raw=>parseImport(raw,classId,subjectId));
  parsedImports=results.every(r=>!r.errors.length)?results.map(r=>r.data):[];
- $("importPreview").innerHTML=results.map((p,i)=>p.errors.length?`<div class="item preview-bad"><h3>❌ Test ${i+1}</h3>${p.errors.map(e=>`<div>${esc(e)}</div>`).join("")}</div>`:`<div class="item preview-ok"><h3>✅ ${esc(p.data.title)}</h3><p>${esc(p.data.classId)} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p></div>`).join("")||"<p class='muted'>No test block found.</p>";
+ $("importPreview").innerHTML=results.map((p,i)=>p.errors.length?`<div class="item preview-bad"><h3>❌ Test ${i+1}</h3>${p.errors.map(e=>`<div>${esc(e)}</div>`).join("")}</div>`:`<div class="item preview-ok"><h3>✅ ${esc(p.data.title)}</h3><p>${esc(p.data.classId)} · ${esc(selectedSubjectFor(p.data.classId,p.data.subjectId)?.name||p.data.subjectId)} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p></div>`).join("")||"<p class='muted'>No test block found.</p>";
  $("publishImport").classList.toggle("hidden",!parsedImports.length);
 };
 $("publishImport").onclick=async()=>{
@@ -235,16 +323,16 @@ $("publishImport").onclick=async()=>{
  catch(e){$("importMsg").textContent=e.message;}
 };
 
-$("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=$("aiSubject").value.trim(),topic=$("aiTopic").value.trim(),count=Math.min(30,Math.max(3,Number($("aiCount").value)||10));if(!cls||!subject||!topic)return alert("Class ID, Subject ID এবং Topic দিন।");const prompt=`Create ${count} MCQ questions for ${cls} on ${topic}. Return only this exact website format:\nTEST: ${topic} Test\nCLASS: ${cls}\nSUBJECT_ID: ${subject}\nCHAPTER: ${topic}\nDURATION: 30\n\n---\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}\nEXPLANATION: one short Bengali explanation of why the answer is correct`;try{await navigator.clipboard.writeText(prompt);}catch{window.prompt("Copy this prompt:",prompt);}window.open("https://chatgpt.com/","_blank","noopener,noreferrer");};
+$("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=$("aiSubject").value.trim(),topic=$("aiTopic").value.trim(),count=Math.min(30,Math.max(3,Number($("aiCount").value)||10));if(!cls||!subject||!topic)return alert("Class, Subject এবং Topic select/enter করুন।");requireClassSubject(cls,subject);const prompt=`Create ${count} MCQ questions for ${cls} on ${topic}. Return only this exact website format:\nTEST: ${topic} Test\nCLASS: ${cls}\nSUBJECT_ID: ${subject}\nCHAPTER: ${topic}\nDURATION: 30\n\n---\nQ: question\nA: option\nB: option\nC: option\nD: option\nANSWER: A\nTOPIC: ${topic}\nEXPLANATION: one short Bengali explanation of why the answer is correct`;try{await navigator.clipboard.writeText(prompt);}catch{window.prompt("Copy this prompt:",prompt);}window.open("https://chatgpt.com/","_blank","noopener,noreferrer");};
 
-async function loadInvites(){const s=await getDocs(collection(db,"invites"));$("inviteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b> · ${esc(d.id)}<br><span class="muted">${esc(d.data().className)} (${esc(d.data().classId)})</span></div>`).join("");$("stStudents").textContent=s.size;}
-async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));$("subjectList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().name)}</b><br><span class="muted">SUBJECT ID: ${esc(d.id)} · class: ${esc(d.data().classId)}</span></div>`).join("");$("stSubjects").textContent=s.size;}
+async function loadInvites(){const s=await getDocs(collection(db,"invites"));adminInvites=s.docs.map(d=>({id:d.id,...d.data()}));$("inviteList").innerHTML=adminInvites.map(x=>`<div class="item"><b>${esc(x.name)}</b> · ${esc(x.id)}<br><span class="muted">${esc(x.className)} (${esc(x.classId)})</span></div>`).join("");$("stStudents").textContent=s.size;refreshAdminSelectors();}
+async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));adminSubjects=s.docs.map(d=>({id:d.id,...d.data()}));$("subjectList").innerHTML=adminSubjects.sort((a,b)=>`${a.classId} ${a.name}`.localeCompare(`${b.classId} ${b.name}`,undefined,{numeric:true,sensitivity:"base"})).map(x=>`<div class="item"><b>${esc(x.name)}</b><br><span class="muted">Class: ${esc(x.classId)} · automatic ID: ${esc(x.id)}</span></div>`).join("");$("stSubjects").textContent=s.size;refreshAdminSelectors();}
 async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b>${d.data().chapter?` <span class="pill teal">${esc(d.data().chapter)}</span>`:""}<br><span class="muted">${esc(d.data().classId)} · ${esc(d.data().subjectId)}</span></div>`).join("");}
 async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b><br><span class="muted">TEST ID: ${esc(d.id)} · ${Number(d.data().questionCount)||0} Q · ${Number(d.data().durationMinutes)||0} min</span></div>`).join("");$("stTests").textContent=s.size;}
 
 $("addAnn").onclick=async()=>{
  const title=$("annTitle").value.trim(),classId=$("annClassId").value.trim(),content=$("annContent").value.trim();
- if(!title||!classId||!content)return $("annMsg").textContent="Title, Class ID ও notice text দিন।";
+ if(!title||!classId||!content)return $("annMsg").textContent="Title, Class ও notice text দিন।";
  await addDoc(collection(db,"announcements"),{title,classId,content,createdAt:serverTimestamp()});
  $("annTitle").value="";$("annContent").value="";$("annMsg").textContent="✅ Notice published.";await loadAnnouncements();
 };
@@ -252,7 +340,7 @@ async function loadAnnouncements(){const s=await getDocs(collection(db,"announce
 
 $("addAsg").onclick=async()=>{
  const title=$("asgTitle").value.trim(),classId=$("asgClassId").value.trim(),subjectId=$("asgSubjectId").value.trim(),dueDate=$("asgDue").value,description=$("asgDesc").value.trim();
- if(!title||!classId||!subjectId)return $("asgMsg").textContent="Title, Class ID, Subject ID দিন।";
+ try{if(!title)throw new Error("Assignment title লিখুন।");requireClassSubject(classId,subjectId);}catch(e){return $("asgMsg").textContent=e.message;}
  await addDoc(collection(db,"assignments"),{title,classId,subjectId,dueDate,description,createdAt:serverTimestamp()});
  $("asgTitle").value="";$("asgDesc").value="";$("asgMsg").textContent="✅ Assignment published.";await loadAssignments();
 };
@@ -273,7 +361,10 @@ function listenDoubts(){
  });
 }
 
-function loadAll(){loadInvites();loadSubjects();loadNotes();loadTests();loadAnnouncements();loadAssignments();listenDoubts();}
+async function loadAll(){
+ const first=await Promise.allSettled([loadInvites(),loadSubjects()]);first.filter(x=>x.status==="rejected").forEach(x=>console.error(x.reason));refreshAdminSelectors();
+ const rest=await Promise.allSettled([loadNotes(),loadTests(),loadAnnouncements(),loadAssignments()]);rest.filter(x=>x.status==="rejected").forEach(x=>console.error(x.reason));listenDoubts();
+}
 
 let latestAttempts=[],attemptUnsub=null;
 function listenAttempts(){

@@ -259,3 +259,30 @@ V5.0 STUDY-FIRST UPGRADE
 
 V5.0 DEPLOYMENT NOTE
 Upload every file to the GitHub repository root. Because the attempt security model changed, also copy firestore.rules into Firebase Rules and click Publish. Deploy the website files and rules together before students start a new test.
+
+V5.1 CLEAN PREMIUM VISUAL UPDATE
+- No study feature, Firebase collection, grading rule or stored data was changed.
+- Refined the colour system, typography, spacing, shadows, controls and focus states.
+- Home uses a balanced dashboard grid on wide screens and a clean single flow on phones.
+- Smart tiles, statistics, notices, leaderboards, revision cards and analytics now have a consistent visual hierarchy.
+- The test runner is calmer and more focused, with clearer question cards, options and palette states.
+- Mobile bottom navigation and the More sheet support safe-area insets and stronger contrast.
+- Dark mode has improved surface separation and the browser theme colour now follows the selected theme.
+- Hover-heavy effects are suppressed on phones; reduced-motion support remains enabled.
+
+V5.2 TEACHER WORKFLOW UPDATE
+- Notes, manual tests, imported tests, AI test prompts, notices and assignments
+  now use Class dropdowns instead of requiring repeated Class ID typing.
+- Subject dropdowns are linked to the chosen Class and store the correct
+  subject document ID automatically; mismatched Class/Subject saves are blocked.
+- Import Destination overrides CLASS and SUBJECT_ID text inside every pasted
+  TEST block, so one Class + Subject selection can publish a whole batch safely.
+- A duplicate subject name (including differences only in case or extra spaces)
+  is blocked inside the same Class. The same subject name is still allowed in a
+  different Class.
+- On phones, Teacher Admin now has Dashboard, Students, Tests and More as a
+  fixed bottom menu. Subjects, Notes, Import, Results, Notices, Assignments and
+  Doubts are available in the More sheet.
+- Class dropdowns are built from the Student/Class list plus classes already
+  used by existing subjects. Add/Update a Student first to introduce a new Class.
+- No new paid service, API or Firebase collection was added.
