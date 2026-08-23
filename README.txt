@@ -1,5 +1,19 @@
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
+V5.5 SAFE TEST DELETE UPDATE
+- Admin -> Tests -> Test Catalog now has a Delete Test button on every test.
+- A detailed confirmation shows the test, class, subject, unit, attempt count,
+  in-progress count and leaderboard-row count before anything is removed.
+- Confirmed deletion first hides the test from students, then removes its answer
+  key, every submitted/in-progress attempt and every linked leaderboard row.
+- If a network/permission error interrupts cleanup, the test stays hidden and
+  remains in the Admin catalog so Delete Test can be pressed again safely.
+- Attempt grading/leaderboard sync now ignores hidden or deleted tests, avoiding
+  orphan leaderboard data during cleanup.
+- IMPORTANT: publish the included firestore.rules after uploading this version;
+  its v5.5 guard prevents another open Admin session from recreating a score row
+  while a test is being deleted.
+
 V4 SAFE MERGE UPDATE
 - Secure V3.4 was kept as the base; the supplied experimental files were not
   used as replacements.
@@ -319,3 +333,25 @@ V5.3 CRITICAL DEPLOYMENT ORDER
 The v5.3 website and v5.3 Firestore Rules must be deployed together. If the old
 rules remain active, new multi-attempt document IDs will correctly be rejected
 and students will see a test-start error.
+
+V5.4 LINKED TEST CATALOG
+- Teacher Tests now has linked Class -> Subject -> Unit/Chapter dropdowns,
+  title search, live matching/total counts, Reset, and grouped exam cards.
+- All Classes displays every published test in clearly labelled Class,
+  Subject, and Unit groups instead of one mixed list.
+- Student Exam Portal now has linked Subject -> Unit/Chapter dropdowns,
+  title search, live counts, Reset, and grouped exam cards.
+- Selecting a Subject only exposes Units that actually contain published tests;
+  selecting a Unit shows only exams in that exact Unit.
+- Unit matching normalizes extra spaces and letter case, so accidental formatting
+  differences do not create separate filter categories.
+- Manual Test Creator now includes a required Unit / Chapter field. Imported
+  tests must also contain CHAPTER, preventing new uncategorized tests.
+- Older tests without a chapter remain visible under "Uncategorized" so no
+  existing data is hidden or deleted.
+- No new paid service, Firestore collection, or index was introduced.
+
+V5.4 DEPLOYMENT
+Upload/replace all files from the v5.4 package in the GitHub repository root.
+The included firestore.rules retains the secure v5.3 attempt lifecycle rules;
+keep those rules published in Firebase. Then hard-refresh Admin and Student pages.

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.3"></head>
+<link rel="stylesheet" href="style.css?v=5.5"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -56,8 +56,11 @@
 <button id="addNote">Publish Note</button><p id="noteMsg" class="muted"></p><div id="noteList"></div></section>
 
 <section id="tests" class="tab card hidden"><h2>🧪 Manual Test Creator</h2>
-<div class="row"><input id="testTitle" placeholder="Test title"><select id="testClassId" aria-label="Select class for test"><option value="">Select Class</option></select><select id="testSubjectId" aria-label="Select subject for test"><option value="">Select Class first</option></select><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
-<div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p><div id="testList"></div></section>
+<div class="row"><input id="testTitle" placeholder="Test title"><select id="testClassId" aria-label="Select class for test"><option value="">Select Class</option></select><select id="testSubjectId" aria-label="Select subject for test"><option value="">Select Class first</option></select><input id="testChapter" placeholder="Unit / Chapter name" aria-label="Unit or chapter name"><input id="testDuration" type="number" value="30" min="1" placeholder="Minutes"></div>
+<div id="questionEditor"></div><button id="addQ" class="secondary">+ Add Question</button> <button id="saveTest">Save & Publish</button><p id="testMsg" class="muted"></p>
+<hr><div class="test-catalog-title"><div><span class="section-kicker">PUBLISHED TEST LIBRARY</span><h2>🔎 Find Tests Quickly</h2><p class="muted">Class → Subject → Unit/Chapter নির্বাচন করুন। All Classes রাখলে সব test grouped অবস্থায় দেখা যাবে।</p></div><span id="adminTestCount" class="pill">0 tests</span></div>
+<div class="filter-bar test-catalog-filters"><select id="adminTestClassFilter" aria-label="Filter tests by class"><option value="">All Classes</option></select><select id="adminTestSubjectFilter" aria-label="Filter tests by subject" disabled><option value="">Select Class first</option></select><select id="adminTestUnitFilter" aria-label="Filter tests by unit or chapter" disabled><option value="">Select Subject first</option></select><input id="adminTestSearch" type="search" placeholder="🔍 Search test title..."><button id="adminTestClear" type="button" class="secondary">Reset</button></div>
+<p id="adminTestScope" class="filter-scope" role="status">All published tests</p><p id="adminTestActionMsg" class="muted" role="status"></p><div id="testList" class="test-catalog"></div></section>
 
 <section id="importer" class="tab card hidden">
 <span class="pill">⚡ Fastest method</span><h2>Copy-Paste Test Import</h2>
@@ -99,11 +102,16 @@ import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "htt
 import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onSnapshot,updateDoc,deleteDoc,serverTimestamp,runTransaction,writeBatch} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-let adminInvites=[],adminSubjects=[];
+let adminInvites=[],adminSubjects=[],adminTests=[],adminTestsLoaded=false;
+const deletingTestIds=new Set();
 const CLASS_SELECT_IDS=["subClassId","noteClassId","testClassId","importClass","aiClass","annClassId","asgClassId"];
 const SUBJECT_LINKS=[["noteClassId","noteSubjectId"],["testClassId","testSubjectId"],["importClass","importSubject"],["aiClass","aiSubject"],["asgClassId","asgSubjectId"]];
 
 function normalizedSubjectName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ").toLowerCase();}
+function cleanedUnitName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ");}
+function normalizedUnitKey(name){return (cleanedUnitName(name)||"Uncategorized").toLocaleLowerCase();}
+function displayUnitName(name){return cleanedUnitName(name)||"Uncategorized";}
+function naturalCompare(a,b){return String(a||"").localeCompare(String(b||""),undefined,{numeric:true,sensitivity:"base"});}
 function stableHash(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return (hash>>>0).toString(36);}
 async function deterministicSubjectId(classId,name){
  const source=`${classId}\u001f${name}`;
@@ -120,6 +128,9 @@ function availableClasses(){
   classes.set(id,{value:id,label:name===id?id:`${name} — ${id}`});
  });
  adminSubjects.forEach(x=>{
+  const id=String(x.classId||"").trim();if(id&&!classes.has(id))classes.set(id,{value:id,label:id});
+ });
+ adminTests.forEach(x=>{
   const id=String(x.classId||"").trim();if(id&&!classes.has(id))classes.set(id,{value:id,label:id});
  });
  return [...classes.values()].sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true,sensitivity:"base"}));
@@ -156,6 +167,40 @@ function requireClassSubject(classId,subjectId){
  if(!subject)throw new Error("এই Class-এর জন্য valid Subject select করুন।");
  return subject;
 }
+function adminClassLabel(classId){return availableClasses().find(x=>x.value===classId)?.label||classId||"Unknown Class";}
+function adminSubjectLabel(subjectId){return adminSubjects.find(x=>x.id===subjectId)?.name||subjectId||"Unknown Subject";}
+function replaceFilterOptions(id,placeholder,items,preferred){
+ const select=$(id),wanted=preferred===undefined?select.value:preferred;select.replaceChildren(new Option(placeholder,""));
+ items.forEach(item=>select.add(new Option(item.label,item.value)));select.value=items.some(item=>item.value===wanted)?wanted:"";
+}
+function unitFilterItems(items){
+ const units=new Map();items.forEach(test=>{const key=normalizedUnitKey(test.chapter);if(!units.has(key))units.set(key,displayUnitName(test.chapter));});
+ return [...units].map(([value,label])=>({value,label})).sort((a,b)=>naturalCompare(a.label,b.label));
+}
+function refreshAdminTestFilters({resetSubject=false,resetUnit=false}={}){
+ const classItems=[...new Set(adminTests.map(t=>String(t.classId||"").trim()).filter(Boolean))].map(value=>({value,label:adminClassLabel(value)})).sort((a,b)=>naturalCompare(a.label,b.label));
+ replaceFilterOptions("adminTestClassFilter","All Classes",classItems);
+ const classId=$("adminTestClassFilter").value,subjectItems=classId?[...new Set(adminTests.filter(t=>t.classId===classId).map(t=>t.subjectId).filter(Boolean))].map(value=>({value,label:adminSubjectLabel(value)})).sort((a,b)=>naturalCompare(a.label,b.label)):[];
+ replaceFilterOptions("adminTestSubjectFilter",classId?"All Subjects":"Select Class first",subjectItems,resetSubject?"":undefined);$("adminTestSubjectFilter").disabled=!classId||!subjectItems.length;
+ const subjectId=$("adminTestSubjectFilter").value,unitItems=classId&&subjectId?unitFilterItems(adminTests.filter(t=>t.classId===classId&&t.subjectId===subjectId)):[];
+ replaceFilterOptions("adminTestUnitFilter",subjectId?"All Units / Chapters":"Select Subject first",unitItems,resetUnit?"":undefined);$("adminTestUnitFilter").disabled=!subjectId||!unitItems.length;
+ renderAdminTestList();
+}
+function filteredAdminTests(){
+ const classId=$("adminTestClassFilter").value,subjectId=$("adminTestSubjectFilter").value,unit=$("adminTestUnitFilter").value,q=$("adminTestSearch").value.trim().toLocaleLowerCase();
+ return adminTests.filter(t=>(!classId||t.classId===classId)&&(!subjectId||t.subjectId===subjectId)&&(!unit||normalizedUnitKey(t.chapter)===unit)&&(!q||`${t.title||""} ${displayUnitName(t.chapter)} ${adminSubjectLabel(t.subjectId)} ${adminClassLabel(t.classId)}`.toLocaleLowerCase().includes(q))).sort((a,b)=>naturalCompare(`${adminClassLabel(a.classId)}\u0000${adminSubjectLabel(a.subjectId)}\u0000${displayUnitName(a.chapter)}\u0000${a.title}`,`${adminClassLabel(b.classId)}\u0000${adminSubjectLabel(b.subjectId)}\u0000${displayUnitName(b.chapter)}\u0000${b.title}`));
+}
+function renderAdminTestList(){
+ const list=filteredAdminTests(),groups=new Map();list.forEach(test=>{const key=`${test.classId}\u001f${test.subjectId}\u001f${normalizedUnitKey(test.chapter)}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(test);});
+ $("adminTestCount").textContent=`${list.length} / ${adminTests.length} tests`;
+ const classId=$("adminTestClassFilter").value,subjectId=$("adminTestSubjectFilter").value,unit=$("adminTestUnitFilter").value,unitLabel=unit?$("adminTestUnitFilter").selectedOptions[0]?.textContent||unit:"All Units";$("adminTestScope").textContent=`Showing: ${classId?adminClassLabel(classId):"All Classes"} · ${subjectId?adminSubjectLabel(subjectId):"All Subjects"} · ${unitLabel}`;
+ $("testList").innerHTML=[...groups.values()].map(items=>{const first=items[0],unitName=displayUnitName(first.chapter);return `<section class="test-catalog-group"><div class="test-group-head"><div><span class="pill">${esc(adminClassLabel(first.classId))}</span> <span class="pill teal">${esc(adminSubjectLabel(first.subjectId))}</span><h3>${esc(unitName)}</h3></div><span class="pill gold">${items.length} exam${items.length===1?"":"s"}</span></div><div class="test-card-grid">${items.map(t=>`<article class="test-library-card"><div class="topbar"><div><b>${esc(t.title||"Untitled Test")}</b><small class="muted">${t.published===false?"Hidden from students":"Published"} · ${esc(adminDate(t.createdAt))}</small></div><div class="test-card-badges"><span class="pill">${Number(t.questionCount)||t.questions?.length||0} Q</span>${t.published===false?'<span class="pill gold">Hidden</span>':""}</div></div><div class="test-meta-line"><span>⏱ ${Number(t.durationMinutes)||0} min</span><span>🧩 ${esc(unitName)}</span></div><details><summary>Test ID</summary><code>${esc(t.id)}</code></details><div class="test-card-actions"><button type="button" class="danger delete-published-test" data-id="${esc(t.id)}" ${deletingTestIds.has(t.id)?"disabled":""}>🗑 Delete Test</button></div></article>`).join("")}</div></section>`;}).join("")||"<div class='catalog-empty'><b>No matching tests</b><span>Filter change করুন অথবা Reset চাপুন।</span></div>";
+ document.querySelectorAll(".delete-published-test").forEach(button=>{button.onclick=()=>deletePublishedTest(button.dataset.id,button);});
+}
+$("adminTestClassFilter").onchange=()=>refreshAdminTestFilters({resetSubject:true,resetUnit:true});
+$("adminTestSubjectFilter").onchange=()=>refreshAdminTestFilters({resetUnit:true});
+$("adminTestUnitFilter").onchange=renderAdminTestList;$("adminTestSearch").oninput=renderAdminTestList;
+$("adminTestClear").onclick=()=>{$("adminTestClassFilter").value="";$("adminTestSearch").value="";refreshAdminTestFilters({resetSubject:true,resetUnit:true});};
 bindAdminSelectors();
 
 function applyThemeBtn(){const dark=document.documentElement.getAttribute("data-theme")==="dark";$("themeBtn").textContent=dark?"☀️":"🌙";const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=dark?"#150f28":"#4c1d95";}
@@ -250,15 +295,15 @@ $("saveTest").onclick=async()=>{
    if(q&&o.every(Boolean)){publicQs.push({q,o,topic,explanation});answers.push(Number(d.querySelector(".ans").value));}
   });
   if(!publicQs.length)throw new Error("At least one complete question required.");
-  await saveTestData({title:$("testTitle").value.trim(),classId,subjectId,durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
-  $("testMsg").textContent="✅ Test published.";await loadTests();
+  await saveTestData({title:$("testTitle").value.trim(),classId,subjectId,chapter:$("testChapter").value,durationMinutes:Number($("testDuration").value)||30,questions:publicQs,answers});
+  $("testTitle").value="";$("testChapter").value="";$("testMsg").textContent="✅ Test published and added to the filtered library.";await loadTests();
  }catch(e){$("testMsg").textContent=e.message;}
 };
 
 async function saveTestData(t){
- if(!t.title)throw new Error("Test title required.");requireClassSubject(t.classId,t.subjectId);
+ if(!t.title)throw new Error("Test title required.");requireClassSubject(t.classId,t.subjectId);const chapter=cleanedUnitName(t.chapter);if(!chapter)throw new Error("Unit / Chapter name required—এটাই filter-এর মূল category।");
  const publicQuestions=t.questions.map(q=>({q:q.q,o:q.o,topic:q.topic||"General"})),explanations=t.questions.map(q=>q.explanation||"");
- const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter:t.chapter||"",durationMinutes:t.durationMinutes||30,published:true,questionCount:publicQuestions.length,questions:publicQuestions,createdAt:serverTimestamp()});
+ const r=await addDoc(collection(db,"tests"),{title:t.title,classId:t.classId,subjectId:t.subjectId,chapter,durationMinutes:t.durationMinutes||30,published:true,questionCount:publicQuestions.length,questions:publicQuestions,createdAt:serverTimestamp()});
  await setDoc(doc(db,"answerKeys",r.id),{answers:t.answers,explanations,createdAt:serverTimestamp()});
  return r.id;
 }
@@ -309,7 +354,7 @@ function parseImport(raw,classId,subjectId){
   else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC,explanation:vals.EXPLANATION||""});answers.push(ai);}
  });
  const data={title:meta.TEST||"",classId,subjectId,chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
- if(!data.title)errors.push("TEST missing.");if(!classId)errors.push("Import Destination Class select করুন।");if(!subjectId)errors.push("Import Destination Subject select করুন।");if(classId&&subjectId&&!selectedSubjectFor(classId,subjectId))errors.push("Selected Subject এই Class-এর নয়।");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
+ if(!data.title)errors.push("TEST missing.");if(!cleanedUnitName(data.chapter))errors.push("CHAPTER missing—Unit/Chapter filter-এর জন্য এটি required.");if(!classId)errors.push("Import Destination Class select করুন।");if(!subjectId)errors.push("Import Destination Subject select করুন।");if(classId&&subjectId&&!selectedSubjectFor(classId,subjectId))errors.push("Selected Subject এই Class-এর নয়।");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
  return {data,errors};
 }
 
@@ -329,7 +374,7 @@ $("aiTestPrompt").onclick=async()=>{const cls=$("aiClass").value.trim(),subject=
 async function loadInvites(){const s=await getDocs(collection(db,"invites"));adminInvites=s.docs.map(d=>({id:d.id,...d.data()}));$("inviteList").innerHTML=adminInvites.map(x=>`<div class="item"><b>${esc(x.name)}</b> · ${esc(x.id)}<br><span class="muted">${esc(x.className)} (${esc(x.classId)})</span></div>`).join("");$("stStudents").textContent=s.size;refreshAdminSelectors();}
 async function loadSubjects(){const s=await getDocs(collection(db,"subjects"));adminSubjects=s.docs.map(d=>({id:d.id,...d.data()}));$("subjectList").innerHTML=adminSubjects.sort((a,b)=>`${a.classId} ${a.name}`.localeCompare(`${b.classId} ${b.name}`,undefined,{numeric:true,sensitivity:"base"})).map(x=>`<div class="item"><b>${esc(x.name)}</b><br><span class="muted">Class: ${esc(x.classId)} · automatic ID: ${esc(x.id)}</span></div>`).join("");$("stSubjects").textContent=s.size;refreshAdminSelectors();}
 async function loadNotes(){const s=await getDocs(collection(db,"notes"));$("noteList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b>${d.data().chapter?` <span class="pill teal">${esc(d.data().chapter)}</span>`:""}<br><span class="muted">${esc(d.data().classId)} · ${esc(d.data().subjectId)}</span></div>`).join("");}
-async function loadTests(){const s=await getDocs(collection(db,"tests"));$("testList").innerHTML=s.docs.map(d=>`<div class="item"><b>${esc(d.data().title)}</b><br><span class="muted">TEST ID: ${esc(d.id)} · ${Number(d.data().questionCount)||0} Q · ${Number(d.data().durationMinutes)||0} min</span></div>`).join("");$("stTests").textContent=s.size;}
+async function loadTests(){const s=await getDocs(collection(db,"tests"));adminTests=s.docs.map(d=>({id:d.id,...d.data()}));adminTestsLoaded=true;$("stTests").textContent=s.size;refreshAdminSelectors();refreshAdminTestFilters();queueAttemptLifecycle();}
 
 $("addAnn").onclick=async()=>{
  const title=$("annTitle").value.trim(),classId=$("annClassId").value.trim(),content=$("annContent").value.trim();
@@ -368,7 +413,7 @@ async function loadAll(){
 }
 
 let latestAttempts=[],attemptUnsub=null,attemptProcessing=false,attemptProcessQueued=false;
-const suppressedLeaderboardGroups=new Set();
+const suppressedLeaderboardGroups=new Set(),suppressedTestIds=new Set();
 function attemptGroupKey(uid,testId){return `${testId}::${uid}`;}
 function timestampParts(value){return [Number(value?.seconds||0),Number(value?.nanoseconds||0)];}
 function compareTimestamp(a,b){const [as,an]=timestampParts(a),[bs,bn]=timestampParts(b);return as-bs||an-bn;}
@@ -392,7 +437,7 @@ async function gradeAttempt(a){
 }
 async function ensureFirstLeaderboardEntry(group){
  const first=[...group].sort(compareSubmittedAttempts)[0];if(!first||first.score==null||first.total==null)return;
- const groupKey=attemptGroupKey(first.uid,first.testId);if(suppressedLeaderboardGroups.has(groupKey))return;
+ const groupKey=attemptGroupKey(first.uid,first.testId);if(suppressedTestIds.has(first.testId)||suppressedLeaderboardGroups.has(groupKey))return;
  const ref=doc(db,"leaderboardEntries",`${first.testId}_${first.uid}`),activeIds=new Set(group.map(a=>a.id));
  const payload={testId:first.testId,classId:first.classId,uid:first.uid,studentName:first.studentName||"Student",score:first.score,total:first.total,percentage:first.percentage,submittedAt:first.submittedAt||serverTimestamp(),sourceAttemptId:first.id,attemptNumber:1,firstAttemptOnly:true,lockedAt:serverTimestamp()};
  await runTransaction(db,async transaction=>{
@@ -404,18 +449,52 @@ async function ensureFirstLeaderboardEntry(group){
  });
 }
 async function processAttemptLifecycle(){
+ if(!adminTestsLoaded){attemptProcessQueued=true;return;}
  if(attemptProcessing){attemptProcessQueued=true;return;}attemptProcessing=true;
  try{
   do{
-   attemptProcessQueued=false;const working=latestAttempts.map(a=>({...a}));
-   for(const a of working.filter(x=>x.status==="submitted"&&x.score==null)){try{await gradeAttempt(a);}catch(e){console.error("grading failed",a.id,e);}}
-   for(const [groupKey,group] of attemptGroups(working)){if(!suppressedLeaderboardGroups.has(groupKey)){try{await ensureFirstLeaderboardEntry(group);}catch(e){console.error("leaderboard sync failed",groupKey,e);}}}
+   attemptProcessQueued=false;const working=latestAttempts.map(a=>({...a})),validTestIds=new Set(adminTests.filter(t=>t.published===true).map(t=>t.id));
+   for(const a of working.filter(x=>validTestIds.has(x.testId)&&x.status==="submitted"&&x.score==null)){try{await gradeAttempt(a);}catch(e){console.error("grading failed",a.id,e);}}
+   for(const [groupKey,group] of attemptGroups(working)){const testId=group[0]?.testId;if(testId&&validTestIds.has(testId)&&!suppressedTestIds.has(testId)&&!suppressedLeaderboardGroups.has(groupKey)){try{await ensureFirstLeaderboardEntry(group);}catch(e){console.error("leaderboard sync failed",groupKey,e);}}}
   }while(attemptProcessQueued);
  }finally{attemptProcessing=false;renderAttempts();}
 }
 function queueAttemptLifecycle(){processAttemptLifecycle().catch(e=>console.error("attempt lifecycle error:",e));}
 async function waitForAttemptProcessor(){for(let i=0;attemptProcessing&&i<200;i++)await new Promise(resolve=>setTimeout(resolve,25));}
 async function deleteReferences(refs){for(let i=0;i<refs.length;i+=400){const batch=writeBatch(db);refs.slice(i,i+400).forEach(ref=>batch.delete(ref));await batch.commit();}}
+
+async function deletePublishedTest(testId,button){
+ const test=adminTests.find(item=>item.id===testId);if(!test||deletingTestIds.has(testId))return;
+ deletingTestIds.add(testId);button.disabled=true;button.textContent="Checking…";$("adminTestActionMsg").textContent="Checking linked attempts and leaderboard data…";
+ const blockedGroups=new Set();let hidden=false,deletedAttempts=0,deletedLeaderboardRows=0;
+ const suppressGroup=a=>{if(!a?.uid)return;const key=attemptGroupKey(a.uid,testId);blockedGroups.add(key);suppressedLeaderboardGroups.add(key);};
+ try{
+  const [attemptPreview,leaderboardPreview]=await Promise.all([
+   getDocs(query(collection(db,"attempts"),where("testId","==",testId))),
+   getDocs(query(collection(db,"leaderboardEntries"),where("testId","==",testId)))
+  ]),inProgress=attemptPreview.docs.filter(d=>d.data().status==="in_progress").length;
+  const confirmed=confirm(`Delete this test permanently?\n\n${test.title||"Untitled Test"}\n${adminClassLabel(test.classId)} · ${adminSubjectLabel(test.subjectId)} · ${displayUnitName(test.chapter)}\n\nThis will also delete:\n• Answer key\n• ${attemptPreview.size} attempt(s), including ${inProgress} in-progress\n• ${leaderboardPreview.size} leaderboard row(s)\n\nThis action cannot be undone.`);
+  if(!confirmed){$("adminTestActionMsg").textContent="Deletion cancelled.";return;}
+  suppressedTestIds.add(testId);attemptPreview.docs.forEach(d=>suppressGroup(d.data()));latestAttempts.filter(a=>a.testId===testId).forEach(suppressGroup);
+  await waitForAttemptProcessor();button.textContent="Deleting…";$("adminTestActionMsg").textContent="Hiding test and safely deleting linked data…";
+
+  await updateDoc(doc(db,"tests",testId),{published:false});hidden=true;test.published=false;renderAdminTestList();
+  const attempts=await getDocs(query(collection(db,"attempts"),where("testId","==",testId)));attempts.docs.forEach(d=>suppressGroup(d.data()));
+  await deleteReferences(attempts.docs.map(d=>d.ref));deletedAttempts=attempts.size;latestAttempts=latestAttempts.filter(a=>a.testId!==testId);
+  const leaderboard=await getDocs(query(collection(db,"leaderboardEntries"),where("testId","==",testId)));
+  await deleteReferences(leaderboard.docs.map(d=>d.ref));deletedLeaderboardRows=leaderboard.size;
+  const finish=writeBatch(db);finish.delete(doc(db,"answerKeys",testId));finish.delete(doc(db,"tests",testId));await finish.commit();
+
+  adminTests=adminTests.filter(item=>item.id!==testId);$("stTests").textContent=adminTests.length;$("stLive").textContent=latestAttempts.filter(a=>a.status==="in_progress").length;
+  $("adminTestActionMsg").textContent=`✅ “${test.title||"Untitled Test"}” deleted with its answer key, ${deletedAttempts} attempt(s) and ${deletedLeaderboardRows} leaderboard row(s).`;
+  refreshAdminSelectors();refreshAdminTestFilters();renderAttempts();
+ }catch(e){
+  console.error("test deletion failed",e);
+  $("adminTestActionMsg").textContent=hidden?"⚠️ Cleanup could not finish. The test is hidden from students; press Delete Test again to safely retry.":"⚠️ Test delete failed: "+e.message;
+ }finally{
+  blockedGroups.forEach(key=>suppressedLeaderboardGroups.delete(key));suppressedTestIds.delete(testId);deletingTestIds.delete(testId);renderAdminTestList();queueAttemptLifecycle();
+ }
+}
 
 function listenAttempts(){
  if(attemptUnsub)attemptUnsub();

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.3">
+<link rel="stylesheet" href="style.css?v=5.5">
 <style>
 /* Critical mobile profile header: kept inline so an old cached stylesheet cannot restore the oversized card. */
 @media(max-width:600px){
@@ -128,9 +128,11 @@
 <section id="tests" class="tab hidden">
   <div class="card"><h2>🧪 Available Tests</h2>
     <p class="muted">Retake যতবার চাইবে করা যাবে। Official leaderboard-এ শুধু প্রথম submitted attempt গণনা হবে।</p>
-    <div class="filter-bar"><input id="testSearch" placeholder="🔍 Search tests..."></div>
+    <div class="test-catalog-title"><div><span class="section-kicker">EXAM PORTAL</span><h3>Subject ও Unit অনুযায়ী test খুঁজে নাও</h3></div><span id="studentTestCount" class="pill">0 tests</span></div>
+    <div class="filter-bar test-catalog-filters"><select id="testSubjectFilter" aria-label="Filter tests by subject"><option value="">All Subjects</option></select><select id="testUnitFilter" aria-label="Filter tests by unit or chapter" disabled><option value="">Select Subject for Units</option></select><input id="testSearch" type="search" placeholder="🔍 Search tests..."><button id="studentTestClear" type="button" class="secondary">Reset</button></div>
+    <p id="studentTestScope" class="filter-scope" role="status">সব subject ও unit-এর test দেখানো হচ্ছে।</p>
     <p id="testLoadMsg" class="muted" role="status"></p>
-    <div id="testsList"></div>
+    <div id="testsList" class="test-catalog"></div>
   </div>
   <div class="card"><h2>🎯 Personal Practice Test</h2><p class="muted">ChatGPT দিয়ে practice questions তৈরি করে এখানে paste করো। এই result Firebase-এ save হবে না।</p><div class="row"><input id="pracTopic" placeholder="Topic"><input id="pracCount" type="number" min="3" max="20" value="5"></div><button id="pracPromptBtn" class="secondary">🤖 Create Prompt</button><textarea id="pracPaste" placeholder="ChatGPT output এখানে paste করো..."></textarea><button id="pracStart">Start Practice</button><div id="pracQuiz"></div></div>
 </section>
@@ -358,9 +360,9 @@ async function loadData(){
  onSnapshot(query(collection(db,"tests"),where("classId","==",profile.classId),where("published","==",true)),snap=>{
  tests=snap.docs.map(d=>({id:d.id,...d.data()}));
   $("testLoadMsg").textContent="";
-  renderTests();renderSmartDashboard();
+  refreshStudentTestFilters();renderSmartDashboard();
   clearTimeout(loadData.testRefresh);loadData.testRefresh=setTimeout(()=>loadProgressAndLeaderboard().catch(e=>console.error("home leaderboard refresh error:",e)),150);
- },err=>{console.error("tests listener error:",err);$("testLoadMsg").textContent="⚠️ Published test list load করা যায়নি। Teacher-কে Firestore Rules v5.3 publish করতে বলো।";$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
+ },err=>{console.error("tests listener error:",err);$("testLoadMsg").textContent="⚠️ Published test list load করা যায়নি। Teacher-কে package-এর Firestore Rules publish করতে বলো।";$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
   const notices=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
@@ -476,17 +478,24 @@ $("flashClose").onclick=()=>$("flashSection").classList.add("hidden");
 
 /* ---------- TESTS ---------- */
 function hasValidTestQuestions(test){return Array.isArray(test?.questions)&&test.questions.length>0&&test.questions.every(item=>item&&typeof item.q==="string"&&item.q.trim()&&Array.isArray(item.o)&&item.o.length===4&&item.o.every(option=>typeof option==="string"&&option.trim()));}
+function catalogUnitName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ")||"Uncategorized";}
+function catalogUnitKey(name){return catalogUnitName(name).toLocaleLowerCase();}
+function testCatalogCompare(a,b){return String(a||"").localeCompare(String(b||""),undefined,{numeric:true,sensitivity:"base"});}
+function replaceStudentTestOptions(id,placeholder,items,preferred){const select=$(id),wanted=preferred===undefined?select.value:preferred;select.replaceChildren(new Option(placeholder,""));items.forEach(item=>select.add(new Option(item.label,item.value)));select.value=items.some(item=>item.value===wanted)?wanted:"";}
+function studentTestUnitItems(items){const units=new Map();items.forEach(test=>{const key=catalogUnitKey(test.chapter);if(!units.has(key))units.set(key,catalogUnitName(test.chapter));});return [...units].map(([value,label])=>({value,label})).sort((a,b)=>testCatalogCompare(a.label,b.label));}
+function refreshStudentTestFilters({resetUnit=false}={}){
+ const subjectItems=[...new Set(tests.map(t=>t.subjectId).filter(Boolean))].map(value=>({value,label:subjectName(value)})).sort((a,b)=>testCatalogCompare(a.label,b.label));replaceStudentTestOptions("testSubjectFilter","All Subjects",subjectItems);
+ const subjectId=$("testSubjectFilter").value,unitItems=subjectId?studentTestUnitItems(tests.filter(t=>t.subjectId===subjectId)):[];replaceStudentTestOptions("testUnitFilter",subjectId?"All Units / Chapters":"Select Subject for Units",unitItems,resetUnit?"":undefined);$("testUnitFilter").disabled=!subjectId||!unitItems.length;renderTests();
+}
 function renderTests(){
- const q=$("testSearch").value.trim().toLowerCase();
- const list=tests.filter(t=>!q||(t.title+" "+(t.chapter||"")).toLowerCase().includes(q));
- $("testsList").innerHTML=list.map(t=>{
-  const submitted=studentAttempts.filter(a=>a.testId===t.id&&a.status==="submitted"),resumable=studentAttempts.some(a=>a.testId===t.id&&a.status==="in_progress"),start=readableDate(t.startAt||t.startsAt),locked=!!start&&start.getTime()>Date.now(),valid=hasValidTestQuestions(t);
-  const label=locked?"Not open yet":!valid?"Test needs correction":resumable?"Resume Test":submitted.length?"Retake Test":"Start Test";
-  return `<div class="item"><span class="pill">${escapeHTML(subjectName(t.subjectId))}</span>${submitted.length?` <span class="pill teal">${submitted.length} submitted</span>`:""}${resumable?` <span class="pill gold">In progress</span>`:""}<h3>${escapeHTML(t.title)}</h3><p class="muted">${escapeHTML(t.chapter||"")} · ${Number(t.questionCount)||t.questions?.length||0} questions · ${Number(t.durationMinutes)||0} min${start?` · ${start.toLocaleString("en-IN")}`:""}</p>${!valid?`<p class="muted">⚠️ এই test-এ valid question নেই—Teacher-কে test-টি ঠিক করতে বলো।</p>`:""}<button class="startTest" data-id="${escapeHTML(t.id)}" ${locked||!valid?"disabled":""}>${label}</button></div>`;
- }).join("")||"<p>No tests yet.</p>";
+ const q=$("testSearch").value.trim().toLocaleLowerCase(),subjectId=$("testSubjectFilter").value,unit=$("testUnitFilter").value;
+ const list=tests.filter(t=>(!subjectId||t.subjectId===subjectId)&&(!unit||catalogUnitKey(t.chapter)===unit)&&(!q||`${t.title||""} ${catalogUnitName(t.chapter)} ${subjectName(t.subjectId)}`.toLocaleLowerCase().includes(q))).sort((a,b)=>testCatalogCompare(`${subjectName(a.subjectId)}\u0000${catalogUnitName(a.chapter)}\u0000${a.title}`,`${subjectName(b.subjectId)}\u0000${catalogUnitName(b.chapter)}\u0000${b.title}`)),groups=new Map();
+ list.forEach(test=>{const key=`${test.subjectId}\u001f${catalogUnitKey(test.chapter)}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(test);});
+ $("studentTestCount").textContent=`${list.length} / ${tests.length} tests`;const unitLabel=unit?$("testUnitFilter").selectedOptions[0]?.textContent||unit:"All Units";$("studentTestScope").textContent=`Showing: ${subjectId?subjectName(subjectId):"All Subjects"} · ${unitLabel}`;
+ $("testsList").innerHTML=[...groups.values()].map(items=>{const first=items[0],unitName=catalogUnitName(first.chapter);return `<section class="test-catalog-group"><div class="test-group-head"><div><span class="pill">${escapeHTML(subjectName(first.subjectId))}</span><h3>${escapeHTML(unitName)}</h3></div><span class="pill gold">${items.length} exam${items.length===1?"":"s"}</span></div><div class="test-card-grid">${items.map(t=>{const submitted=studentAttempts.filter(a=>a.testId===t.id&&a.status==="submitted"),resumable=studentAttempts.some(a=>a.testId===t.id&&a.status==="in_progress"),start=readableDate(t.startAt||t.startsAt),locked=!!start&&start.getTime()>Date.now(),valid=hasValidTestQuestions(t),label=locked?"Not open yet":!valid?"Test needs correction":resumable?"Resume Test":submitted.length?"Retake Test":"Start Test";return `<article class="test-library-card student-test-card"><div><span class="pill teal">${escapeHTML(unitName)}</span>${submitted.length?` <span class="pill">${submitted.length} submitted</span>`:""}${resumable?` <span class="pill gold">In progress</span>`:""}<h3>${escapeHTML(t.title)}</h3><p class="muted">${Number(t.questionCount)||t.questions?.length||0} questions · ${Number(t.durationMinutes)||0} min${start?` · ${start.toLocaleString("en-IN")}`:""}</p>${!valid?`<p class="catalog-warning">⚠️ এই test-এ valid question নেই—Teacher-কে test-টি ঠিক করতে বলো।</p>`:""}</div><button class="startTest" data-id="${escapeHTML(t.id)}" ${locked||!valid?"disabled":""}>${label}</button></article>`;}).join("")}</div></section>`;}).join("")||"<div class='catalog-empty'><b>No matching tests</b><span>Subject/Unit filter change করো অথবা Reset চাপো।</span></div>";
  document.querySelectorAll(".startTest").forEach(b=>b.onclick=()=>startTest(b.dataset.id));
 }
-$("testSearch").oninput=renderTests;
+$("testSubjectFilter").onchange=()=>refreshStudentTestFilters({resetUnit:true});$("testUnitFilter").onchange=renderTests;$("testSearch").oninput=renderTests;$("studentTestClear").onclick=()=>{$("testSubjectFilter").value="";$("testSearch").value="";refreshStudentTestFilters({resetUnit:true});};
 
 function updateTestProgress(){
  const total=activeTest?.questions?.length||1,done=Object.keys(answers).length;$("prog").style.width=(done/total*100)+"%";$("progText").textContent=`Answered ${done}/${total} · Review ${markedForReview.size}`;
@@ -529,7 +538,7 @@ async function startTest(id){
   clearInterval(timerHandle);timerHandle=setInterval(tick,1000);tick();$("runner").scrollIntoView({behavior:"smooth"});
   $("testForm").onchange=e=>{if(e.target.type!=="radio")return;answers[e.target.name]=Number(e.target.value);updateTestProgress();queueAttemptSave();};
  }catch(e){
-  console.error("test start error:",e);activeAttempt=null;activeTest=null;$("testLoadMsg").textContent="⚠️ Test start হয়নি। Teacher-কে website files-এর সঙ্গে Firestore Rules v5.3 publish করতে বলো।";showToast("Test start failed—please inform Teacher.");
+  console.error("test start error:",e);activeAttempt=null;activeTest=null;$("testLoadMsg").textContent="⚠️ Test start হয়নি। Teacher-কে website files-এর সঙ্গে package-এর Firestore Rules publish করতে বলো।";showToast("Test start failed—please inform Teacher.");
  }finally{startingTest=false;renderTests();}
 }
 function tick(){
