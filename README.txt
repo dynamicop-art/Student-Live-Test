@@ -1,5 +1,18 @@
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
+V5.6 PUBLISHED TEST NAME EDIT UPDATE
+- Admin -> Tests -> Test Catalog now has an Edit Name button on every test.
+- Renaming keeps the same Test ID, questions, answer key, attempts and
+  leaderboard rows, so rankings and first-attempt locking remain unchanged.
+- Existing submitted and in-progress attempt labels are synchronized in safe
+  batches, so Test History, Results, Mistake Notebook and CSV show the new name.
+- Empty names and names over 120 characters are blocked.
+- A duplicate name is blocked within the same Class + Subject + Unit/Chapter.
+  The same name may still be used in a different class, subject or unit.
+- If history synchronization is interrupted, the new test name remains saved;
+  open Edit Name and press OK with the same name to retry the label sync.
+- No Firestore Rules change was required beyond the included v5.5 rules.
+
 V5.5 SAFE TEST DELETE UPDATE
 - Admin -> Tests -> Test Catalog now has a Delete Test button on every test.
 - A detailed confirmation shows the test, class, subject, unit, attempt count,

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.5"></head>
+<link rel="stylesheet" href="style.css?v=5.6"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -103,11 +103,13 @@ import {getFirestore,collection,doc,setDoc,addDoc,getDocs,getDoc,query,where,onS
 import {firebaseConfig,TEACHER_EMAIL} from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let adminInvites=[],adminSubjects=[],adminTests=[],adminTestsLoaded=false;
-const deletingTestIds=new Set();
+const deletingTestIds=new Set(),editingTestIds=new Set();
 const CLASS_SELECT_IDS=["subClassId","noteClassId","testClassId","importClass","aiClass","annClassId","asgClassId"];
 const SUBJECT_LINKS=[["noteClassId","noteSubjectId"],["testClassId","testSubjectId"],["importClass","importSubject"],["aiClass","aiSubject"],["asgClassId","asgSubjectId"]];
 
 function normalizedSubjectName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ").toLowerCase();}
+function cleanedTestTitle(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ");}
+function normalizedTestTitle(name){return cleanedTestTitle(name).toLocaleLowerCase();}
 function cleanedUnitName(name){return String(name||"").normalize("NFKC").trim().replace(/\s+/g," ");}
 function normalizedUnitKey(name){return (cleanedUnitName(name)||"Uncategorized").toLocaleLowerCase();}
 function displayUnitName(name){return cleanedUnitName(name)||"Uncategorized";}
@@ -194,7 +196,8 @@ function renderAdminTestList(){
  const list=filteredAdminTests(),groups=new Map();list.forEach(test=>{const key=`${test.classId}\u001f${test.subjectId}\u001f${normalizedUnitKey(test.chapter)}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(test);});
  $("adminTestCount").textContent=`${list.length} / ${adminTests.length} tests`;
  const classId=$("adminTestClassFilter").value,subjectId=$("adminTestSubjectFilter").value,unit=$("adminTestUnitFilter").value,unitLabel=unit?$("adminTestUnitFilter").selectedOptions[0]?.textContent||unit:"All Units";$("adminTestScope").textContent=`Showing: ${classId?adminClassLabel(classId):"All Classes"} · ${subjectId?adminSubjectLabel(subjectId):"All Subjects"} · ${unitLabel}`;
- $("testList").innerHTML=[...groups.values()].map(items=>{const first=items[0],unitName=displayUnitName(first.chapter);return `<section class="test-catalog-group"><div class="test-group-head"><div><span class="pill">${esc(adminClassLabel(first.classId))}</span> <span class="pill teal">${esc(adminSubjectLabel(first.subjectId))}</span><h3>${esc(unitName)}</h3></div><span class="pill gold">${items.length} exam${items.length===1?"":"s"}</span></div><div class="test-card-grid">${items.map(t=>`<article class="test-library-card"><div class="topbar"><div><b>${esc(t.title||"Untitled Test")}</b><small class="muted">${t.published===false?"Hidden from students":"Published"} · ${esc(adminDate(t.createdAt))}</small></div><div class="test-card-badges"><span class="pill">${Number(t.questionCount)||t.questions?.length||0} Q</span>${t.published===false?'<span class="pill gold">Hidden</span>':""}</div></div><div class="test-meta-line"><span>⏱ ${Number(t.durationMinutes)||0} min</span><span>🧩 ${esc(unitName)}</span></div><details><summary>Test ID</summary><code>${esc(t.id)}</code></details><div class="test-card-actions"><button type="button" class="danger delete-published-test" data-id="${esc(t.id)}" ${deletingTestIds.has(t.id)?"disabled":""}>🗑 Delete Test</button></div></article>`).join("")}</div></section>`;}).join("")||"<div class='catalog-empty'><b>No matching tests</b><span>Filter change করুন অথবা Reset চাপুন।</span></div>";
+ $("testList").innerHTML=[...groups.values()].map(items=>{const first=items[0],unitName=displayUnitName(first.chapter);return `<section class="test-catalog-group"><div class="test-group-head"><div><span class="pill">${esc(adminClassLabel(first.classId))}</span> <span class="pill teal">${esc(adminSubjectLabel(first.subjectId))}</span><h3>${esc(unitName)}</h3></div><span class="pill gold">${items.length} exam${items.length===1?"":"s"}</span></div><div class="test-card-grid">${items.map(t=>`<article class="test-library-card"><div class="topbar"><div><b>${esc(t.title||"Untitled Test")}</b><small class="muted">${t.published===false?"Hidden from students":"Published"} · ${esc(adminDate(t.createdAt))}</small></div><div class="test-card-badges"><span class="pill">${Number(t.questionCount)||t.questions?.length||0} Q</span>${t.published===false?'<span class="pill gold">Hidden</span>':""}</div></div><div class="test-meta-line"><span>⏱ ${Number(t.durationMinutes)||0} min</span><span>🧩 ${esc(unitName)}</span></div><details><summary>Test ID</summary><code>${esc(t.id)}</code></details><div class="test-card-actions"><button type="button" class="secondary edit-published-test" data-id="${esc(t.id)}" ${deletingTestIds.has(t.id)||editingTestIds.has(t.id)?"disabled":""}>✏️ Edit Name</button><button type="button" class="danger delete-published-test" data-id="${esc(t.id)}" ${deletingTestIds.has(t.id)||editingTestIds.has(t.id)?"disabled":""}>🗑 Delete Test</button></div></article>`).join("")}</div></section>`;}).join("")||"<div class='catalog-empty'><b>No matching tests</b><span>Filter change করুন অথবা Reset চাপুন।</span></div>";
+ document.querySelectorAll(".edit-published-test").forEach(button=>{button.onclick=()=>editPublishedTestName(button.dataset.id,button);});
  document.querySelectorAll(".delete-published-test").forEach(button=>{button.onclick=()=>deletePublishedTest(button.dataset.id,button);});
 }
 $("adminTestClassFilter").onchange=()=>refreshAdminTestFilters({resetSubject:true,resetUnit:true});
@@ -462,9 +465,31 @@ async function processAttemptLifecycle(){
 function queueAttemptLifecycle(){processAttemptLifecycle().catch(e=>console.error("attempt lifecycle error:",e));}
 async function waitForAttemptProcessor(){for(let i=0;attemptProcessing&&i<200;i++)await new Promise(resolve=>setTimeout(resolve,25));}
 async function deleteReferences(refs){for(let i=0;i<refs.length;i+=400){const batch=writeBatch(db);refs.slice(i,i+400).forEach(ref=>batch.delete(ref));await batch.commit();}}
+async function updateReferences(refs,patch){for(let i=0;i<refs.length;i+=400){const batch=writeBatch(db);refs.slice(i,i+400).forEach(ref=>batch.update(ref,patch));await batch.commit();}}
+
+async function editPublishedTestName(testId,button){
+ const test=adminTests.find(item=>item.id===testId);if(!test||deletingTestIds.has(testId)||editingTestIds.has(testId))return;
+ const entered=prompt("Edit test name (maximum 120 characters):",test.title||"");if(entered===null)return;
+ const newTitle=cleanedTestTitle(entered),oldTitle=cleanedTestTitle(test.title)||"Untitled Test";
+ if(!newTitle)return $("adminTestActionMsg").textContent="⚠️ Test name cannot be empty.";
+ if(newTitle.length>120)return $("adminTestActionMsg").textContent="⚠️ Test name must be 120 characters or fewer.";
+ const duplicate=adminTests.find(item=>item.id!==testId&&item.classId===test.classId&&item.subjectId===test.subjectId&&normalizedUnitKey(item.chapter)===normalizedUnitKey(test.chapter)&&normalizedTestTitle(item.title)===normalizedTestTitle(newTitle));
+ if(duplicate)return $("adminTestActionMsg").textContent=`⚠️ “${newTitle}” already exists in this Class, Subject and Unit. Use a distinct test name.`;
+
+ editingTestIds.add(testId);button.disabled=true;button.textContent="Saving…";$("adminTestActionMsg").textContent="Updating test name and linked history…";let titleSaved=false,linkedAttempts=0;
+ try{
+  await updateDoc(doc(db,"tests",testId),{title:newTitle,updatedAt:serverTimestamp()});titleSaved=true;test.title=newTitle;renderAdminTestList();
+  const attempts=await getDocs(query(collection(db,"attempts"),where("testId","==",testId)));linkedAttempts=attempts.size;
+  await updateReferences(attempts.docs.map(d=>d.ref),{testTitle:newTitle});latestAttempts.filter(a=>a.testId===testId).forEach(a=>a.testTitle=newTitle);
+  $("adminTestActionMsg").textContent=normalizedTestTitle(oldTitle)===normalizedTestTitle(newTitle)?`✅ Test name unchanged; ${linkedAttempts} linked attempt label(s) synchronized.`:`✅ Test renamed from “${oldTitle}” to “${newTitle}”; ${linkedAttempts} linked attempt label(s) synchronized.`;
+  refreshAdminTestFilters();renderAttempts();
+ }catch(e){
+  console.error("test rename failed",e);$("adminTestActionMsg").textContent=titleSaved?`⚠️ Test name changed to “${newTitle}”, but some history labels could not sync. Open Edit Name and press OK again to retry.`:"⚠️ Test name update failed: "+e.message;
+ }finally{editingTestIds.delete(testId);renderAdminTestList();}
+}
 
 async function deletePublishedTest(testId,button){
- const test=adminTests.find(item=>item.id===testId);if(!test||deletingTestIds.has(testId))return;
+ const test=adminTests.find(item=>item.id===testId);if(!test||deletingTestIds.has(testId)||editingTestIds.has(testId))return;
  deletingTestIds.add(testId);button.disabled=true;button.textContent="Checking…";$("adminTestActionMsg").textContent="Checking linked attempts and leaderboard data…";
  const blockedGroups=new Set();let hidden=false,deletedAttempts=0,deletedLeaderboardRows=0;
  const suppressGroup=a=>{if(!a?.uid)return;const key=attemptGroupKey(a.uid,testId);blockedGroups.add(key);suppressedLeaderboardGroups.add(key);};
