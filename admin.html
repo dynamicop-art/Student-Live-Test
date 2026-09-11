@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5.6"></head>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css?v=6.0"></head>
 <body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -68,7 +69,7 @@
 <div class="item selector-panel"><h3>🎯 Import Destination</h3><div class="row"><select id="importClass" aria-label="Select class for imported test"><option value="">Select Class</option></select><select id="importSubject" aria-label="Select subject for imported test"><option value="">Select Class first</option></select></div></div>
 <div class="item"><h3>🤖 Free Test Prompt Helper</h3><div class="row"><select id="aiClass" aria-label="Select class for AI prompt"><option value="">Select Class</option></select><select id="aiSubject" aria-label="Select subject for AI prompt"><option value="">Select Class first</option></select><input id="aiTopic" placeholder="Topic"><input id="aiCount" type="number" min="3" max="30" value="10"></div><button id="aiTestPrompt" class="secondary">Copy Prompt & Open ChatGPT</button></div>
 <textarea id="importBox" style="min-height:360px" placeholder="Paste complete test block here..."></textarea>
-<div class="row"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
+<div class="row"><input id="adminImportFile" type="file" accept=".txt,.md,text/plain,text/markdown" aria-label="Import test file"><button id="previewImport">Preview Import</button><button id="loadSample" class="secondary">Load Sample</button></div>
 <div id="importPreview"></div>
 <button id="publishImport" class="hidden">✅ Publish Imported Test</button><p id="importMsg" class="muted"></p>
 </section>
@@ -339,30 +340,32 @@ TOPIC: Vapour Pressure`;
 let parsedImports=[];
 function invalidateImportPreview(){parsedImports=[];$("publishImport").classList.add("hidden");$("importPreview").innerHTML="";$("importMsg").textContent="";}
 $("loadSample").onclick=()=>{$("importBox").value=SAMPLE;invalidateImportPreview();};
+$("adminImportFile").onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>1024*1024){$("importMsg").textContent="File 1 MB-এর মধ্যে রাখুন।";e.target.value="";return;}try{$("importBox").value=await f.text();invalidateImportPreview();$("importMsg").textContent=`✅ ${f.name} loaded — Preview Import চাপুন।`;}catch{$("importMsg").textContent="File পড়া যায়নি।";}finally{e.target.value="";}};
 $("importBox").addEventListener("input",invalidateImportPreview);
 ["importClass","importSubject"].forEach(id=>$(id).addEventListener("change",invalidateImportPreview));
 
+function normalizeImportText(raw){return String(raw||"").replace(/\r/g,"").replace(/```(?:text|txt|markdown|md)?/gi,"").replace(/```/g,"").replace(/^\s*#{1,6}\s+/gm,"").replace(/\u00a0/g," ").trim();}
 function parseImport(raw,classId,subjectId){
- const lines=raw.replace(/\r/g,"").split("\n");
- const meta={};let firstSep=lines.findIndex(x=>x.trim()==="---");
- const head=(firstSep<0?lines:lines.slice(0,firstSep));
- head.forEach(line=>{const m=line.match(/^([A-Z_]+)\s*:\s*(.+)$/i);if(m)meta[m[1].toUpperCase()]=m[2].trim();});
- const body=(firstSep<0?[]:lines.slice(firstSep).join("\n")).split(/\n---\s*\n/).map(x=>x.trim()).filter(Boolean);
- const questions=[];const answers=[];const errors=[];
- body.forEach((block,idx)=>{
-  const vals={};
-  block.split("\n").forEach(line=>{const m=line.match(/^(Q|A|B|C|D|ANSWER|TOPIC|EXPLANATION)\s*:\s*(.*)$/i);if(m)vals[m[1].toUpperCase()]=m[2].trim();});
-  const opts=[vals.A,vals.B,vals.C,vals.D],ans=(vals.ANSWER||"").trim().toUpperCase(),ai="ABCD".indexOf(ans[0]||"");
-  if(!vals.Q||opts.some(x=>!x)||ai<0||!vals.TOPIC)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER/TOPIC incomplete.`);
-  else{questions.push({q:vals.Q,o:opts,topic:vals.TOPIC,explanation:vals.EXPLANATION||""});answers.push(ai);}
- });
+ const clean=normalizeImportText(raw),lines=clean.split("\n"),meta={};
+ lines.forEach(line=>{const m=line.trim().match(/^(TEST|CHAPTER|DURATION|CLASS|SUBJECT_ID)\s*[:\-]\s*(.+)$/i);if(m)meta[m[1].toUpperCase()]=m[2].trim();});
+ const records=[];let cur=null,last=null;const push=()=>{if(cur){records.push(cur);cur=null;last=null;}};
+ for(const original of lines){const line=original.trim();if(!line)continue;if(/^[-–—_]{3,}$/.test(line)){push();continue;}
+  let m=line.match(/^(?:[-*•]\s*)?(?:\d+\s*[.)-]\s*)?(?:Q(?:UESTION)?(?:\s*\d+)?|প্রশ্ন(?:\s*\d+)?)\s*[:.)-]\s*(.+)$/i);if(m){push();cur={Q:m[1].trim()};last="Q";continue;}
+  m=line.match(/^(?:[-*•]\s*)?\(?([A-D])\)?\s*[).:\-]\s*(.+)$/i);if(m){cur??={};cur[m[1].toUpperCase()]=m[2].trim();last=m[1].toUpperCase();continue;}
+  m=line.match(/^(?:[-*•]\s*)?(?:ANSWER|ANS|CORRECT\s*ANSWER)\s*[:\-]\s*(.+)$/i);if(m){cur??={};cur.ANSWER=m[1].trim();last="ANSWER";continue;}
+  m=line.match(/^(?:[-*•]\s*)?(?:TOPIC)\s*[:\-]\s*(.+)$/i);if(m){cur??={};cur.TOPIC=m[1].trim();last="TOPIC";continue;}
+  m=line.match(/^(?:[-*•]\s*)?(?:EXPLANATION|EXPLAIN|WHY)\s*[:\-]\s*(.+)$/i);if(m){cur??={};cur.EXPLANATION=m[1].trim();last="EXPLANATION";continue;}
+  if(cur&&last&&["Q","A","B","C","D","TOPIC","EXPLANATION"].includes(last))cur[last]=`${cur[last]||""} ${line}`.trim();
+ }
+ push();const questions=[],answers=[],errors=[];
+ records.forEach((vals,idx)=>{const opts=[vals.A,vals.B,vals.C,vals.D],ans=String(vals.ANSWER||"").trim(),match=ans.match(/(?:OPTION\s*)?([A-D])/i),ai=match?"ABCD".indexOf(match[1].toUpperCase()):-1,topic=(vals.TOPIC||meta.CHAPTER||"General").trim();if(!vals.Q||opts.some(x=>!x)||ai<0)errors.push(`Question ${idx+1}: Q/A/B/C/D/ANSWER incomplete.`);else{questions.push({q:vals.Q,o:opts,topic,explanation:vals.EXPLANATION||""});answers.push(ai);}});
  const data={title:meta.TEST||"",classId,subjectId,chapter:meta.CHAPTER||"",durationMinutes:Number(meta.DURATION)||30,questions,answers};
  if(!data.title)errors.push("TEST missing.");if(!cleanedUnitName(data.chapter))errors.push("CHAPTER missing—Unit/Chapter filter-এর জন্য এটি required.");if(!classId)errors.push("Import Destination Class select করুন।");if(!subjectId)errors.push("Import Destination Subject select করুন।");if(classId&&subjectId&&!selectedSubjectFor(classId,subjectId))errors.push("Selected Subject এই Class-এর নয়।");if(!questions.length)errors.push("No valid questions found.");if(data.durationMinutes<1||data.durationMinutes>240)errors.push("DURATION must be 1–240 minutes.");if(questions.length>100)errors.push("Maximum 100 questions per test.");
  return {data,errors};
 }
 
 $("previewImport").onclick=()=>{
- const classId=$("importClass").value.trim(),subjectId=$("importSubject").value.trim(),chunks=$("importBox").value.replace(/\r/g,"").split(/\n(?=\s*TEST\s*:)/i).map(x=>x.trim()).filter(Boolean),results=chunks.map(raw=>parseImport(raw,classId,subjectId));
+ const classId=$("importClass").value.trim(),subjectId=$("importSubject").value.trim(),normalized=normalizeImportText($("importBox").value),chunks=normalized.split(/\n(?=\s*TEST\s*[:\-])/i).map(x=>x.trim()).filter(Boolean),results=chunks.map(raw=>parseImport(raw,classId,subjectId));
  parsedImports=results.every(r=>!r.errors.length)?results.map(r=>r.data):[];
  $("importPreview").innerHTML=results.map((p,i)=>p.errors.length?`<div class="item preview-bad"><h3>❌ Test ${i+1}</h3>${p.errors.map(e=>`<div>${esc(e)}</div>`).join("")}</div>`:`<div class="item preview-ok"><h3>✅ ${esc(p.data.title)}</h3><p>${esc(p.data.classId)} · ${esc(selectedSubjectFor(p.data.classId,p.data.subjectId)?.name||p.data.subjectId)} · ${p.data.questions.length} questions · ${p.data.durationMinutes} min</p></div>`).join("")||"<p class='muted'>No test block found.</p>";
  $("publishImport").classList.toggle("hidden",!parsedImports.length);

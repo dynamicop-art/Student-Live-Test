@@ -1,3 +1,20 @@
+V5.7 PRACTICE IMPORT + ADAPTIVE PRACTICE UPDATE
+- Fixed the Student -> Tests -> Personal Practice Test import flow. It is no
+  longer limited to one exact ChatGPT text layout.
+- Students can now import practice questions by normal paste, clipboard read,
+  or TXT / MD / JSON file upload (client-side only; max 512 KB).
+- The practice parser accepts common ChatGPT variations such as fenced code,
+  numbered questions, A:/A)/A. options, and Answer/Ans/Correct Answer labels.
+- Added Preview & Validate with ready/skipped counts before starting practice.
+- Added "Auto Practice from My Performance": the app builds a free local
+  practice set from the student's own graded review, prioritizing recent wrong
+  answers first. No OpenAI API key, backend, or new Firebase collection needed.
+- Practice results remain device/session-only and do not affect official exam
+  attempts or leaderboards.
+- Direct automatic transfer of a ChatGPT response back into this static site is
+  intentionally not attempted; clipboard/file import avoids cross-site browser
+  restrictions without adding a paid API or exposing a secret key.
+
 STUDENT LEARNING HUB V3 (PREMIUM DESIGN + FULL FEATURE SET) — SETUP
 
 V5.6 PUBLISHED TEST NAME EDIT UPDATE
@@ -368,3 +385,58 @@ V5.4 DEPLOYMENT
 Upload/replace all files from the v5.4 package in the GitHub repository root.
 The included firestore.rules retains the secure v5.3 attempt lifecycle rules;
 keep those rules published in Firebase. Then hard-refresh Admin and Student pages.
+
+============================================================
+ULTIMATE v6 UPDATE — IMPORTANT DEPLOYMENT NOTES
+============================================================
+
+This package upgrades the student experience without changing the teacher grading model.
+
+NEW STUDENT FEATURES
+- Confidence Mode in live tests: Sure / Maybe / Guess per question.
+- Confidence Intelligence: shows how confidence matches real accuracy.
+- Exam Replay: answer changes, first-answer timing, total duration and late-mistake insight.
+- Mistake DNA: tag wrong answers as Concept gap / Careless / Calculation / Guess / Question reading.
+- Knowledge Map: Priority / Building / Strong / Mastered topic states from graded results.
+- Smart Practice Feed: one-question-at-a-time adaptive feed prioritising wrong/uncertain questions.
+- Daily Mission: personalised 3-task plan derived from weak topics, assignments and tests.
+- Personal AI Study Coach: context-aware ChatGPT prompts using current performance data; no paid API required.
+- Universal Quick Find: Ctrl/Cmd + K searches notes, tests, assignments and app sections.
+- PWA app shell: installable experience where supported, online/offline indicator and same-origin shell caching.
+- Chapter Boss: 5-question weak-topic mastery challenge using graded review questions.
+- Challenge Link Duel: play first, then share the same practice question set and target score with a friend; no duel backend required.
+- Viva Rehearsal: oral-answer prompt, optional browser speech-to-text and explicit ChatGPT evaluation flow.
+- Share-to-app target: supported installed browsers can share text into student.html; shared text is loaded into the Practice importer.
+- Practice importer from v5.7 remains: textarea, clipboard, TXT/MD/JSON and tolerant ChatGPT formatting.
+- Teacher Test Importer is now tolerant too: ChatGPT code fences, numbered questions, A)/A./A: options, Ans:/Correct Answer:, CHAPTER fallback for missing TOPIC, plus TXT/MD file loading.
+
+FILES ADDED
+- manifest.webmanifest
+- sw.js
+- app-icon-192.png
+- app-icon-512.png
+
+IMPORTANT: FIRESTORE RULES MUST BE PUBLISHED
+Ultimate v6 stores two additional student-owned fields inside attempt documents:
+- confidence (map, max 500 entries)
+- answerTimeline (list, max 600 events)
+
+Publish the included firestore.rules BEFORE students start v6 tests. The rules continue to prevent students from writing grades, scores, answer keys or leaderboard results.
+
+DEPLOYMENT CHECKLIST
+1. Upload/replace ALL files from this folder in the hosting root.
+2. Publish the included firestore.rules in Firebase Console / Firebase CLI.
+3. Hard refresh once after deployment so style.css?v=6.0 and the new service worker are active.
+4. Sign in as one student and run a short test: answer + confidence -> submit -> teacher grades -> student Review / Progress / Replay.
+5. Verify Practice importer and Smart Feed with at least one graded test containing review data.
+6. PWA install/share features depend on browser/platform support; normal website and clipboard/file import remain the fallback.
+
+DATA / PRIVACY NOTES
+- Confidence and answer timeline belong only to the student's attempt; normal attempt privacy rules still apply.
+- Mistake DNA labels and Daily Mission completion are stored locally in that browser via localStorage. They are not sent to ChatGPT.
+- AI Study Coach only copies a concise performance-context prompt when the student explicitly presses a coach button, then opens ChatGPT.
+
+COMPATIBILITY
+- Old attempts without confidence or answerTimeline continue to render normally.
+- Old results without replay data simply do not show the Replay button.
+- Existing grading, leaderboard, notes, assignments, doubts, bookmarks, streaks and teacher/admin pages remain compatible.

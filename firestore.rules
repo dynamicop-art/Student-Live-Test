@@ -68,7 +68,7 @@ service cloud.firestore {
         return id == (request.resource.data.testId + '_' + request.auth.uid)
           && request.resource.data.keys().hasOnly([
             'uid','studentName','classId','testId','testTitle','subjectId',
-            'status','progress','answers','markedForReview','startedAt'
+            'status','progress','answers','markedForReview','confidence','answerTimeline','startedAt'
           ]);
       }
       function validMultiAttemptCreate(){
@@ -76,7 +76,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly([
             'attemptId','attemptToken','attemptNumber','isRetake','uid','studentName',
             'classId','testId','testTitle','subjectId','status','progress','answers',
-            'markedForReview','startedAt'
+            'markedForReview','confidence','answerTimeline','startedAt'
           ])
           && request.resource.data.attemptId == id
           && request.resource.data.attemptToken is string
@@ -105,6 +105,8 @@ service cloud.firestore {
         && request.resource.data.answers.size() == 0
         && request.resource.data.markedForReview is list
         && request.resource.data.markedForReview.size() == 0
+        && (!('confidence' in request.resource.data) || (request.resource.data.confidence is map && request.resource.data.confidence.size() == 0))
+        && (!('answerTimeline' in request.resource.data) || (request.resource.data.answerTimeline is list && request.resource.data.answerTimeline.size() == 0))
         && request.resource.data.progress is int
         && request.resource.data.progress == 0
         && !request.resource.data.keys().hasAny(['score','total','percentage','gradedAt','topicStats','review','submittedAt','autoSubmitted']);
@@ -128,10 +130,12 @@ service cloud.firestore {
         && request.resource.data.answers.size() <= 500
         && request.resource.data.markedForReview is list
         && request.resource.data.markedForReview.size() <= 500
+        && (!('confidence' in request.resource.data) || (request.resource.data.confidence is map && request.resource.data.confidence.size() <= 500))
+        && (!('answerTimeline' in request.resource.data) || (request.resource.data.answerTimeline is list && request.resource.data.answerTimeline.size() <= 600))
         && request.resource.data.progress is int
         && request.resource.data.progress == request.resource.data.answers.size()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'answers','progress','markedForReview','lastUpdated','status','submittedAt','autoSubmitted'
+          'answers','progress','markedForReview','confidence','answerTimeline','lastUpdated','status','submittedAt','autoSubmitted'
         ])
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastUpdated'])
             || request.resource.data.lastUpdated == request.time)
