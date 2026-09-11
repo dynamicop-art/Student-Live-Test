@@ -2,17 +2,17 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#4c1d95"><meta name="color-scheme" content="light dark">
-<title>AETHER v8.1 · Neural Learning Interface</title>
+<title>Student Learning Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=8.1"></head>
-<body class="landing-app" data-visual="aurora">
+<link rel="stylesheet" href="style.css?v=9.0-stable"></head>
+<body>
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
-<section class="hero landing-hero"><div class="landing-orb" aria-hidden="true"><i></i><i></i><i></i><span>A</span></div><div class="brand-line"><span class="brand-dot"></span> AETHER LEARNING SYSTEM</div><h1>Learn like the interface<br><em>already knows you.</em></h1><p>Adaptive tests, mastery intelligence, focus systems, pressure training and a personal learning cockpit—inside one private student workspace.</p><div class="landing-status"><span><i></i> Firebase linked</span><span>◈ Zero paid AI required</span><span>⚡ PWA ready</span></div></section>
+<section class="hero"><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1>Student Learning Hub</h1><p>Class V থেকে Class XII — নোটস, লাইভ টেস্ট এবং রেজাল্ট, সব এক জায়গায়, একদম প্রাইভেট ও পার্সোনালাইজড।</p></section>
 <div class="grid">
   <section class="card login-card"><div class="section-kicker">🔑 Student Access</div><h2>Welcome back</h2>
     <input id="lemail" type="email" placeholder="Email">
@@ -31,7 +31,7 @@
   </section>
 </div><div class="footer-note">Private academic portal • Powered by Firebase + GitHub Pages</div></div>
 <script type="module">
-try{const fx=await import("./effects.js?v=8.1");fx.mountHeroSparkle();fx.mountCardTilt();fx.mountButtonRipples();fx.mountNeuralField?.();}catch(e){console.warn("Optional effects unavailable",e);}
+try{const fx=await import("./effects.js");fx.mountHeroSparkle();fx.mountCardTilt();fx.mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,deleteUser,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";

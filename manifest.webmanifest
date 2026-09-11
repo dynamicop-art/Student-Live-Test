@@ -1,13 +1,13 @@
 {
-  "name": "AETHER Learning Interface",
-  "short_name": "AETHER",
-  "description": "Neural learning interface with adaptive tests, readiness intelligence, pressure training, focus systems, revision and progress tracking.",
+  "name": "Arpan Learning Suite — Stable",
+  "short_name": "Arpan Learning",
+  "description": "Student tests, adaptive practice, revision intelligence and progress tracking.",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#050611",
-  "theme_color": "#0a0d1b",
+  "background_color": "#f4f2fb",
+  "theme_color": "#4c1d95",
   "orientation": "any",
   "icons": [
     {
