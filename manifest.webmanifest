@@ -1,17 +1,27 @@
 {
-  "name": "Arpan Learning Suite",
-  "short_name": "Learning Suite",
-  "description": "NOVA adaptive learning OS with tests, readiness intelligence, focus sessions, revision and progress tracking.",
+  "name": "AETHER Learning Interface",
+  "short_name": "AETHER",
+  "description": "Neural learning interface with adaptive tests, readiness intelligence, pressure training, focus systems, revision and progress tracking.",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f2fb",
-  "theme_color": "#4c1d95",
+  "background_color": "#050611",
+  "theme_color": "#0a0d1b",
   "orientation": "any",
   "icons": [
-    {"src":"app-icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"app-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "share_target": {
     "action": "./student.html",

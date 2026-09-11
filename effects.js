@@ -134,3 +134,26 @@ export function mountCursorAura(){
   document.addEventListener('pointermove',e=>{x=e.clientX;y=e.clientY;aura.classList.add('on');if(raf)return;raf=requestAnimationFrame(()=>{raf=0;aura.style.transform=`translate3d(${x-130}px,${y-130}px,0)`;});},{passive:true});
   document.addEventListener('pointerleave',()=>aura.classList.remove('on'),{passive:true});
 }
+
+/* ---------- AETHER v8: NEURAL BACKGROUND FIELD ----------
+   A single low-density canvas shared by landing/student pages. It idles at
+   ~30fps, pauses in hidden tabs and reduces node count on small/touch screens. */
+export function mountNeuralField(){
+  if(document.querySelector('.neural-field'))return;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const c=document.createElement('canvas');c.className='neural-field';c.setAttribute('aria-hidden','true');document.body.prepend(c);
+  const ctx=c.getContext('2d',{alpha:true});let w=0,h=0,dpr=1,pts=[],pointer={x:-9999,y:-9999},last=0,raf=0;
+  const mobile=matchMedia('(max-width: 700px),(pointer: coarse)').matches;
+  function resize(){dpr=Math.min(devicePixelRatio||1,1.5);w=innerWidth;h=innerHeight;c.width=Math.max(1,Math.round(w*dpr));c.height=Math.max(1,Math.round(h*dpr));c.style.width=w+'px';c.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);const n=mobile?24:Math.min(54,Math.max(34,Math.floor(w/32)));pts=Array.from({length:n},(_,i)=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.11,vy:(Math.random()-.5)*.10,r:.7+Math.random()*1.2,p:i%3}));}
+  function frame(t){raf=requestAnimationFrame(frame);if(document.hidden||t-last<33)return;last=t;ctx.clearRect(0,0,w,h);const dark=document.documentElement.getAttribute('data-theme')==='dark'||document.body.classList.contains('student-app')||document.body.classList.contains('landing-app');
+    for(let i=0;i<pts.length;i++){const a=pts[i];a.x+=a.vx;a.y+=a.vy;if(a.x<-30)a.x=w+30;if(a.x>w+30)a.x=-30;if(a.y<-30)a.y=h+30;if(a.y>h+30)a.y=-30;const pd=Math.hypot(a.x-pointer.x,a.y-pointer.y);if(pd<150){a.x+=(a.x-pointer.x)*.0007;a.y+=(a.y-pointer.y)*.0007;}for(let j=i+1;j<pts.length;j++){const b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<125*125){const alpha=(1-Math.sqrt(d2)/125)*(dark?.09:.055);ctx.strokeStyle=`rgba(${a.p===0?'34,211,238':a.p===1?'168,85,247':'99,102,241'},${alpha})`;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}ctx.fillStyle=a.p===0?'rgba(103,232,249,.38)':a.p===1?'rgba(196,181,253,.28)':'rgba(165,180,252,.28)';ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();}
+  }
+  resize();addEventListener('resize',resize,{passive:true});if(!mobile)addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY},{passive:true});raf=requestAnimationFrame(frame);
+}
+
+/* Magnetic dock motion: desktop only, very small transform budget. */
+export function mountMagneticDock(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.addEventListener('pointermove',e=>{const b=e.target.closest?.('.student-nav button,.utility-btn');if(!b)return;const r=b.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/r.width,dy=(e.clientY-r.top-r.height/2)/r.height;b.style.setProperty('--mag-x',`${dx*4}px`);b.style.setProperty('--mag-y',`${dy*4}px`);},{passive:true});
+  document.addEventListener('pointerout',e=>{const b=e.target.closest?.('.student-nav button,.utility-btn');if(!b||b.contains(e.relatedTarget))return;b.style.removeProperty('--mag-x');b.style.removeProperty('--mag-y');},{passive:true});
+}

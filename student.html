@@ -2,32 +2,29 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#4c1d95"><meta name="color-scheme" content="light dark">
-<title>Student Portal · NOVA v7</title>
+<title>AETHER v8 · Neural Learning Interface</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="app-icon-192.png">
-<link rel="stylesheet" href="style.css?v=7.0">
-<style>
-/* Critical mobile profile header: kept inline so an old cached stylesheet cannot restore the oversized card. */
-@media(max-width:600px){
-  section.hero.topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;min-height:0!important;height:auto!important;margin:6px 0 12px!important;padding:58px 14px 14px!important;border-radius:22px!important;text-align:left!important}
-  section.hero.topbar .avatar-row{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;width:100%!important;min-width:0!important;text-align:left!important}
-  section.hero.topbar .avatar-row>div{display:block!important;min-width:0!important;text-align:left!important}
-  section.hero.topbar .profile-orbit{width:58px!important;height:58px!important;flex:0 0 58px!important}
-  section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:49px!important;height:49px!important}
-  section.hero.topbar .brand-line{justify-content:flex-start!important;width:auto!important;max-width:100%!important;margin:0 0 5px!important;padding:0!important;border:0!important;background:none!important;backdrop-filter:none!important;font-size:8.5px!important;letter-spacing:.07em!important;animation:brandFloat 4.8s ease-in-out infinite!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  section.hero.topbar h1{max-width:100%!important;margin:0 0 3px!important;font-size:clamp(18px,5.4vw,22px)!important;line-height:1.15!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  section.hero.topbar p#who{max-width:100%!important;margin:0!important;font-size:10.5px!important;line-height:1.3!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  section.hero.topbar>button#logout{align-self:center!important;width:auto!important;min-width:68px!important;margin:0!important;padding:9px 9px!important;border-radius:12px!important;font-size:11px!important;box-shadow:none!important}
-  section.hero.topbar .learn-symbol{display:none!important} section.hero.topbar .star,section.hero.topbar .sparkle-sweep{display:block!important}
-}
-@media(max-width:370px){section.hero.topbar{grid-template-columns:minmax(0,1fr) 62px!important;padding:56px 11px 13px!important;gap:6px!important}section.hero.topbar .profile-orbit{width:52px!important;height:52px!important;flex-basis:52px!important}section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:44px!important;height:44px!important}section.hero.topbar h1{font-size:17px!important}section.hero.topbar p#who{font-size:9.5px!important}section.hero.topbar>button#logout{min-width:62px!important;padding:8px 6px!important;font-size:10px!important}}
-</style></head>
-<body>
-<div class="fab-row"><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
+<link rel="stylesheet" href="style.css?v=8.0">
+</head>
+<body class="student-app" data-visual="aurora">
+
+<div id="launchOverlay" class="launch-overlay hidden" aria-hidden="true">
+  <canvas id="launchCanvas" aria-hidden="true"></canvas>
+  <div class="launch-shell">
+    <div class="launch-topline"><span class="launch-signal"><i></i>AETHER LINK ESTABLISHED</span><span id="launchClock">--:--</span></div>
+    <div class="launch-core-wrap"><div class="launch-orbit o1"></div><div class="launch-orbit o2"></div><div class="launch-core"><span id="launchReadiness">—</span><small>READINESS</small></div></div>
+    <div class="launch-copy"><span class="launch-kicker">DAILY LAUNCH SEQUENCE</span><h1 id="launchGreeting">Good morning.</h1><p id="launchMotivation">Preparing your learning brief…</p></div>
+    <div class="launch-brief-grid"><div><span>NEXT MOVE</span><b id="launchNext">Analyzing…</b></div><div><span>PRESSURE</span><b id="launchPressure">—</b></div><div><span>MOMENTUM</span><b id="launchMomentum">—</b></div></div>
+    <button id="enterWorkspace" type="button" class="launch-enter"><span>ENTER WORKSPACE</span><i>→</i></button>
+    <button id="skipLaunch" type="button" class="launch-skip">Skip intro</button>
+  </div>
+</div>
+<div class="fab-row"><button id="paletteBtn" class="palette-fab" type="button" title="Cycle visual mode">◈</button><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">◐</button></div>
 <div class="wrap">
 <section class="hero topbar">
   <div class="avatar-row"><span class="profile-orbit" id="profileEffect"><span id="avatarBox"></span><i class="online-dot" title="Online"></i></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
@@ -48,9 +45,11 @@
 <div class="utility-strip" aria-label="App tools">
   <button id="quickFindBtn" type="button" class="secondary utility-btn">⌘ Quick Find</button>
   <button id="focusCapsuleBtn" type="button" class="secondary utility-btn nova-utility">◉ Focus Capsule</button>
+  <button id="warpSprintBtn" type="button" class="secondary utility-btn">⚡ Warp Sprint</button>
+  <button id="voicePilotBtn" type="button" class="secondary utility-btn">◈ Voice Pilot</button>
   <button id="installAppBtn" type="button" class="secondary utility-btn hidden">⬇ Install App</button>
   <span id="networkBadge" class="network-badge" aria-live="polite">● Online</span>
-  <span class="version-badge">NOVA v7</span>
+  <span class="version-badge">AETHER v8</span>
 </div>
 
 <!-- ================= HOME ================= -->
@@ -69,22 +68,18 @@
     </div>
   </div>
 
-  <div class="card nova-command-center" id="novaCommandCenter">
-    <div class="nova-readiness" id="novaReadinessRing" style="--readiness:0">
-      <span class="nova-ring-value" id="novaReadiness">—</span><small>Readiness</small>
+  <div class="aether-cockpit" id="novaCommandCenter">
+    <canvas id="cockpitCanvas" class="cockpit-canvas" aria-hidden="true"></canvas>
+    <div class="cockpit-scan" aria-hidden="true"></div>
+    <div class="cockpit-head"><div><span class="aether-live"><i></i>AETHER NEURAL CORE</span><h2 id="novaHeadline">Building your learning signal…</h2><p id="novaReason">Reading performance, confidence, deadlines and focus memory.</p></div><span class="cockpit-mode">LIVE</span></div>
+    <div class="cockpit-main">
+      <div class="readiness-reactor" id="novaReadinessRing" style="--readiness:0"><div class="reactor-orbit orbit-a"></div><div class="reactor-orbit orbit-b"></div><div class="reactor-core"><span class="nova-ring-value" id="novaReadiness">—</span><small>READINESS</small></div><span class="reactor-pip p1"></span><span class="reactor-pip p2"></span><span class="reactor-pip p3"></span></div>
+      <div class="cockpit-radar"><canvas id="pulseRadar" width="300" height="220" aria-label="Learning pulse radar"></canvas><span>LEARNING PULSE</span></div>
+      <div class="cockpit-metrics" aria-label="Learning pulse"><div><span>Momentum</span><b id="novaMomentum">—</b></div><div><span>Pressure</span><b id="novaPressure">—</b></div><div><span>Focus today</span><b id="novaFocusToday">0m</b></div></div>
     </div>
-    <div class="nova-command-copy">
-      <div class="nova-eyebrow"><span class="nova-live-dot"></span>NOVA ADAPTIVE ENGINE</div>
-      <h2 id="novaHeadline">Building your learning signal…</h2>
-      <p id="novaReason" class="muted">Tests, mistakes, deadlines and study momentum are combined locally to recommend the highest-impact next step.</p>
-      <div class="nova-actions"><button id="novaActionBtn" type="button">▶ Next Best Action</button><button id="novaRescueBtn" type="button" class="secondary">⚡ Rescue Plan</button></div>
-      <div id="novaRescuePlan" class="nova-rescue-plan hidden"></div>
-    </div>
-    <div class="nova-metrics" aria-label="Learning pulse">
-      <div><span>Momentum</span><b id="novaMomentum">—</b></div>
-      <div><span>Pressure</span><b id="novaPressure">—</b></div>
-      <div><span>Focus today</span><b id="novaFocusToday">0m</b></div>
-    </div>
+    <div class="cockpit-actions"><button id="novaActionBtn" type="button" class="primary-command"><span>▶</span><b>NEXT BEST ACTION</b></button><button id="novaRescueBtn" type="button" class="ghost-command">⚡ Rescue Sequence</button><button id="warpFromCockpit" type="button" class="ghost-command">⏱ Pressure Sprint</button></div>
+    <div id="novaRescuePlan" class="nova-rescue-plan hidden"></div>
+    <div class="learning-twin" id="learningTwin"><div class="twin-head"><span>◈ LEARNING TWIN</span><small>Projected impact · local estimate</small></div><div id="twinScenarios" class="twin-scenarios"><span class="twin-loading">Simulating next moves…</span></div></div>
   </div>
 
   <div class="home-primary-grid">
@@ -230,7 +225,7 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
   <div class="focus-shell">
     <div class="focus-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
     <button id="focusClose" class="focus-close secondary" type="button">✕ Exit</button>
-    <div class="focus-brand"><span class="nova-live-dot"></span>NOVA FOCUS CAPSULE</div>
+    <div class="focus-brand"><span class="nova-live-dot"></span>AETHER FOCUS CAPSULE</div>
     <h2 id="focusGoal">One task. Zero noise.</h2>
     <p id="focusGoalMeta" class="muted">Your next best action will appear here.</p>
     <div class="focus-timer" id="focusTimer">25:00</div>
@@ -241,6 +236,15 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
   </div>
 </div>
 
+
+<div id="warpOverlay" class="warp-overlay hidden" aria-hidden="true">
+  <div class="warp-shell">
+    <div class="warp-header"><div><span class="section-kicker">PRESSURE TRAINING</span><h2>⚡ Warp Sprint</h2></div><button id="warpClose" type="button" class="secondary">✕</button></div>
+    <div class="warp-hud"><div><span>TIME</span><b id="warpTimer">03:00</b></div><div><span>SCORE</span><b id="warpScore">0</b></div><div><span>CHAIN</span><b id="warpChain">0×</b></div></div>
+    <div class="warp-track"><i id="warpProgress"></i></div>
+    <div id="warpStage" class="warp-stage"><p class="muted">5 adaptive questions. 3 minutes. No leaderboard pressure—just train your decision speed.</p><button id="warpStart" type="button">START SPRINT</button></div>
+  </div>
+</div>
 <div id="reviewOverlay" class="modal-overlay hidden"><div class="modal-card"><div class="topbar"><h3 id="reviewTitle">Answer Review</h3><button id="reviewClose" class="secondary">✕</button></div><div id="reviewBody"></div></div></div>
 <div id="replayOverlay" class="modal-overlay hidden"><div class="modal-card replay-modal"><div class="topbar"><div><span class="section-kicker">EXAM TELEMETRY</span><h3 id="replayTitle">Exam Replay</h3></div><button id="replayClose" class="secondary">✕</button></div><div id="replayInsights" class="replay-insights"></div><div id="replayTimeline" class="replay-timeline"></div></div></div>
 <div id="quickFindOverlay" class="modal-overlay hidden"><div class="modal-card quick-find-modal"><div class="topbar"><div><span class="section-kicker">UNIVERSAL SEARCH</span><h3>⌘ Quick Find</h3></div><button id="quickFindClose" class="secondary">✕</button></div><input id="quickFindInput" class="quick-find-input" autocomplete="off" placeholder="Search notes, tests, assignments, sections…"><div id="quickFindResults" class="quick-find-results"></div><p class="muted quick-find-hint">Tip: Ctrl/⌘ + K opens this from anywhere.</p></div></div>
@@ -260,8 +264,8 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
 </div>
 
 <script type="module">
-let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{},mountCursorAura=()=>{};
-try{const fx=await import("./effects.js?v=7.0");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle,mountCursorAura}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();mountCursorAura();}catch(e){console.warn("Optional effects unavailable",e);}
+let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{},mountCursorAura=()=>{},mountNeuralField=()=>{},mountMagneticDock=()=>{};
+try{const fx=await import("./effects.js?v=8.0");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle,mountCursorAura,mountNeuralField,mountMagneticDock}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();mountCursorAura();mountNeuralField();mountMagneticDock();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -301,6 +305,10 @@ $("themeBtn").onclick=()=>{
 };
 function updateSoundButton(){$("soundBtn").textContent=isSoundOn()?"🔊":"🔇";}
 updateSoundButton();$("soundBtn").onclick=()=>{setSoundOn(!isSoundOn());updateSoundButton();if(isSoundOn())playChime("click");};
+const VISUAL_MODES=["aurora","ion","solar"];
+function applyVisualMode(mode){const m=VISUAL_MODES.includes(mode)?mode:"aurora";document.body.dataset.visual=m;localStorage.setItem("visualMode",m);$("paletteBtn").title=`Visual mode: ${m}`;$("paletteBtn").textContent=m==="aurora"?"◈":m==="ion"?"✦":"☼";}
+applyVisualMode(localStorage.getItem("visualMode")||"aurora");
+$("paletteBtn").onclick=()=>{const cur=document.body.dataset.visual||"aurora",next=VISUAL_MODES[(VISUAL_MODES.indexOf(cur)+1)%VISUAL_MODES.length];applyVisualMode(next);playChime("click");toast(`Visual mode: ${next}`,"◈");};
 
 const DAILY_QUOTES=[["প্রতিদিনের ছোট revision-ই বড় প্রস্তুতি তৈরি করে।","Study Tip"],["ভুল মানে শেখার পরবর্তী ধাপ।","Daily Motivation"],["বোঝার চেষ্টা করো, শুধু মুখস্থ নয়।","Learning Tip"],["Consistency beats last-minute pressure.","Study Tip"],["আজকের চেষ্টা আগামীকালের আত্মবিশ্বাস।","Daily Motivation"]];
 function renderQuote(){const q=DAILY_QUOTES[Math.floor(Date.now()/86400000)%DAILY_QUOTES.length];$("quoteText").textContent=`“${q[0]}”`;$("quoteBy").textContent=`— ${q[1]}`;}renderQuote();
@@ -322,6 +330,7 @@ onAuthStateChanged(auth,async u=>{
  const streakTask=updateStreak().then(()=>{renderBadges();renderXP(progressMine.length);}).catch(e=>console.warn("streak update deferred",e));
  await loadData();
  await streakTask;
+ renderLaunchBriefing();
  consumeSharedPracticeImport();consumeDuelChallenge();
  const savedTab=localStorage.getItem(`lastTab:${u.uid}`);if(savedTab&&$(savedTab))openTab(savedTab,{remember:false,scroll:false});
 });
@@ -446,7 +455,7 @@ $('coachWeak').onclick=()=>{const weak=reportTopics[0];if(!weak)return showToast
 $('coachQuiz').onclick=()=>{const weak=reportTopics[0],topic=weak?.label||'my current syllabus';openChatGPTPrompt(`আমি ${profile.className}-এর বাংলা-মাধ্যমের student। আমাকে ${topic} topic-এ 7-question adaptive oral quiz নাও। একবারে শুধু 1টি question করবে, আমার answer না পাওয়া পর্যন্ত পরের question বা correct answer বলবে না। ভুল হলে hint দেবে, শেষে strengths, misconception এবং next revision step বলবে। Context: ${performanceContext()}`);};
 
 const QUICK_SECTIONS=[['home','Home'],['notes','Notes'],['tests','Tests & Practice'],['assignments','Assignments'],['revision','Revision Centre'],['progress','Progress & Mastery'],['history','Test History'],['games','Learning Games'],['doubts','Ask a Doubt']];
-const QUICK_ACTIONS=[['focus','Focus Capsule','Action · distraction-free study'],['smartfeed','Adaptive Smart Feed','Action · practice weak questions'],['boss','Chapter Boss','Action · weak-topic challenge'],['next','Next Best Action','Action · NOVA recommendation']];
+const QUICK_ACTIONS=[['focus','Focus Capsule','Action · distraction-free study'],['warp','Warp Sprint','Action · timed pressure training'],['voice','Voice Pilot','Action · hands-free navigation'],['smartfeed','Adaptive Smart Feed','Action · practice weak questions'],['boss','Chapter Boss','Action · weak-topic challenge'],['next','Next Best Action','Action · AETHER recommendation']];
 function quickFindItems(){return [
  ...QUICK_SECTIONS.map(([id,label])=>({type:'section',id,title:label,meta:'Section'})),
  ...QUICK_ACTIONS.map(([id,title,meta])=>({type:'action',id,title,meta})),
@@ -457,7 +466,7 @@ function quickFindItems(){return [
 function renderQuickFind(){const q=$('quickFindInput').value.trim().toLocaleLowerCase(),items=quickFindItems().filter(x=>!q||(x.title+' '+x.meta).toLocaleLowerCase().includes(q)).slice(0,20);$('quickFindResults').innerHTML=items.length?items.map(x=>`<button type="button" class="quick-result" data-type="${x.type}" data-id="${escapeHTML(x.id)}"><span><b>${escapeHTML(x.title)}</b><small>${escapeHTML(x.meta)}</small></span><span>↗</span></button>`).join(''):`<p class="muted">No match found.</p>`;document.querySelectorAll('.quick-result').forEach(b=>b.onclick=()=>openQuickResult(b.dataset.type,b.dataset.id));}
 function openQuickFind(){renderQuickFind();$('quickFindOverlay').classList.remove('hidden');setTimeout(()=>$('quickFindInput').focus(),30);}
 function closeQuickFind(){$('quickFindOverlay').classList.add('hidden');}
-function openQuickResult(type,id){closeQuickFind();if(type==='section')return openTab(id);if(type==='action'){if(id==='focus')return openFocusCapsule();if(id==='smartfeed'){openTab('tests');return setTimeout(startSmartFeed,80);}if(id==='boss'){openTab('games');return setTimeout(startBoss,80);}if(id==='next')return runNovaAction();}if(type==='note'){openTab('notes');const n=notes.find(x=>x.id===id);$('noteSearch').value=n?.title||'';renderNotes();return;}if(type==='test'){openTab('tests');const t=tests.find(x=>x.id===id);$('testSearch').value=t?.title||'';renderTests();return;}if(type==='assignment'){openTab('assignments');setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),80);}}
+function openQuickResult(type,id){closeQuickFind();if(type==='section')return openTab(id);if(type==='action'){if(id==='focus')return openFocusCapsule();if(id==='warp')return openWarpSprint();if(id==='voice')return startVoicePilot();if(id==='smartfeed'){openTab('tests');return setTimeout(startSmartFeed,80);}if(id==='boss'){openTab('games');return setTimeout(startBoss,80);}if(id==='next')return runNovaAction();}if(type==='note'){openTab('notes');const n=notes.find(x=>x.id===id);$('noteSearch').value=n?.title||'';renderNotes();return;}if(type==='test'){openTab('tests');const t=tests.find(x=>x.id===id);$('testSearch').value=t?.title||'';renderTests();return;}if(type==='assignment'){openTab('assignments');setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),80);}}
 $('quickFindBtn').onclick=openQuickFind;$('quickFindClose').onclick=closeQuickFind;$('quickFindInput').oninput=renderQuickFind;$('quickFindOverlay').onclick=e=>{if(e.target.id==='quickFindOverlay')closeQuickFind();};
 document.addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'');if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openQuickFind();}else if(e.key==='/'&&!typing){e.preventDefault();openQuickFind();}else if(e.key==='Escape'&&!$('quickFindOverlay').classList.contains('hidden'))closeQuickFind();});
 
@@ -935,7 +944,7 @@ $("pracPreview").onclick=()=>practiceParseAndPreview(true);
 $("pracStart").onclick=()=>renderPracticeQuiz(practiceParseAndPreview(false));
 $("pracAuto").onclick=()=>{const count=Math.min(20,Math.max(3,Number($("pracCount").value)||5)),qs=adaptivePracticeQuestions(count);if(!qs.length)return showToast("Auto practice-এর জন্য graded review এখনো নেই");$("pracImportStatus").textContent=`⚡ তোমার recent performance থেকে ${qs.length}টি question তৈরি হয়েছে — ভুল প্রশ্নগুলো আগে।`;$("pracImportPreview").innerHTML="";renderPracticeQuiz(qs);};
 
-/* ---------- NOVA v7: READINESS / AUTOPILOT / FOCUS / STUDY MEMORY ---------- */
+/* ---------- AETHER v8: READINESS / AUTOPILOT / FOCUS / STUDY MEMORY ---------- */
 let novaAction=null,focusTotal=25*60,focusLeft=25*60,focusRunning=false,focusTick=null,focusUnsaved=0,ambientCtx=null,ambientSource=null,ambientGain=null;
 const studyKey=()=>`novaStudySeconds:${auth.currentUser?.uid||'guest'}`;
 function studyLog(){try{return JSON.parse(localStorage.getItem(studyKey())||'{}')||{};}catch{return {};}}
@@ -968,8 +977,63 @@ function nextBestAction(){
 }
 function runNovaAction(){const a=novaAction||nextBestAction();if(a.kind==='weak'){openTab('tests');$('pracTopic').value=a.topic||'';setTimeout(()=>{const count=Math.min(8,Math.max(5,Number($('pracCount').value)||5)),focused=smartFeedPool().filter(q=>q.topic===a.topic).slice(0,count),qs=focused.length>=3?focused:adaptivePracticeQuestions(count);if(qs.length)renderPracticeQuiz(qs);else $('pracTopic').scrollIntoView({behavior:'smooth',block:'center'});},100);return;}openTab(a.tab||'home');if(a.kind==='note'&&a.id){const n=notes.find(x=>x.id===a.id);$('noteSearch').value=n?.title||'';renderNotes();}if(a.kind==='test'&&a.id){const t=tests.find(x=>x.id===a.id);$('testSearch').value=t?.title||'';renderTests();}if(a.kind==='assignment'&&a.id)setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(a.id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
 function rescuePlan(){const sig=readinessSignal(),topics=overallTopicRows().slice(0,2),pending=assignments.filter(a=>!doneAssignmentIds.has(a.id))[0],steps=[];if(topics[0])steps.push(`12 min · Recall + practice ${topics[0].label}`);if(pending)steps.push(`15 min · Move ${pending.title} forward`);steps.push(`${sig.score<60?'10':'7'} min · Closed-book self-test`);steps.push('3 min · Review only the mistakes');return steps.slice(0,4);}
+
+function updateSignalHue(score){document.body.style.setProperty('--signal',String(Math.max(0,Math.min(100,score||0))));}
+function forecastScenarios(sig=readinessSignal()){
+ const weak=reportTopics[0];
+ return [
+  {icon:'◉',label:'15 min deep focus',gain:Math.min(4,100-sig.score),action:'focus'},
+  {icon:'↗',label:weak?`Repair ${weak.label}`:'Targeted revision',gain:Math.min(weak&&weak.pct<60?8:5,100-sig.score),action:'weak'},
+  {icon:'⚡',label:'1 pressure sprint',gain:Math.min(5,100-sig.score),action:'warp'}
+ ];
+}
+function renderLearningTwin(sig=readinessSignal()){
+ if(!$('twinScenarios'))return;
+ $('twinScenarios').innerHTML=forecastScenarios(sig).map(x=>`<button type="button" class="twin-scenario" data-action="${x.action}"><span>${x.icon}</span><b>${escapeHTML(x.label)}</b><small>≈ ${sig.score} → ${Math.min(100,sig.score+x.gain)}</small></button>`).join('');
+ document.querySelectorAll('.twin-scenario').forEach(b=>b.onclick=()=>{const a=b.dataset.action;if(a==='focus')openFocusCapsule();else if(a==='warp')openWarpSprint();else runNovaAction();});
+}
+function renderPulseRadar(sig=readinessSignal()){
+ const c=$('pulseRadar');if(!c)return;const ctx=c.getContext('2d'),dpr=Math.min(2,devicePixelRatio||1),cssW=c.clientWidth||300,cssH=c.clientHeight||220;
+ if(c.width!==Math.round(cssW*dpr)||c.height!==Math.round(cssH*dpr)){c.width=Math.round(cssW*dpr);c.height=Math.round(cssH*dpr);}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);
+ const vals=[sig.accuracy,sig.topicCoverage,sig.consistency,sig.calibration,Math.max(0,100-sig.pressure)],labels=['Accuracy','Coverage','Momentum','Confidence','Calm'],cx=cssW/2,cy=cssH/2+4,R=Math.min(cssW,cssH)*.34,N=vals.length;
+ const point=(i,r)=>{const a=-Math.PI/2+i*Math.PI*2/N;return[cx+Math.cos(a)*r,cy+Math.sin(a)*r]};
+ ctx.lineWidth=1;for(let ring=1;ring<=4;ring++){ctx.beginPath();for(let i=0;i<N;i++){const [x,y]=point(i,R*ring/4);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.strokeStyle='rgba(148,163,184,.15)';ctx.stroke();}
+ for(let i=0;i<N;i++){const [x,y]=point(i,R);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);ctx.strokeStyle='rgba(148,163,184,.09)';ctx.stroke();const [lx,ly]=point(i,R+18);ctx.fillStyle='rgba(226,232,240,.68)';ctx.font='600 9px Space Grotesk, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(labels[i],lx,ly);}
+ ctx.beginPath();vals.forEach((v,i)=>{const [x,y]=point(i,R*Math.max(.08,v/100));i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();const g=ctx.createLinearGradient(0,0,cssW,cssH);g.addColorStop(0,'rgba(34,211,238,.28)');g.addColorStop(1,'rgba(168,85,247,.24)');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(103,232,249,.9)';ctx.lineWidth=1.5;ctx.stroke();
+ vals.forEach((v,i)=>{const [x,y]=point(i,R*Math.max(.08,v/100));ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fillStyle='#d8fbff';ctx.shadowBlur=12;ctx.shadowColor='#22d3ee';ctx.fill();ctx.shadowBlur=0;});
+}
+function launchTimeGreeting(){const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
+function renderLaunchBriefing(){
+ const ov=$('launchOverlay');if(!ov||sessionStorage.getItem('aetherLaunchSeen')==='1')return;const sig=readinessSignal(),a=nextBestAction();
+ $('launchReadiness').textContent=sig.score;$('launchGreeting').textContent=`${launchTimeGreeting()}, ${profile?.name?.split(' ')[0]||'learner'}.`;$('launchNext').textContent=a.title;$('launchPressure').textContent=sig.pressure>=60?'HIGH':sig.pressure>=25?'MEDIUM':'LOW';$('launchMomentum').textContent=sig.consistency>=75?'HIGH':sig.consistency>=50?'STEADY':'BUILDING';$('launchMotivation').textContent=$('quoteText')?.textContent?.replace(/[“”]/g,'')||'Small focused work compounds fast.';
+ const tick=()=>{$('launchClock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});};tick();clearInterval(renderLaunchBriefing.clock);renderLaunchBriefing.clock=setInterval(tick,1000);ov.classList.remove('hidden');ov.setAttribute('aria-hidden','false');document.body.classList.add('launch-open');
+ drawLaunchField();
+}
+function closeLaunch(){const ov=$('launchOverlay');if(!ov)return;ov.classList.add('leaving');sessionStorage.setItem('aetherLaunchSeen','1');clearInterval(renderLaunchBriefing.clock);setTimeout(()=>{ov.classList.add('hidden');ov.classList.remove('leaving');ov.setAttribute('aria-hidden','true');document.body.classList.remove('launch-open');},480);playChime('success');}
+$('enterWorkspace').onclick=closeLaunch;$('skipLaunch').onclick=closeLaunch;
+function drawLaunchField(){const c=$('launchCanvas');if(!c)return;const ctx=c.getContext('2d'),fit=()=>{c.width=innerWidth;c.height=innerHeight};fit();const pts=Array.from({length:Math.min(85,Math.max(35,Math.floor(innerWidth/18)))},()=>({x:Math.random()*c.width,y:Math.random()*c.height,z:.2+Math.random()*.8}));let start=performance.now(),raf=0;function f(now){if($('launchOverlay').classList.contains('hidden'))return cancelAnimationFrame(raf);ctx.clearRect(0,0,c.width,c.height);const t=(now-start)/1000;for(const p of pts){p.y+=.12+p.z*.32;if(p.y>c.height){p.y=0;p.x=Math.random()*c.width}ctx.fillStyle=`rgba(103,232,249,${.08+p.z*.35})`;ctx.fillRect(p.x+Math.sin(t+p.y)*5,p.y,1.2+p.z*1.5,1.2+p.z*1.5);}raf=requestAnimationFrame(f)}raf=requestAnimationFrame(f);}
+
+let warpState=null,warpTick=null;
+function openWarpSprint(){$('warpOverlay').classList.remove('hidden');$('warpOverlay').setAttribute('aria-hidden','false');document.body.classList.add('warp-open');$('warpStage').innerHTML='<p class="muted">5 adaptive questions. 3 minutes. No leaderboard pressure—just train your decision speed.</p><button id="warpStart" type="button">START SPRINT</button>';$('warpTimer').textContent='03:00';$('warpScore').textContent='0';$('warpChain').textContent='0×';$('warpProgress').style.width='0%';$('warpStart').onclick=startWarpSprint;}
+function closeWarp(){clearInterval(warpTick);warpTick=null;$('warpOverlay').classList.add('hidden');$('warpOverlay').setAttribute('aria-hidden','true');document.body.classList.remove('warp-open');}
+function startWarpSprint(){let qs=adaptivePracticeQuestions(5);if(qs.length<3)qs=smartFeedPool().slice(0,5);if(qs.length<3){$('warpStage').innerHTML='<p class="muted">Pressure Sprint needs at least 3 graded/review questions. Complete a test first.</p>';return;}warpState={questions:qs.slice(0,5),index:0,score:0,chain:0,left:180};renderWarpQuestion();clearInterval(warpTick);warpTick=setInterval(()=>{if(!warpState)return;warpState.left--;$('warpTimer').textContent=`${String(Math.floor(warpState.left/60)).padStart(2,'0')}:${String(warpState.left%60).padStart(2,'0')}`;if(warpState.left<=0)finishWarp(true);},1000);}
+function renderWarpQuestion(){const st=warpState;if(!st)return;if(st.index>=st.questions.length)return finishWarp(false);const q=st.questions[st.index];$('warpProgress').style.width=`${st.index/st.questions.length*100}%`;$('warpStage').innerHTML=`<div class="warp-q-meta"><span>${st.index+1}/${st.questions.length}</span><span>${escapeHTML(q.topic||'Adaptive')}</span></div><h3>${escapeHTML(q.q)}</h3><div class="warp-options">${q.o.map((o,i)=>`<button type="button" data-v="${i}"><span>${String.fromCharCode(65+i)}</span>${escapeHTML(o)}</button>`).join('')}</div>`;document.querySelectorAll('.warp-options button').forEach(b=>b.onclick=()=>{const right=Number(b.dataset.v)===q.answer;document.querySelectorAll('.warp-options button').forEach(x=>x.disabled=true);if(right){st.score++;st.chain++;playChime('success');}else st.chain=0;$('warpScore').textContent=st.score;$('warpChain').textContent=`${st.chain}×`;b.classList.add(right?'hit':'miss');setTimeout(()=>{st.index++;renderWarpQuestion();},420);});}
+function finishWarp(timeout){clearInterval(warpTick);warpTick=null;const st=warpState,pct=Math.round(st.score/st.questions.length*100);$('warpProgress').style.width='100%';$('warpStage').innerHTML=`<div class="warp-result"><span>${timeout?'TIME SIGNAL ENDED':'SPRINT COMPLETE'}</span><b>${pct}%</b><p>${st.score}/${st.questions.length} correct · ${pct>=80?'Pressure control strong.':'Repeat once after a short revision.'}</p><button id="warpAgain">RUN AGAIN</button></div>`;if(pct>=80)confettiBurst(45);$('warpAgain').onclick=startWarpSprint;}
+$('warpClose').onclick=closeWarp;$('warpSprintBtn').onclick=openWarpSprint;$('warpFromCockpit').onclick=openWarpSprint;
+
+function startVoicePilot(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return toast('Voice Pilot is not supported in this browser','◈');const r=new SR();r.lang='bn-IN';r.interimResults=false;r.maxAlternatives=1;toast('Listening… say “tests”, “progress”, “focus”, “revision”, “home”','🎙️');playChime('notify');r.onresult=e=>{const text=(e.results[0][0].transcript||'').toLowerCase();const go=id=>{openTab(id);toast(`Opening ${id}`,'◈')};if(/test|পরীক্ষা/.test(text))go('tests');else if(/progress|অগ্রগতি|রেজাল্ট/.test(text))go('progress');else if(/revision|রিভিশন/.test(text))go('revision');else if(/note|নোট/.test(text))go('notes');else if(/focus|ফোকাস/.test(text))openFocusCapsule();else if(/warp|sprint|স্প্রিন্ট/.test(text))openWarpSprint();else if(/home|হোম/.test(text))go('home');else if(/next|পরের/.test(text))runNovaAction();else toast(`Heard: ${text} · command not matched`,'◈');};r.onerror=()=>toast('Voice Pilot could not hear clearly','🎙️');r.start();}
+$('voicePilotBtn').onclick=startVoicePilot;
+
+let cockpitRaf=0,cockpitLast=0;
+function startCockpitCanvas(){
+ const c=$('cockpitCanvas');if(!c||cockpitRaf)return;const ctx=c.getContext('2d');
+ function frame(t){cockpitRaf=requestAnimationFrame(frame);if(document.hidden||t-cockpitLast<50||c.offsetParent===null)return;cockpitLast=t;const dpr=Math.min(1.5,devicePixelRatio||1),w=c.clientWidth||900,h=c.clientHeight||470;if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const cx=w*.28,cy=h*.54,tt=t*.00015;ctx.save();ctx.translate(cx,cy);for(let r=55;r<Math.min(250,w*.32);r+=38){ctx.beginPath();ctx.arc(0,0,r,tt*r*.01,tt*r*.01+Math.PI*1.25);ctx.strokeStyle=`rgba(103,232,249,${.022+r%76/500})`;ctx.lineWidth=.7;ctx.stroke();}for(let i=0;i<9;i++){const a=tt*(i%2?1:-1)+i*.81,rr=72+(i%4)*37,x=Math.cos(a)*rr,y=Math.sin(a)*rr*.58;ctx.fillStyle=i%3===0?'rgba(103,232,249,.42)':i%3===1?'rgba(167,139,250,.34)':'rgba(244,114,182,.28)';ctx.beginPath();ctx.arc(x,y,1.2+(i%2),0,Math.PI*2);ctx.fill();}ctx.restore();
+ const lineX=(t*.035)%Math.max(1,w);const g=ctx.createLinearGradient(lineX-120,0,lineX+120,0);g.addColorStop(0,'transparent');g.addColorStop(.5,'rgba(103,232,249,.025)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(lineX-120,0,240,h);
+ }
+ cockpitRaf=requestAnimationFrame(frame);
+}
 function renderNovaSystem(){
- if(!$('novaReadiness'))return;const sig=readinessSignal(),a=nextBestAction();novaAction=a;$('novaReadiness').textContent=sig.score;$('novaReadinessRing').style.setProperty('--readiness',sig.score);$('novaHeadline').textContent=a.title;$('novaReason').textContent=a.reason;$('novaMomentum').textContent=sig.consistency>=75?'High':sig.consistency>=50?'Steady':'Low';$('novaPressure').textContent=sig.pressure>=60?'High':sig.pressure>=25?'Medium':'Low';const mins=Math.floor((studyLog()[todayStr()]||0)/60);$('novaFocusToday').textContent=`${mins}m`;renderReadinessLab(sig);renderKnowledgeConstellation();renderStudyHeatmap();
+ if(!$('novaReadiness'))return;const sig=readinessSignal(),a=nextBestAction();novaAction=a;$('novaReadiness').textContent=sig.score;$('novaReadinessRing').style.setProperty('--readiness',sig.score);$('novaHeadline').textContent=a.title;$('novaReason').textContent=a.reason;$('novaMomentum').textContent=sig.consistency>=75?'High':sig.consistency>=50?'Steady':'Low';$('novaPressure').textContent=sig.pressure>=60?'High':sig.pressure>=25?'Medium':'Low';const mins=Math.floor((studyLog()[todayStr()]||0)/60);$('novaFocusToday').textContent=`${mins}m`;renderReadinessLab(sig);renderKnowledgeConstellation();renderStudyHeatmap();renderPulseRadar(sig);renderLearningTwin(sig);updateSignalHue(sig.score);startCockpitCanvas();
 }
 $('novaActionBtn').onclick=runNovaAction;
 $('novaRescueBtn').onclick=()=>{const box=$('novaRescuePlan'),open=!box.classList.contains('hidden');if(open){box.classList.add('hidden');return;}box.innerHTML=`<b>⚡ Fast Rescue Sequence</b>${rescuePlan().map((x,i)=>`<span><i>${i+1}</i>${escapeHTML(x)}</span>`).join('')}`;box.classList.remove('hidden');};
