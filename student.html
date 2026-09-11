@@ -2,14 +2,14 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#4c1d95"><meta name="color-scheme" content="light dark">
-<title>AETHER v8 · Neural Learning Interface</title>
+<title>AETHER v8.1 · Neural Learning Interface</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="app-icon-192.png">
-<link rel="stylesheet" href="style.css?v=8.0">
+<link rel="stylesheet" href="style.css?v=8.1">
 </head>
 <body class="student-app" data-visual="aurora">
 
@@ -49,7 +49,7 @@
   <button id="voicePilotBtn" type="button" class="secondary utility-btn">◈ Voice Pilot</button>
   <button id="installAppBtn" type="button" class="secondary utility-btn hidden">⬇ Install App</button>
   <span id="networkBadge" class="network-badge" aria-live="polite">● Online</span>
-  <span class="version-badge">AETHER v8</span>
+  <span class="version-badge">AETHER v8.1</span>
 </div>
 
 <!-- ================= HOME ================= -->
@@ -265,7 +265,7 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
 
 <script type="module">
 let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{},mountCursorAura=()=>{},mountNeuralField=()=>{},mountMagneticDock=()=>{};
-try{const fx=await import("./effects.js?v=8.0");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle,mountCursorAura,mountNeuralField,mountMagneticDock}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();mountCursorAura();mountNeuralField();mountMagneticDock();}catch(e){console.warn("Optional effects unavailable",e);}
+try{const fx=await import("./effects.js?v=8.1");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle,mountCursorAura,mountNeuralField,mountMagneticDock}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();mountCursorAura();mountNeuralField();mountMagneticDock();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -944,7 +944,7 @@ $("pracPreview").onclick=()=>practiceParseAndPreview(true);
 $("pracStart").onclick=()=>renderPracticeQuiz(practiceParseAndPreview(false));
 $("pracAuto").onclick=()=>{const count=Math.min(20,Math.max(3,Number($("pracCount").value)||5)),qs=adaptivePracticeQuestions(count);if(!qs.length)return showToast("Auto practice-এর জন্য graded review এখনো নেই");$("pracImportStatus").textContent=`⚡ তোমার recent performance থেকে ${qs.length}টি question তৈরি হয়েছে — ভুল প্রশ্নগুলো আগে।`;$("pracImportPreview").innerHTML="";renderPracticeQuiz(qs);};
 
-/* ---------- AETHER v8: READINESS / AUTOPILOT / FOCUS / STUDY MEMORY ---------- */
+/* ---------- AETHER v8.1: READINESS / AUTOPILOT / FOCUS / STUDY MEMORY ---------- */
 let novaAction=null,focusTotal=25*60,focusLeft=25*60,focusRunning=false,focusTick=null,focusUnsaved=0,ambientCtx=null,ambientSource=null,ambientGain=null;
 const studyKey=()=>`novaStudySeconds:${auth.currentUser?.uid||'guest'}`;
 function studyLog(){try{return JSON.parse(localStorage.getItem(studyKey())||'{}')||{};}catch{return {};}}

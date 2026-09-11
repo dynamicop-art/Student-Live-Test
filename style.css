@@ -1025,3 +1025,216 @@ body.landing-app .grid{grid-template-columns:1.1fr 1fr .75fr;gap:10px;margin-top
  body.student-app .fab-row{top:8px;right:9px}.student-app .fab-row button{width:34px;height:34px;border-radius:11px}.student-app .hero.topbar{padding-top:12px!important}.student-app .motivation-card{grid-template-columns:30px 1fr;padding:10px 12px!important;min-height:62px}.student-app .quote-text{font-size:11px}.student-app .smart-dashboard{padding:8px!important}.student-app .smart-grid{gap:6px}.student-app .smart-tile{min-height:80px;padding:9px}.student-app .smart-tile b{font-size:10px}.student-app .aether-cockpit{padding:13px;margin-top:8px}.student-app .cockpit-head p{display:none}.student-app .cockpit-main{grid-template-columns:112px 1fr;gap:5px}.student-app .readiness-reactor{width:108px;height:108px}.student-app .reactor-core{width:68px;height:68px}.student-app .reactor-core:before{inset:-7px}.student-app .nova-ring-value{font-size:22px}.student-app .reactor-core small{font-size:5px}.student-app .reactor-orbit.orbit-a{inset:3px}.student-app .reactor-orbit.orbit-b{inset:17px}.student-app .reactor-pip{width:5px;height:5px}.student-app .cockpit-radar{height:145px}.student-app .cockpit-radar canvas{height:140px}.student-app .cockpit-radar>span{font-size:5px}.student-app .cockpit-metrics{gap:4px}.student-app .cockpit-metrics>div{padding:6px}.student-app .cockpit-metrics span{font-size:5px}.student-app .cockpit-metrics b{font-size:9px}.student-app .cockpit-actions{display:grid;grid-template-columns:1fr 1fr}.student-app .primary-command{grid-column:1/-1;min-width:0}.student-app .learning-twin{padding:8px}.student-app .twin-head small{display:none}.student-app .twin-scenario{grid-template-columns:17px 1fr auto!important;padding:8px!important}.student-app .twin-scenario b,.student-app .twin-scenario small{font-size:7.5px}.launch-shell{padding:35px 10px;min-height:520px}.launch-topline{padding:0 6px}.launch-core-wrap{width:145px;height:145px}.launch-core{width:76px;height:76px}.launch-core span{font-size:28px}.launch-copy h1{font-size:29px}.launch-copy p{font-size:10px;padding:0 8px}.launch-brief-grid{grid-template-columns:1fr;margin-top:18px;gap:5px}.launch-brief-grid>div{padding:8px}.launch-enter{min-width:220px}.warp-shell{min-height:100%;width:100%;border-radius:22px;padding:15px}.warp-overlay{padding:7px}.warp-stage{min-height:400px;padding:14px 0}.warp-stage h3{font-size:15px}.warp-options button{font-size:10px;padding:10px}.student-app .cursor-aura{display:none}
 }
 @media(prefers-reduced-motion:reduce){.cockpit-scan,.reactor-orbit,.reactor-pip,.launch-orbit,.motivation-card:after,.motivation-icon,.constellation-stage svg line{animation:none!important}.neural-field{display:none!important}}
+
+/* ========================================================================== */
+/* AETHER v8.1 — MOBILE STABILITY HOTFIX                                      */
+/* Fixes high-specificity desktop rules leaking into phone layouts.           */
+/* ========================================================================== */
+html,body{max-width:100%;}
+body.landing-app,body.student-app{overflow-x:hidden;}
+
+@media (max-width:900px){
+  /* LANDING: force a real one-column phone layout. */
+  body.landing-app .wrap{
+    width:100%!important;max-width:none!important;margin:0!important;
+    padding:12px 12px calc(30px + env(safe-area-inset-bottom))!important;
+    overflow-x:hidden!important;
+  }
+  body.landing-app .landing-hero{
+    width:100%!important;min-height:0!important;height:auto!important;
+    padding:205px 18px 24px!important;margin:0 0 12px!important;
+    border-radius:24px!important;text-align:center!important;align-items:center!important;
+    box-sizing:border-box!important;
+  }
+  body.landing-app .landing-orb{
+    left:50%!important;top:102px!important;transform:translate(-50%,-50%)!important;
+    width:136px!important;height:136px!important;
+  }
+  body.landing-app .landing-orb span{font-size:52px!important;}
+  body.landing-app .landing-orb:before{inset:-17px!important;}
+  body.landing-app .landing-orb:after{inset:21px!important;}
+  body.landing-app .landing-hero h1{
+    width:100%!important;max-width:580px!important;margin:8px auto 13px!important;
+    font-size:clamp(30px,9vw,42px)!important;line-height:1.04!important;
+  }
+  body.landing-app .landing-hero p{
+    max-width:560px!important;font-size:13.5px!important;line-height:1.55!important;margin-inline:auto!important;
+  }
+  body.landing-app .landing-status{justify-content:center!important;gap:6px!important;}
+  body.landing-app .grid{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;width:100%!important;margin:0!important;
+  }
+  body.landing-app .login-card{
+    width:100%!important;min-width:0!important;max-width:none!important;min-height:0!important;
+    margin:0!important;padding:19px!important;border-radius:20px!important;box-sizing:border-box!important;
+    background:linear-gradient(145deg,rgba(15,19,38,.94),rgba(8,10,23,.96))!important;
+    border:1px solid rgba(148,163,184,.13)!important;color:#eaf5ff!important;
+    backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
+  }
+  body.landing-app .login-card h2{font-size:21px!important;color:#f4f8ff!important;margin:7px 0 12px!important;}
+  body.landing-app .login-card .muted{color:#94a4b8!important;}
+  body.landing-app .login-card input{
+    width:100%!important;min-width:0!important;box-sizing:border-box!important;
+    background:rgba(4,7,18,.86)!important;color:#f1f7ff!important;
+  }
+  body.landing-app .login-card button,body.landing-app .login-card .btn{
+    width:100%!important;justify-content:center!important;box-sizing:border-box!important;
+  }
+  body.landing-app .footer-note{text-align:center!important;padding:8px 4px 0!important;}
+
+  /* STUDENT APP: remove the desktop dock offset that squeezed the whole UI. */
+  body.student-app{
+    padding-bottom:calc(82px + env(safe-area-inset-bottom))!important;
+  }
+  body.student-app .wrap{
+    width:100%!important;max-width:none!important;margin:0!important;
+    padding:10px 11px calc(88px + env(safe-area-inset-bottom))!important;
+    box-sizing:border-box!important;overflow-x:clip!important;
+  }
+  body.student-app .wrap>*{min-width:0;max-width:100%;box-sizing:border-box;}
+  body.student-app #home{display:block!important;width:100%!important;}
+  body.student-app #home>*{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
+
+  /* Header/nameplate — full width, readable and no clipping. */
+  body.student-app .hero.topbar{
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;gap:9px!important;width:100%!important;min-height:0!important;height:auto!important;
+    margin:50px 0 9px!important;padding:13px 13px!important;border-radius:19px!important;
+    box-sizing:border-box!important;
+  }
+  body.student-app .hero.topbar .avatar-row{
+    min-width:0!important;width:100%!important;display:flex!important;flex-direction:row!important;
+    flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;text-align:left!important;
+  }
+  body.student-app .hero.topbar .avatar-row>div{min-width:0!important;display:block!important;text-align:left!important;}
+  body.student-app .hero.topbar .profile-orbit{width:60px!important;height:60px!important;flex:0 0 60px!important;}
+  body.student-app .hero.topbar .profile-orbit .avatar,
+  body.student-app .hero.topbar .profile-orbit .avatar-placeholder{width:50px!important;height:50px!important;}
+  body.student-app .hero.topbar .brand-line{
+    width:auto!important;max-width:100%!important;margin:0 0 5px!important;padding:0!important;
+    white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+    font-size:8.5px!important;letter-spacing:.09em!important;
+  }
+  body.student-app .hero.topbar h1{
+    max-width:100%!important;margin:0 0 3px!important;font-size:clamp(18px,5.2vw,23px)!important;
+    line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  }
+  body.student-app .hero.topbar p,body.student-app #who{
+    max-width:100%!important;margin:0!important;font-size:10.5px!important;line-height:1.3!important;
+    white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  }
+  body.student-app .hero.topbar>button{
+    width:auto!important;min-width:70px!important;max-width:92px!important;min-height:40px!important;
+    margin:0!important;padding:9px 9px!important;border-radius:12px!important;font-size:10px!important;box-shadow:none!important;
+  }
+
+  /* Top utilities: horizontal scroll instead of overflowing the viewport. */
+  body.student-app .utility-strip{
+    position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+    width:100%!important;max-width:100%!important;margin:0 0 9px!important;padding:6px!important;
+    display:flex!important;justify-content:flex-start!important;flex-wrap:nowrap!important;gap:6px!important;
+    overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;
+    -webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;
+  }
+  body.student-app .utility-strip::-webkit-scrollbar{display:none!important;}
+  body.student-app .utility-strip>*{flex:0 0 auto!important;}
+  body.student-app .utility-btn{min-height:38px!important;padding:7px 9px!important;font-size:9px!important;}
+  body.student-app .network-badge,body.student-app .version-badge{font-size:9px!important;padding:6px 8px!important;}
+
+  /* Bottom dock: intentionally fixed, centered and never clipped. */
+  body.student-app .student-nav{
+    position:fixed!important;z-index:2500!important;
+    left:8px!important;right:8px!important;top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;
+    transform:none!important;width:auto!important;height:62px!important;max-height:62px!important;
+    margin:0!important;padding:6px!important;overflow:hidden!important;
+    display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important;
+    border-radius:19px!important;background:rgba(5,7,17,.94)!important;
+    border:1px solid rgba(var(--v1),.17)!important;box-shadow:0 18px 58px rgba(0,0,0,.55)!important;
+    backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;
+  }
+  body.student-app .student-nav button[data-tab]{display:none!important;}
+  body.student-app .student-nav button[data-tab="home"],
+  body.student-app .student-nav button[data-tab="notes"],
+  body.student-app .student-nav button[data-tab="tests"],
+  body.student-app .student-nav button[data-tab="revision"],
+  body.student-app .student-nav .mobile-more{
+    display:flex!important;width:100%!important;min-width:0!important;min-height:48px!important;height:48px!important;
+    margin:0!important;padding:5px 2px!important;align-items:center!important;justify-content:center!important;
+    flex-direction:column!important;gap:1px!important;border-radius:13px!important;
+    font-size:8px!important;line-height:1.08!important;white-space:normal!important;overflow:hidden!important;
+  }
+  body.student-app .student-nav button.active{box-shadow:inset 0 2px var(--cyan)!important;}
+
+  /* Home readability / no low-contrast headings. */
+  body.student-app .motivation-card{margin:0 0 8px!important;}
+  body.student-app .smart-dashboard{width:100%!important;margin:0 0 8px!important;padding:9px!important;}
+  body.student-app .smart-dashboard h2{color:#edf7ff!important;background:none!important;-webkit-text-fill-color:initial!important;}
+  body.student-app .smart-dashboard .topbar{align-items:center!important;gap:8px!important;}
+  body.student-app .smart-dashboard .pill{flex:0 0 auto!important;}
+  body.student-app .smart-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;}
+  body.student-app .smart-tile{width:100%!important;min-width:0!important;min-height:96px!important;padding:10px!important;}
+  body.student-app .smart-tile b{font-size:11.5px!important;line-height:1.25!important;overflow-wrap:anywhere!important;}
+  body.student-app .smart-tile small{font-size:9px!important;line-height:1.3!important;}
+
+  /* Cockpit scales down instead of forcing horizontal width. */
+  body.student-app .aether-cockpit{width:100%!important;max-width:100%!important;min-width:0!important;padding:14px!important;margin:9px 0!important;border-radius:22px!important;}
+  body.student-app .cockpit-head{gap:8px!important;}
+  body.student-app .cockpit-head h2{font-size:17px!important;}
+  body.student-app .cockpit-main{grid-template-columns:138px minmax(0,1fr)!important;gap:6px!important;min-height:0!important;}
+  body.student-app .readiness-reactor{width:132px!important;height:132px!important;}
+  body.student-app .reactor-core{width:78px!important;height:78px!important;}
+  body.student-app .nova-ring-value{font-size:25px!important;}
+  body.student-app .cockpit-radar{height:170px!important;min-width:0!important;border-right:0!important;}
+  body.student-app .cockpit-radar canvas{width:100%!important;max-width:100%!important;height:160px!important;}
+  body.student-app .cockpit-metrics{grid-column:1/-1!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;}
+  body.student-app .cockpit-metrics>div{min-width:0!important;padding:7px!important;}
+  body.student-app .cockpit-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;}
+  body.student-app .primary-command{grid-column:1/-1!important;min-width:0!important;width:100%!important;}
+  body.student-app .ghost-command{width:100%!important;min-width:0!important;}
+  body.student-app .twin-scenarios{grid-template-columns:1fr!important;}
+
+  /* Generic safety for all tabs/cards/forms/modals. */
+  body.student-app .card,body.student-app .item,body.student-app .exam-board,
+  body.student-app input,body.student-app select,body.student-app textarea,
+  body.student-app table{max-width:100%!important;min-width:0;box-sizing:border-box;}
+  body.student-app .topbar{min-width:0;}
+  body.student-app .modal-card{width:min(94vw,680px)!important;max-width:94vw!important;max-height:88vh!important;overflow:auto!important;box-sizing:border-box!important;}
+  body.student-app img,body.student-app canvas,body.student-app svg{max-width:100%;}
+  body.student-app .home-primary-grid,body.student-app .home-insight-grid{grid-template-columns:1fr!important;}
+}
+
+@media (max-width:520px){
+  body.landing-app .landing-hero{padding-top:190px!important;}
+  body.landing-app .landing-orb{top:94px!important;width:124px!important;height:124px!important;}
+  body.landing-app .landing-hero h1{font-size:31px!important;}
+  body.landing-app .landing-status span{font-size:7px!important;padding:6px 8px!important;}
+  body.student-app .fab-row{position:fixed!important;top:8px!important;right:9px!important;left:auto!important;z-index:3000!important;}
+  body.student-app .fab-row button{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;border-radius:11px!important;}
+  body.student-app .hero.topbar{margin-top:47px!important;padding:12px!important;grid-template-columns:minmax(0,1fr) 70px!important;}
+  body.student-app .hero.topbar .profile-orbit{width:56px!important;height:56px!important;flex-basis:56px!important;}
+  body.student-app .hero.topbar .profile-orbit .avatar,
+  body.student-app .hero.topbar .profile-orbit .avatar-placeholder{width:47px!important;height:47px!important;}
+  body.student-app .hero.topbar h1{font-size:18px!important;}
+  body.student-app .hero.topbar p,body.student-app #who{font-size:9.8px!important;}
+  body.student-app .motivation-card{grid-template-columns:30px 1fr!important;min-height:62px!important;padding:10px 11px!important;}
+  body.student-app .quote-text{font-size:11px!important;line-height:1.35!important;}
+  body.student-app .smart-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  body.student-app .cockpit-main{grid-template-columns:105px minmax(0,1fr)!important;gap:3px!important;}
+  body.student-app .readiness-reactor{width:102px!important;height:102px!important;}
+  body.student-app .reactor-core{width:64px!important;height:64px!important;}
+  body.student-app .nova-ring-value{font-size:20px!important;}
+  body.student-app .cockpit-radar{height:130px!important;}
+  body.student-app .cockpit-radar canvas{height:125px!important;}
+  body.student-app .cockpit-metrics span{font-size:5.5px!important;}
+  body.student-app .cockpit-metrics b{font-size:9px!important;}
+}
+
+@media (max-width:360px){
+  body.student-app .wrap{padding-left:8px!important;padding-right:8px!important;}
+  body.student-app .smart-grid{grid-template-columns:1fr!important;}
+  body.student-app .smart-tile{min-height:82px!important;}
+  body.student-app .cockpit-main{grid-template-columns:1fr!important;}
+  body.student-app .readiness-reactor{margin:2px auto!important;}
+  body.student-app .cockpit-radar{height:145px!important;}
+}
