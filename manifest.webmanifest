@@ -1,7 +1,7 @@
 {
   "name": "Arpan Learning Suite",
   "short_name": "Learning Suite",
-  "description": "Student tests, adaptive practice, revision intelligence and progress tracking.",
+  "description": "NOVA adaptive learning OS with tests, readiness intelligence, focus sessions, revision and progress tracking.",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",

@@ -2,14 +2,14 @@
 <script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#4c1d95"><meta name="color-scheme" content="light dark">
-<title>Student Portal · Ultimate v6</title>
+<title>Student Portal · NOVA v7</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d28d9'/%3E%3Cstop offset='1' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Poppins,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="app-icon-192.png">
-<link rel="stylesheet" href="style.css?v=6.0">
+<link rel="stylesheet" href="style.css?v=7.0">
 <style>
 /* Critical mobile profile header: kept inline so an old cached stylesheet cannot restore the oversized card. */
 @media(max-width:600px){
@@ -18,11 +18,11 @@
   section.hero.topbar .avatar-row>div{display:block!important;min-width:0!important;text-align:left!important}
   section.hero.topbar .profile-orbit{width:58px!important;height:58px!important;flex:0 0 58px!important}
   section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:49px!important;height:49px!important}
-  section.hero.topbar .brand-line{justify-content:flex-start!important;width:auto!important;max-width:100%!important;margin:0 0 5px!important;padding:0!important;border:0!important;background:none!important;backdrop-filter:none!important;font-size:8.5px!important;letter-spacing:.07em!important;animation:none!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  section.hero.topbar .brand-line{justify-content:flex-start!important;width:auto!important;max-width:100%!important;margin:0 0 5px!important;padding:0!important;border:0!important;background:none!important;backdrop-filter:none!important;font-size:8.5px!important;letter-spacing:.07em!important;animation:brandFloat 4.8s ease-in-out infinite!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
   section.hero.topbar h1{max-width:100%!important;margin:0 0 3px!important;font-size:clamp(18px,5.4vw,22px)!important;line-height:1.15!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
   section.hero.topbar p#who{max-width:100%!important;margin:0!important;font-size:10.5px!important;line-height:1.3!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
   section.hero.topbar>button#logout{align-self:center!important;width:auto!important;min-width:68px!important;margin:0!important;padding:9px 9px!important;border-radius:12px!important;font-size:11px!important;box-shadow:none!important}
-  section.hero.topbar .star,section.hero.topbar .learn-symbol,section.hero.topbar .sparkle-sweep{display:none!important}
+  section.hero.topbar .learn-symbol{display:none!important} section.hero.topbar .star,section.hero.topbar .sparkle-sweep{display:block!important}
 }
 @media(max-width:370px){section.hero.topbar{grid-template-columns:minmax(0,1fr) 62px!important;padding:56px 11px 13px!important;gap:6px!important}section.hero.topbar .profile-orbit{width:52px!important;height:52px!important;flex-basis:52px!important}section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:44px!important;height:44px!important}section.hero.topbar h1{font-size:17px!important}section.hero.topbar p#who{font-size:9.5px!important}section.hero.topbar>button#logout{min-width:62px!important;padding:8px 6px!important;font-size:10px!important}}
 </style></head>
@@ -47,13 +47,19 @@
 </nav>
 <div class="utility-strip" aria-label="App tools">
   <button id="quickFindBtn" type="button" class="secondary utility-btn">⌘ Quick Find</button>
+  <button id="focusCapsuleBtn" type="button" class="secondary utility-btn nova-utility">◉ Focus Capsule</button>
   <button id="installAppBtn" type="button" class="secondary utility-btn hidden">⬇ Install App</button>
   <span id="networkBadge" class="network-badge" aria-live="polite">● Online</span>
-  <span class="version-badge">ULTIMATE v6</span>
+  <span class="version-badge">NOVA v7</span>
 </div>
 
 <!-- ================= HOME ================= -->
 <section id="home" class="tab">
+  <div class="card quote-card motivation-card" aria-label="Daily motivation">
+    <div class="motivation-icon" aria-hidden="true">✦</div>
+    <div class="motivation-copy"><span class="section-kicker">DAILY MOTIVATION</span><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
+  </div>
+
   <div class="card smart-dashboard"><div class="topbar"><div><span class="section-kicker">TODAY</span><h2>⚡ Smart Dashboard</h2></div><span id="todayDate" class="pill"></span></div>
     <div class="smart-grid">
       <button class="smart-tile" id="todayAssignmentBtn" type="button"><span>📌 Assignment</span><b id="todayAssignment">Loading…</b><small id="todayAssignmentMeta">Checking deadlines</small></button>
@@ -62,55 +68,62 @@
       <button class="smart-tile" id="continueBtn" type="button"><span>↗ Continue</span><b id="continueTitle">Open Notes</b><small id="continueMeta">Resume your last section</small></button>
     </div>
   </div>
-  <div class="card mission-card">
-    <div class="topbar"><div><span class="section-kicker">PERSONALISED TODAY</span><h2>🎯 Daily Mission</h2><p class="muted">তোমার results, mistakes এবং pending work থেকে আজকের সবচেয়ে useful কাজগুলো।</p></div><span id="missionProgress" class="pill">0 / 0</span></div>
-    <div id="dailyMissionList" class="mission-list"><div class="skeleton skeleton-block"></div></div>
-  </div>
-  <div class="card ai-coach-card">
-    <div class="topbar"><div><span class="section-kicker">NO PAID API REQUIRED</span><h2>✨ Personal AI Study Coach</h2><p id="coachSummary" class="muted">তোমার performance context দিয়ে ChatGPT-কে smarter tutor হিসেবে ব্যবহার করো।</p></div><span class="pill teal">Context-aware</span></div>
-    <div class="coach-actions"><button id="coachPlan" type="button">🗓 Build My Study Plan</button><button id="coachWeak" type="button" class="secondary">🧠 Teach My Weakest Topic</button><button id="coachQuiz" type="button" class="secondary">🎯 Quiz Me</button></div>
-  </div>
-  <div class="card quote-card"><div class="quote-text" id="quoteText"></div><div class="quote-by" id="quoteBy"></div></div>
-  <div class="card"><h2>📣 Notice Board</h2><div id="noticeList"></div></div>
 
-  <div class="card home-performance"><div class="topbar"><div><h2>📊 Performance Snapshot</h2><p class="muted">তোমার graded results-এর দ্রুত summary।</p></div><button class="secondary" id="openProgress">View Details</button></div><div class="home-stat-grid"><div class="mini-stat"><b id="homeTests">0</b><span>Tests</span></div><div class="mini-stat"><b id="homeAvg">—</b><span>Average</span></div><div class="mini-stat"><b id="homeBest">—</b><span>Best</span></div><div class="mini-stat"><b id="homeRank">—</b><span>Latest Rank</span></div></div><div id="homeFocus" class="focus-tip muted">একটি graded test-এর পরে revision focus এখানে দেখা যাবে।</div></div>
-
-  <div class="card weekly-goal-card"><div class="topbar"><div><h2>🎯 Weekly Test Goal</h2><p class="muted">নিজের জন্য একটি realistic weekly target রাখো।</p></div><select id="weeklyGoal" aria-label="Weekly test target"><option value="1">1 test</option><option value="2">2 tests</option><option value="3">3 tests</option><option value="4">4 tests</option><option value="5">5 tests</option><option value="6">6 tests</option><option value="7">7 tests</option></select></div><div class="goal-meter"><div id="weeklyGoalFill"></div></div><div class="goal-copy"><b id="weeklyGoalText">0 / 3 tests</b><span id="weeklyGoalHint" class="muted">Start with one test this week.</span></div></div>
-
-  <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><p class="muted">সর্বশেষ তিনটি পরীক্ষার class ranking।</p><div id="homeLeaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
-
-  <div class="card"><h2>🔥 Study Streak</h2>
-    <div class="streak-box">
-      <div class="streak-num">🔥 <span id="streakCount">0</span> days</div>
-      <div class="badge-row" id="badgeRow"></div>
+  <div class="card nova-command-center" id="novaCommandCenter">
+    <div class="nova-readiness" id="novaReadinessRing" style="--readiness:0">
+      <span class="nova-ring-value" id="novaReadiness">—</span><small>Readiness</small>
     </div>
-    <p class="muted">প্রতিদিন hub-এ ঢুকলেই streak বাড়ে — নিয়মিত revision-এর অভ্যাস তৈরি করার জন্য।</p>
+    <div class="nova-command-copy">
+      <div class="nova-eyebrow"><span class="nova-live-dot"></span>NOVA ADAPTIVE ENGINE</div>
+      <h2 id="novaHeadline">Building your learning signal…</h2>
+      <p id="novaReason" class="muted">Tests, mistakes, deadlines and study momentum are combined locally to recommend the highest-impact next step.</p>
+      <div class="nova-actions"><button id="novaActionBtn" type="button">▶ Next Best Action</button><button id="novaRescueBtn" type="button" class="secondary">⚡ Rescue Plan</button></div>
+      <div id="novaRescuePlan" class="nova-rescue-plan hidden"></div>
+    </div>
+    <div class="nova-metrics" aria-label="Learning pulse">
+      <div><span>Momentum</span><b id="novaMomentum">—</b></div>
+      <div><span>Pressure</span><b id="novaPressure">—</b></div>
+      <div><span>Focus today</span><b id="novaFocusToday">0m</b></div>
+    </div>
   </div>
 
-  <div class="card"><h2>🎮 Learning Level</h2><div class="xp-box"><div class="xp-ring" id="xpRing" data-level="1" style="--xppct:0"></div><div class="xp-info"><h3 id="xpTitle">Level 1 · Starter</h3><div class="xp-track"><div class="xp-fill" id="xpFill"></div></div><div class="muted" id="xpSub">0 XP</div></div></div><p class="muted">XP motivation-এর জন্য; এটি official academic result নয়।</p></div>
+  <div class="home-primary-grid">
+    <div class="card mission-card compact-home-card">
+      <div class="topbar compact-card-head"><div><span class="section-kicker">TODAY</span><h2>🎯 Daily Mission</h2></div><span id="missionProgress" class="pill">0 / 0</span></div>
+      <div id="dailyMissionList" class="mission-list"><div class="skeleton skeleton-block"></div></div>
+    </div>
+    <div class="card ai-coach-card compact-home-card">
+      <div class="topbar compact-card-head"><div><span class="section-kicker">AI COACH</span><h2>✨ Personal Study Coach</h2><p id="coachSummary" class="muted coach-summary">তোমার performance context অনুযায়ী সাহায্য।</p></div><span class="pill teal">Smart</span></div>
+      <div class="coach-actions"><button id="coachPlan" type="button">🗓 Today Plan</button><button id="coachWeak" type="button" class="secondary">🧠 Weak Topic</button><button id="coachQuiz" type="button" class="secondary">🎯 Quiz Me</button></div>
+    </div>
+  </div>
 
-  <div class="card"><h2>⏱️ Pomodoro Study Timer</h2>
-    <div class="pomo-box">
-      <div class="pomo-ring" id="pomoRing" data-time="25:00" style="--pct:0"></div>
-      <div>
-        <div class="row" style="max-width:280px">
-          <select id="pomoMode"><option value="25">Focus 25 min</option><option value="5">Short break 5 min</option><option value="15">Long break 15 min</option></select>
-        </div>
-        <div class="pomo-actions">
-          <button id="pomoStart" class="secondary">▶️ Start</button>
-          <button id="pomoPause" class="secondary">⏸️ Pause</button>
-          <button id="pomoReset" class="secondary">🔄 Reset</button>
-        </div>
+  <div class="home-insight-grid">
+    <div class="card compact-home-card"><div class="topbar compact-card-head"><h2>📣 Notice Board</h2><span class="pill">Latest</span></div><div id="noticeList"></div></div>
+    <div class="card home-performance compact-home-card"><div class="topbar compact-card-head"><div><h2>📊 Performance Snapshot</h2></div><button class="secondary compact-action" id="openProgress">Details</button></div><div class="home-stat-grid"><div class="mini-stat"><b id="homeTests">0</b><span>Tests</span></div><div class="mini-stat"><b id="homeAvg">—</b><span>Average</span></div><div class="mini-stat"><b id="homeBest">—</b><span>Best</span></div><div class="mini-stat"><b id="homeRank">—</b><span>Rank</span></div></div><div id="homeFocus" class="focus-tip muted">একটি graded test-এর পরে revision focus এখানে দেখা যাবে।</div></div>
+  </div>
+
+  <details id="homeMorePanel" class="card home-more-panel">
+    <summary><span><b>✨ More tools & insights</b><small>Weekly goal, leaderboard, streak, timer, subjects & profile</small></span><span class="summary-chevron">⌄</span></summary>
+    <div class="home-more-content">
+      <div class="card study-memory-card"><div class="topbar"><div><span class="section-kicker">LOCAL STUDY MEMORY</span><h2>🧠 21-Day Learning Heatmap</h2></div><span id="studyMinutesPill" class="pill teal">0 min</span></div><p class="muted">Focus Capsule time + submitted tests. Stored only in this browser.</p><div id="studyHeatmap" class="study-heatmap" aria-label="21 day study activity"></div></div>
+      <div class="card weekly-goal-card"><div class="topbar"><div><h2>🎯 Weekly Test Goal</h2></div><select id="weeklyGoal" aria-label="Weekly test target"><option value="1">1 test</option><option value="2">2 tests</option><option value="3">3 tests</option><option value="4">4 tests</option><option value="5">5 tests</option><option value="6">6 tests</option><option value="7">7 tests</option></select></div><div class="goal-meter"><div id="weeklyGoalFill"></div></div><div class="goal-copy"><b id="weeklyGoalText">0 / 3 tests</b><span id="weeklyGoalHint" class="muted">Start with one test this week.</span></div></div>
+
+      <div class="card leaderboard-card"><h2>🏆 Latest 3 Exam Leaderboards</h2><div id="homeLeaderboard" class="recent-leaderboards"><div class="skeleton skeleton-block"></div></div></div>
+
+      <div class="home-mini-tools">
+        <div class="card"><h2>🔥 Study Streak</h2><div class="streak-box"><div class="streak-num">🔥 <span id="streakCount">0</span> days</div><div class="badge-row" id="badgeRow"></div></div></div>
+        <div class="card"><h2>🎮 Learning Level</h2><div class="xp-box"><div class="xp-ring" id="xpRing" data-level="1" style="--xppct:0"></div><div class="xp-info"><h3 id="xpTitle">Level 1 · Starter</h3><div class="xp-track"><div class="xp-fill" id="xpFill"></div></div><div class="muted" id="xpSub">0 XP</div></div></div></div>
+      </div>
+
+      <div class="card"><h2>⏱️ Pomodoro Study Timer</h2><div class="pomo-box"><div class="pomo-ring" id="pomoRing" data-time="25:00" style="--pct:0"></div><div><div class="row" style="max-width:280px"><select id="pomoMode"><option value="25">Focus 25 min</option><option value="5">Short break 5 min</option><option value="15">Long break 15 min</option></select></div><div class="pomo-actions"><button id="pomoStart" class="secondary">▶️ Start</button><button id="pomoPause" class="secondary">⏸️ Pause</button><button id="pomoReset" class="secondary">🔄 Reset</button></div></div></div></div>
+
+      <div class="home-mini-tools">
+        <div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">150 KB-এর কম ছবি ব্যবহার করো।</p><div class="row"><input id="avatarFile" type="file" accept="image/*"><button id="saveAvatar" class="secondary">Save Picture</button></div><p id="avatarMsg" class="muted"></p></div>
+        <div class="card"><h2>📚 My Subjects</h2><div id="subjects" class="grid"></div></div>
       </div>
     </div>
-  </div>
-
-  <div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">ছোট একটা ছবি (150 KB এর কম) আপলোড করো, নিজের প্রোফাইলে দেখা যাবে।</p>
-    <div class="row"><input id="avatarFile" type="file" accept="image/*"><button id="saveAvatar" class="secondary">Save Picture</button></div>
-    <p id="avatarMsg" class="muted"></p>
-  </div>
-
-  <div class="card"><h2>📚 My Subjects</h2><div id="subjects" class="grid"></div></div>
+  </details>
 </section>
 
 <!-- ================= NOTES ================= -->
@@ -184,6 +197,10 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
   <div class="card"><h2>🎯 Topic-wise Weak Areas</h2><p class="muted">৬০%-এর কম accuracy হলে ChatGPT দিয়ে topic-টি সহজভাবে বুঝে নাও।</p><div id="topicBars" class="barlist"><p class="muted">টেস্ট দিলে এখানে topic অনুযায়ী দুর্বল জায়গা দেখা যাবে।</p></div></div>
   <div class="card"><div class="topbar"><div><span class="section-kicker">CALIBRATION</span><h2>🎯 Confidence Intelligence</h2><p class="muted">Sure, unsure আর guess—তোমার confidence আসলে accuracy-এর সাথে কতটা match করছে।</p></div></div><div id="confidenceAnalytics" class="confidence-analytics"><p class="muted">Confidence data collect হলে এখানে insight দেখা যাবে।</p></div></div>
   <div class="card"><div class="topbar"><div><span class="section-kicker">MASTERY MAP</span><h2>🗺️ Knowledge Map</h2><p class="muted">Topic-গুলোকে Priority → Building → Strong → Mastered ধাপে দেখানো হচ্ছে।</p></div><span id="masteryCount" class="pill">0 mastered</span></div><div id="masteryMap" class="mastery-map"><p class="muted">Graded result-এর পরে mastery map তৈরি হবে।</p></div></div>
+  <div class="grid2 nova-progress-grid">
+    <div class="card readiness-lab"><div class="topbar"><div><span class="section-kicker">PREDICTIVE SIGNAL</span><h2>◉ Exam Readiness Engine</h2></div><span id="readinessGrade" class="pill">Waiting</span></div><div id="readinessBreakdown" class="readiness-breakdown"><p class="muted">Graded attempts-এর পরে readiness signal তৈরি হবে।</p></div><p class="muted readiness-disclaimer">Readiness is a study estimate, not a guaranteed exam score.</p></div>
+    <div class="card constellation-card"><div class="topbar"><div><span class="section-kicker">KNOWLEDGE GRAPH</span><h2>✦ Learning Constellation</h2></div><span class="pill teal">Interactive</span></div><div id="learningConstellation" class="constellation-stage"><p class="muted">Topic data পাওয়া গেলে তোমার strongest ও weakest knowledge nodes এখানে দেখা যাবে।</p></div></div>
+  </div>
 </section>
 
 <!-- ================= TEST HISTORY ================= -->
@@ -209,6 +226,21 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
   <div class="card ultimate-feature-card"><div class="game-icon">🎙️</div><h2>Viva Rehearsal</h2><p class="muted">Weak topic বা note নিজের ভাষায় explain করো; speech-to-text থাকলে microphone ব্যবহার করো, তারপর ChatGPT দিয়ে feedback নাও।</p><select id="vivaTopic"><option value="">Auto-select focus</option></select><div id="vivaQuestion" class="viva-question">Start করলে একটি oral prompt আসবে।</div><textarea id="vivaTranscript" placeholder="তোমার spoken answer / transcript এখানে থাকবে…"></textarea><div class="coach-actions"><button id="vivaStart" class="secondary" type="button">▶ Start Viva</button><button id="vivaMic" class="secondary" type="button">🎙️ Speak</button><button id="vivaEvaluate" type="button">✨ Evaluate with ChatGPT</button></div><p id="vivaStatus" class="muted"></p></div>
 </div></section>
 
+<div id="focusOverlay" class="focus-overlay hidden" aria-hidden="true">
+  <div class="focus-shell">
+    <div class="focus-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+    <button id="focusClose" class="focus-close secondary" type="button">✕ Exit</button>
+    <div class="focus-brand"><span class="nova-live-dot"></span>NOVA FOCUS CAPSULE</div>
+    <h2 id="focusGoal">One task. Zero noise.</h2>
+    <p id="focusGoalMeta" class="muted">Your next best action will appear here.</p>
+    <div class="focus-timer" id="focusTimer">25:00</div>
+    <div class="focus-progress"><i id="focusProgress"></i></div>
+    <div class="focus-presets" role="group" aria-label="Focus duration"><button class="secondary focus-preset" data-min="15">15m</button><button class="secondary focus-preset active" data-min="25">25m</button><button class="secondary focus-preset" data-min="45">45m</button></div>
+    <div class="focus-actions"><button id="focusStart" type="button">▶ Start Focus</button><button id="focusAmbient" class="secondary" type="button">◌ Deep Noise: Off</button></div>
+    <p id="focusStatus" class="focus-status">When the capsule runs, study time is saved locally for your learning heatmap.</p>
+  </div>
+</div>
+
 <div id="reviewOverlay" class="modal-overlay hidden"><div class="modal-card"><div class="topbar"><h3 id="reviewTitle">Answer Review</h3><button id="reviewClose" class="secondary">✕</button></div><div id="reviewBody"></div></div></div>
 <div id="replayOverlay" class="modal-overlay hidden"><div class="modal-card replay-modal"><div class="topbar"><div><span class="section-kicker">EXAM TELEMETRY</span><h3 id="replayTitle">Exam Replay</h3></div><button id="replayClose" class="secondary">✕</button></div><div id="replayInsights" class="replay-insights"></div><div id="replayTimeline" class="replay-timeline"></div></div></div>
 <div id="quickFindOverlay" class="modal-overlay hidden"><div class="modal-card quick-find-modal"><div class="topbar"><div><span class="section-kicker">UNIVERSAL SEARCH</span><h3>⌘ Quick Find</h3></div><button id="quickFindClose" class="secondary">✕</button></div><input id="quickFindInput" class="quick-find-input" autocomplete="off" placeholder="Search notes, tests, assignments, sections…"><div id="quickFindResults" class="quick-find-results"></div><p class="muted quick-find-hint">Tip: Ctrl/⌘ + K opens this from anywhere.</p></div></div>
@@ -228,8 +260,8 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
 </div>
 
 <script type="module">
-let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};
-try{const fx=await import("./effects.js");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
+let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{},mountCursorAura=()=>{};
+try{const fx=await import("./effects.js?v=7.0");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle,mountCursorAura}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();mountCursorAura();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,updateDoc,collection,getDocs,query,where,addDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -241,7 +273,7 @@ let deferredInstallPrompt=null,smartFeedState=null;
 const WEAK_TOPIC_THRESHOLD=60;
 const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
 let reportSubjects=[],reportTopics=[],reportAttempts=[];
-let progressMine=[],studentAttempts=[],cachedLeaderboardEntries=[];
+let progressMine=[],studentAttempts=[],cachedLeaderboardEntries=[],initialProgressLoaded=false,leaderboardLoaded=false;
 
 /* ---------- APP SHELL / PWA ---------- */
 function updateNetworkBadge(){const online=navigator.onLine;$('networkBadge').textContent=online?'● Online':'● Offline';$('networkBadge').classList.toggle('offline',!online);}
@@ -286,8 +318,10 @@ onAuthStateChanged(auth,async u=>{
  if(!u){location.href="index.html";return;}
  const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
  profile=p.data();$("welcome").textContent=`Hi, ${profile.name} 👋`;$("who").textContent=`${profile.className} · ${profile.email}`;
- renderAvatar();await updateStreak();renderBadges();
+ renderAvatar();
+ const streakTask=updateStreak().then(()=>{renderBadges();renderXP(progressMine.length);}).catch(e=>console.warn("streak update deferred",e));
  await loadData();
+ await streakTask;
  consumeSharedPracticeImport();consumeDuelChallenge();
  const savedTab=localStorage.getItem(`lastTab:${u.uid}`);if(savedTab&&$(savedTab))openTab(savedTab,{remember:false,scroll:false});
 });
@@ -390,7 +424,7 @@ function renderSmartDashboard(){
  $("weakAreaMeta").textContent=weakTopic&&weakTopic.pct<WEAK_TOPIC_THRESHOLD?`${weakTopic.pct}% accuracy · revise today`:weakSubject&&weakSubject.pct<75?`${weakSubject.pct}% subject average`:"No urgent weak area";
  const last=localStorage.getItem(`lastTab:${auth.currentUser?.uid||"guest"}`)||"notes",labels={home:"Home",notes:"Notes",tests:"Tests",assignments:"Assignments",revision:"Revision Centre",progress:"Progress",history:"Test History",games:"Games",doubts:"Doubts"};
  const safeLast=last==="home"?"notes":last;$("continueTitle").textContent=labels[safeLast]||"Notes";$("continueMeta").textContent="Resume your last section";$("continueBtn").dataset.target=safeLast;
- $("todayAssignmentBtn").disabled=!assignment;$("nextTestBtn").disabled=!next;renderDailyMission();renderCoachSummary();
+ $("todayAssignmentBtn").disabled=!assignment;$("nextTestBtn").disabled=!next;renderDailyMission();renderCoachSummary();if(initialProgressLoaded)renderNovaSystem();
 }
 $("todayAssignmentBtn").onclick=()=>openTab("assignments");$("nextTestBtn").onclick=()=>openTab("tests");$("weakAreaBtn").onclick=()=>openTab("revision");$("continueBtn").onclick=()=>openTab($("continueBtn").dataset.target||"notes");
 
@@ -412,8 +446,10 @@ $('coachWeak').onclick=()=>{const weak=reportTopics[0];if(!weak)return showToast
 $('coachQuiz').onclick=()=>{const weak=reportTopics[0],topic=weak?.label||'my current syllabus';openChatGPTPrompt(`আমি ${profile.className}-এর বাংলা-মাধ্যমের student। আমাকে ${topic} topic-এ 7-question adaptive oral quiz নাও। একবারে শুধু 1টি question করবে, আমার answer না পাওয়া পর্যন্ত পরের question বা correct answer বলবে না। ভুল হলে hint দেবে, শেষে strengths, misconception এবং next revision step বলবে। Context: ${performanceContext()}`);};
 
 const QUICK_SECTIONS=[['home','Home'],['notes','Notes'],['tests','Tests & Practice'],['assignments','Assignments'],['revision','Revision Centre'],['progress','Progress & Mastery'],['history','Test History'],['games','Learning Games'],['doubts','Ask a Doubt']];
+const QUICK_ACTIONS=[['focus','Focus Capsule','Action · distraction-free study'],['smartfeed','Adaptive Smart Feed','Action · practice weak questions'],['boss','Chapter Boss','Action · weak-topic challenge'],['next','Next Best Action','Action · NOVA recommendation']];
 function quickFindItems(){return [
  ...QUICK_SECTIONS.map(([id,label])=>({type:'section',id,title:label,meta:'Section'})),
+ ...QUICK_ACTIONS.map(([id,title,meta])=>({type:'action',id,title,meta})),
  ...notes.map(n=>({type:'note',id:n.id,title:n.title,meta:`Note · ${n.chapter||subjectName(n.subjectId)}`})),
  ...tests.map(t=>({type:'test',id:t.id,title:t.title,meta:`Test · ${subjectName(t.subjectId)} · ${t.chapter||'General'}`})),
  ...assignments.map(a=>({type:'assignment',id:a.id,title:a.title,meta:`Assignment${a.dueDate?' · due '+a.dueDate:''}`}))
@@ -421,7 +457,7 @@ function quickFindItems(){return [
 function renderQuickFind(){const q=$('quickFindInput').value.trim().toLocaleLowerCase(),items=quickFindItems().filter(x=>!q||(x.title+' '+x.meta).toLocaleLowerCase().includes(q)).slice(0,20);$('quickFindResults').innerHTML=items.length?items.map(x=>`<button type="button" class="quick-result" data-type="${x.type}" data-id="${escapeHTML(x.id)}"><span><b>${escapeHTML(x.title)}</b><small>${escapeHTML(x.meta)}</small></span><span>↗</span></button>`).join(''):`<p class="muted">No match found.</p>`;document.querySelectorAll('.quick-result').forEach(b=>b.onclick=()=>openQuickResult(b.dataset.type,b.dataset.id));}
 function openQuickFind(){renderQuickFind();$('quickFindOverlay').classList.remove('hidden');setTimeout(()=>$('quickFindInput').focus(),30);}
 function closeQuickFind(){$('quickFindOverlay').classList.add('hidden');}
-function openQuickResult(type,id){closeQuickFind();if(type==='section')return openTab(id);if(type==='note'){openTab('notes');const n=notes.find(x=>x.id===id);$('noteSearch').value=n?.title||'';renderNotes();return;}if(type==='test'){openTab('tests');const t=tests.find(x=>x.id===id);$('testSearch').value=t?.title||'';renderTests();return;}if(type==='assignment'){openTab('assignments');setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),80);}}
+function openQuickResult(type,id){closeQuickFind();if(type==='section')return openTab(id);if(type==='action'){if(id==='focus')return openFocusCapsule();if(id==='smartfeed'){openTab('tests');return setTimeout(startSmartFeed,80);}if(id==='boss'){openTab('games');return setTimeout(startBoss,80);}if(id==='next')return runNovaAction();}if(type==='note'){openTab('notes');const n=notes.find(x=>x.id===id);$('noteSearch').value=n?.title||'';renderNotes();return;}if(type==='test'){openTab('tests');const t=tests.find(x=>x.id===id);$('testSearch').value=t?.title||'';renderTests();return;}if(type==='assignment'){openTab('assignments');setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),80);}}
 $('quickFindBtn').onclick=openQuickFind;$('quickFindClose').onclick=closeQuickFind;$('quickFindInput').oninput=renderQuickFind;$('quickFindOverlay').onclick=e=>{if(e.target.id==='quickFindOverlay')closeQuickFind();};
 document.addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'');if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openQuickFind();}else if(e.key==='/'&&!typing){e.preventDefault();openQuickFind();}else if(e.key==='Escape'&&!$('quickFindOverlay').classList.contains('hidden'))closeQuickFind();});
 
@@ -444,7 +480,7 @@ async function loadData(){
  tests=snap.docs.map(d=>({id:d.id,...d.data()}));
   $("testLoadMsg").textContent="";
   refreshStudentTestFilters();renderSmartDashboard();
-  clearTimeout(loadData.testRefresh);loadData.testRefresh=setTimeout(()=>loadProgressAndLeaderboard().catch(e=>console.error("home leaderboard refresh error:",e)),150);
+  if(initialProgressLoaded){clearTimeout(loadData.testRefresh);loadData.testRefresh=setTimeout(()=>loadProgressAndLeaderboard(false,true).catch(e=>console.error("progress refresh error:",e)),220);}
  },err=>{console.error("tests listener error:",err);$("testLoadMsg").textContent="⚠️ Published test list load করা যায়নি। Teacher-কে package-এর Firestore Rules publish করতে বলো।";$("testsList").innerHTML="<p class='muted'>Test list load করা যায়নি। পরে আবার চেষ্টা করো।</p>";});
 
  onSnapshot(query(collection(db,"announcements"),where("classId","==",profile.classId)),snap=>{
@@ -459,7 +495,11 @@ async function loadData(){
   renderAssignments();renderSmartDashboard();
  });
 
- await loadProgressAndLeaderboard();
+ await loadProgressAndLeaderboard(false,false);
+ initialProgressLoaded=true;
+ const loadLeaderboardLater=()=>loadProgressAndLeaderboard(true,true).catch(e=>console.error("leaderboard refresh error:",e));
+ if("requestIdleCallback" in window)requestIdleCallback(loadLeaderboardLater,{timeout:1800});else setTimeout(loadLeaderboardLater,650);
+ $("homeMorePanel")?.addEventListener("toggle",()=>{if($("homeMorePanel").open&&!leaderboardLoaded)loadLeaderboardLater();},{once:false});
  listenMyDoubts();
 }
 
@@ -764,7 +804,7 @@ function renderMasteryMap(topicRows){
  $('masteryMap').innerHTML=topicRows.length?topicRows.map((r,i)=>{const [cls,label]=classify(r.pct);return `<article class="mastery-node ${cls}"><div class="mastery-node-head"><span>${label}</span><b>${r.pct}%</b></div><h3>${escapeHTML(r.label)}</h3><div class="mastery-progress"><i style="width:${r.pct}%"></i></div><small>${r.correct}/${r.total} correct</small>${r.pct<85?`<button type="button" class="secondary mastery-practice" data-topic-index="${i}">Practice this</button>`:''}</article>`;}).join(''):`<p class="muted">Graded result-এর পরে mastery map তৈরি হবে।</p>`;
  document.querySelectorAll('.mastery-practice').forEach(b=>b.onclick=()=>{const r=topicRows[Number(b.dataset.topicIndex)];openTab('tests');$('pracTopic').value=r.label;$('pracCount').value='5';$('pracTopic').scrollIntoView({behavior:'smooth',block:'center'});showToast(`Practice focus: ${r.label}`);});
 }
-async function loadProgressAndLeaderboard(useCache=false){
+async function loadProgressAndLeaderboard(useCache=false,loadLeaderboard=true){
  let mine=progressMine;
  if(!useCache){const myAttempts=await getDocs(query(collection(db,"attempts"),where("uid","==",auth.currentUser.uid)));studentAttempts=myAttempts.docs.map(d=>({id:d.id,...d.data()}));mine=studentAttempts.filter(a=>a.status==="submitted");progressMine=mine;const selected=$("progressSubject").value;$("progressSubject").innerHTML=`<option value="">All Subjects</option>`+subjects.map(s=>`<option value="${escapeHTML(s.id)}">${escapeHTML(s.name)}</option>`).join("");if(subjects.some(s=>s.id===selected))$("progressSubject").value=selected;fillProgressUnits();}
  const selectedSubject=$("progressSubject").value,selectedUnit=$("progressUnit").value;
@@ -808,7 +848,7 @@ async function loadProgressAndLeaderboard(useCache=false){
 
  // Privacy-safe leaderboards for the latest three published tests.
  const latestTests=[...tests].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,3);
- if(!useCache){const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));cachedLeaderboardEntries=safeEntries.docs.map(d=>d.data());}
+ if(loadLeaderboard&&(!leaderboardLoaded||!useCache)){const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));cachedLeaderboardEntries=safeEntries.docs.map(d=>d.data());leaderboardLoaded=true;}
  const entries=cachedLeaderboardEntries;
  const cards=latestTests.map(test=>{
   const rows=entries.filter(x=>x.testId===test.id&&Number.isFinite(Number(x.percentage))).sort((a,b)=>Number(b.percentage)-Number(a.percentage)||(a.submittedAt?.seconds||Infinity)-(b.submittedAt?.seconds||Infinity)||String(a.studentName||"").localeCompare(String(b.studentName||"")));
@@ -819,14 +859,14 @@ async function loadProgressAndLeaderboard(useCache=false){
   const rowHtml=visible.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""} ${i===10?"lb-separated":""}"><span class="lb-rank ${r.rank===1?"top1":r.rank===2?"top2":r.rank===3?"top3":""}">${r.rank}</span><span class="lb-name">${escapeHTML(r.studentName||"Student")}</span><span class="lb-score">${Number(r.score)}/${Number(r.total)} · ${Number(r.percentage)}%</span></div>`).join("");
   return `<section class="exam-board"><div class="exam-board-head"><div><span class="pill">${escapeHTML(subjectName(test.subjectId))}</span><h3>${escapeHTML(test.title)}</h3></div><span class="muted">${test.createdAt?.toDate?test.createdAt.toDate().toLocaleDateString("en-IN"):"Recent exam"}</span></div>${rowHtml||"<p class='muted'>এই পরীক্ষার graded result এখনো নেই।</p>"}</section>`;
  });
- const leaderboardHTML=cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>";
+ const leaderboardHTML=loadLeaderboard?(cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>"):"<p class='muted'>Leaderboard background-এ load হচ্ছে…</p>";
  $("homeLeaderboard").innerHTML=leaderboardHTML;
 
  const graded=mine.filter(a=>Number.isFinite(Number(a.percentage))),avg=graded.length?Math.round(graded.reduce((s,a)=>s+Number(a.percentage),0)/graded.length):null,best=graded.length?Math.max(...graded.map(a=>Number(a.percentage))):null;
  $("homeTests").textContent=mine.length;$("homeAvg").textContent=avg==null?"—":avg+"%";$("homeBest").textContent=best==null?"—":best+"%";
  const newest=latestTests[0],latestRows=newest?entries.filter(x=>x.testId===newest.id).sort((a,b)=>Number(b.percentage)-Number(a.percentage)):[];let rank="—",last=null,currentRank=0;latestRows.forEach((r,i)=>{if(Number(r.percentage)!==last)currentRank=i+1;if(r.uid===auth.currentUser.uid)rank="#"+currentRank;last=Number(r.percentage);});$("homeRank").textContent=rank;
  const weakest=topicRows[0];$("homeFocus").innerHTML=weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD?`<div><b>🎯 Revision focus: ${escapeHTML(weakest.label)} (${weakest.pct}%)</b><button id="homeWeakHelp" class="secondary">✨ Solve with ChatGPT</button></div>`:"<span>✅ কোনো topic 60%-এর নিচে নেই—নিয়মিত revision চালিয়ে যাও।</span>";if(weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD)$("homeWeakHelp").onclick=()=>openChatGPTPrompt(weakTopicPrompt(weakest));
- renderRevisionCentre();renderSmartDashboard();renderTests();renderVivaTopics();
+ renderRevisionCentre();renderSmartDashboard();renderTests();renderVivaTopics();renderNovaSystem();
 }
 
 $("printReport").onclick=()=>{
@@ -894,6 +934,58 @@ $("pracFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;
 $("pracPreview").onclick=()=>practiceParseAndPreview(true);
 $("pracStart").onclick=()=>renderPracticeQuiz(practiceParseAndPreview(false));
 $("pracAuto").onclick=()=>{const count=Math.min(20,Math.max(3,Number($("pracCount").value)||5)),qs=adaptivePracticeQuestions(count);if(!qs.length)return showToast("Auto practice-এর জন্য graded review এখনো নেই");$("pracImportStatus").textContent=`⚡ তোমার recent performance থেকে ${qs.length}টি question তৈরি হয়েছে — ভুল প্রশ্নগুলো আগে।`;$("pracImportPreview").innerHTML="";renderPracticeQuiz(qs);};
+
+/* ---------- NOVA v7: READINESS / AUTOPILOT / FOCUS / STUDY MEMORY ---------- */
+let novaAction=null,focusTotal=25*60,focusLeft=25*60,focusRunning=false,focusTick=null,focusUnsaved=0,ambientCtx=null,ambientSource=null,ambientGain=null;
+const studyKey=()=>`novaStudySeconds:${auth.currentUser?.uid||'guest'}`;
+function studyLog(){try{return JSON.parse(localStorage.getItem(studyKey())||'{}')||{};}catch{return {};}}
+function saveStudySeconds(seconds){if(seconds<=0)return;const data=studyLog(),d=todayStr();data[d]=(Number(data[d])||0)+Math.round(seconds);localStorage.setItem(studyKey(),JSON.stringify(data));renderStudyHeatmap();if($('novaFocusToday'))$('novaFocusToday').textContent=`${Math.floor((data[d]||0)/60)}m`;}
+function attemptDay(a){const d=a.submittedAt?.toDate?a.submittedAt.toDate():(a.submittedAt?.seconds?new Date(Number(a.submittedAt.seconds)*1000):null);return d&&!Number.isNaN(d.getTime())?d.toISOString().slice(0,10):'';}
+function overallTopicRows(){const map={};progressMine.forEach(a=>(a.topicStats?Object.entries(a.topicStats):[]).forEach(([topic,st])=>{if(!map[topic])map[topic]={correct:0,total:0};map[topic].correct+=Number(st.correct)||0;map[topic].total+=Number(st.total)||0;}));return Object.entries(map).filter(([,v])=>v.total>0).map(([label,v])=>({label,correct:v.correct,total:v.total,pct:Math.round(v.correct/v.total*100)})).sort((a,b)=>a.pct-b.pct);}
+function readinessSignal(){
+ const graded=[...progressMine].filter(a=>Number.isFinite(Number(a.percentage))).sort((a,b)=>(b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
+ const recent=graded.slice(0,5),accuracy=recent.length?recent.reduce((s,a)=>s+Number(a.percentage),0)/recent.length:45;
+ const topics=overallTopicRows(),weak=topics.filter(t=>t.pct<60).length,topicCoverage=topics.length?Math.max(25,100-Math.min(70,weak*12)):45;
+ const streak=Math.min(7,Number(profile?.streak?.count)||0),consistency=35+streak/7*65;
+ let confTotal=0,confGood=0;graded.slice(0,6).forEach(a=>(a.review||[]).forEach((r,i)=>{const c=a.confidence?.['q'+i];if(!c)return;confTotal++;if((r.isCorrect&&c==='sure')||(!r.isCorrect&&c!=='sure'))confGood++;}));
+ const calibration=confTotal?confGood/confTotal*100:60;
+ const now=todayStr(),pending=assignments.filter(a=>!doneAssignmentIds.has(a.id)),urgent=pending.filter(a=>a.dueDate&&a.dueDate<=now).length,pressure=Math.min(100,urgent*32+Math.max(0,pending.length-urgent)*7);
+ const score=Math.max(5,Math.min(99,Math.round(accuracy*.48+topicCoverage*.22+consistency*.18+calibration*.12-pressure*.08)));
+ const label=score>=85?'Launch Ready':score>=70?'Strong':score>=55?'Building':score>=40?'Needs Focus':'Recovery Mode';
+ return {score,label,accuracy:Math.round(accuracy),topicCoverage:Math.round(topicCoverage),consistency:Math.round(consistency),calibration:Math.round(calibration),pressure,weak,graded:graded.length};
+}
+function nextBestAction(){
+ const now=todayStr(),pending=[...assignments].filter(a=>!doneAssignmentIds.has(a.id)).sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+ const overdue=pending.find(a=>a.dueDate&&a.dueDate<now),due=pending.find(a=>a.dueDate===now),topics=overallTopicRows(),weak=topics[0];
+ const attempted=new Set(progressMine.filter(a=>a.status==='submitted').map(a=>a.testId)),available=tests.find(t=>!attempted.has(t.id));
+ if(overdue)return {kind:'assignment',title:`Finish overdue: ${overdue.title}`,reason:`Deadline ${overdue.dueDate} · highest immediate risk`,tab:'assignments',id:overdue.id};
+ if(weak&&weak.pct<50)return {kind:'weak',title:`Repair ${weak.label}`,reason:`${weak.pct}% accuracy · biggest knowledge gap`,tab:'tests',topic:weak.label};
+ if(due)return {kind:'assignment',title:`Complete today: ${due.title}`,reason:'Due today · protect your schedule',tab:'assignments',id:due.id};
+ if(available)return {kind:'test',title:`Attempt ${available.title}`,reason:'Published test not attempted yet',tab:'tests',id:available.id};
+ if(weak&&weak.pct<75)return {kind:'weak',title:`Strengthen ${weak.label}`,reason:`${weak.pct}% accuracy · fastest score gain`,tab:'revision',topic:weak.label};
+ const note=notes[0];if(note)return {kind:'note',title:`10-minute recall: ${note.chapter||note.title}`,reason:'No urgent gaps · keep memory active',tab:'notes',id:note.id};
+ return {kind:'explore',title:'Run a Smart Practice Feed',reason:'Build enough learning data for a sharper recommendation',tab:'tests'};
+}
+function runNovaAction(){const a=novaAction||nextBestAction();if(a.kind==='weak'){openTab('tests');$('pracTopic').value=a.topic||'';setTimeout(()=>{const count=Math.min(8,Math.max(5,Number($('pracCount').value)||5)),focused=smartFeedPool().filter(q=>q.topic===a.topic).slice(0,count),qs=focused.length>=3?focused:adaptivePracticeQuestions(count);if(qs.length)renderPracticeQuiz(qs);else $('pracTopic').scrollIntoView({behavior:'smooth',block:'center'});},100);return;}openTab(a.tab||'home');if(a.kind==='note'&&a.id){const n=notes.find(x=>x.id===a.id);$('noteSearch').value=n?.title||'';renderNotes();}if(a.kind==='test'&&a.id){const t=tests.find(x=>x.id===a.id);$('testSearch').value=t?.title||'';renderTests();}if(a.kind==='assignment'&&a.id)setTimeout(()=>document.querySelector(`[data-assignment-id="${CSS.escape(a.id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
+function rescuePlan(){const sig=readinessSignal(),topics=overallTopicRows().slice(0,2),pending=assignments.filter(a=>!doneAssignmentIds.has(a.id))[0],steps=[];if(topics[0])steps.push(`12 min · Recall + practice ${topics[0].label}`);if(pending)steps.push(`15 min · Move ${pending.title} forward`);steps.push(`${sig.score<60?'10':'7'} min · Closed-book self-test`);steps.push('3 min · Review only the mistakes');return steps.slice(0,4);}
+function renderNovaSystem(){
+ if(!$('novaReadiness'))return;const sig=readinessSignal(),a=nextBestAction();novaAction=a;$('novaReadiness').textContent=sig.score;$('novaReadinessRing').style.setProperty('--readiness',sig.score);$('novaHeadline').textContent=a.title;$('novaReason').textContent=a.reason;$('novaMomentum').textContent=sig.consistency>=75?'High':sig.consistency>=50?'Steady':'Low';$('novaPressure').textContent=sig.pressure>=60?'High':sig.pressure>=25?'Medium':'Low';const mins=Math.floor((studyLog()[todayStr()]||0)/60);$('novaFocusToday').textContent=`${mins}m`;renderReadinessLab(sig);renderKnowledgeConstellation();renderStudyHeatmap();
+}
+$('novaActionBtn').onclick=runNovaAction;
+$('novaRescueBtn').onclick=()=>{const box=$('novaRescuePlan'),open=!box.classList.contains('hidden');if(open){box.classList.add('hidden');return;}box.innerHTML=`<b>⚡ Fast Rescue Sequence</b>${rescuePlan().map((x,i)=>`<span><i>${i+1}</i>${escapeHTML(x)}</span>`).join('')}`;box.classList.remove('hidden');};
+function renderReadinessLab(sig=readinessSignal()){if(!$('readinessBreakdown'))return;$('readinessGrade').textContent=`${sig.score}% · ${sig.label}`;const rows=[['Recent accuracy',sig.accuracy],['Topic coverage',sig.topicCoverage],['Consistency',sig.consistency],['Confidence calibration',sig.calibration]];$('readinessBreakdown').innerHTML=rows.map(([label,v])=>`<div class="readiness-row"><div><span>${label}</span><b>${v}%</b></div><div class="readiness-track"><i style="width:${v}%"></i></div></div>`).join('')+`<div class="readiness-note">${sig.weak?`${sig.weak} weak topic${sig.weak===1?'':'s'} detected.`:'No sub-60% topic detected.'} ${sig.pressure?`Deadline pressure ${sig.pressure}%.`:''}</div>`;}
+function renderKnowledgeConstellation(){if(!$('learningConstellation'))return;const rows=overallTopicRows().slice(0,7);if(!rows.length){$('learningConstellation').innerHTML='<p class="muted">Topic-level graded data দরকার।</p>';return;}const pos=[[14,24],[48,12],[82,24],[18,70],[50,84],[82,70],[50,48]];const lines=rows.map((_,i)=>`<line x1="50" y1="50" x2="${pos[i][0]}" y2="${pos[i][1]}"/>`).join('');$('learningConstellation').innerHTML=`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g>${lines}</g><circle cx="50" cy="50" r="4"/></svg><div class="constellation-core">YOU</div>`+rows.map((r,i)=>`<button type="button" class="constellation-node ${r.pct>=80?'strong':r.pct<60?'weak':''}" style="--cx:${pos[i][0]}%;--cy:${pos[i][1]}%" data-topic="${encodeURIComponent(r.label)}"><b>${r.pct}%</b><span>${escapeHTML(r.label)}</span></button>`).join('');document.querySelectorAll('.constellation-node').forEach(b=>b.onclick=()=>{openTab('tests');$('pracTopic').value=decodeURIComponent(b.dataset.topic);$('pracTopic').scrollIntoView({behavior:'smooth',block:'center'});});}
+function renderStudyHeatmap(){if(!$('studyHeatmap'))return;const log=studyLog(),attemptCounts={};progressMine.forEach(a=>{const d=attemptDay(a);if(d)attemptCounts[d]=(attemptCounts[d]||0)+1;});const cells=[];let totalSec=0;for(let i=20;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const key=d.toISOString().slice(0,10),sec=Number(log[key])||0,testsDone=attemptCounts[key]||0;totalSec+=sec;const points=sec/600+testsDone*2,level=points>=6?4:points>=3?3:points>=1?2:points>0?1:0;cells.push(`<span class="heat-cell l${level}" title="${key}: ${Math.floor(sec/60)} focus min, ${testsDone} test(s)"><i>${d.getDate()}</i></span>`);}$('studyHeatmap').innerHTML=cells.join('');$('studyMinutesPill').textContent=`${Math.floor(totalSec/60)} min / 21d`;}
+function focusFormat(sec){return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;}
+function renderFocus(){if(!$('focusTimer'))return;$('focusTimer').textContent=focusFormat(focusLeft);$('focusProgress').style.width=`${Math.max(0,Math.min(100,(1-focusLeft/focusTotal)*100))}%`;$('focusStart').textContent=focusRunning?'⏸ Pause':'▶ Start Focus';}
+function flushFocus(){if(focusUnsaved>0){saveStudySeconds(focusUnsaved);focusUnsaved=0;}}
+function openFocusCapsule(){const a=novaAction||nextBestAction();$('focusGoal').textContent=a.title;$('focusGoalMeta').textContent=a.reason;$('focusOverlay').classList.remove('hidden');$('focusOverlay').setAttribute('aria-hidden','false');document.body.classList.add('focus-open');renderFocus();}
+function closeFocusCapsule(){if(focusRunning){focusRunning=false;clearInterval(focusTick);focusTick=null;}flushFocus();stopAmbient();$('focusOverlay').classList.add('hidden');$('focusOverlay').setAttribute('aria-hidden','true');document.body.classList.remove('focus-open');renderFocus();}
+function setFocusMinutes(min){if(focusRunning)return;focusTotal=focusLeft=Number(min)*60;document.querySelectorAll('.focus-preset').forEach(b=>b.classList.toggle('active',Number(b.dataset.min)===Number(min)));renderFocus();}
+function focusToggle(){if(focusRunning){focusRunning=false;clearInterval(focusTick);focusTick=null;flushFocus();$('focusStatus').textContent='Paused. Your progress is saved locally.';renderFocus();return;}focusRunning=true;$('focusStatus').textContent='Capsule active · one task only.';focusTick=setInterval(()=>{focusLeft--;focusUnsaved++;if(focusUnsaved>=30)flushFocus();renderFocus();if(focusLeft<=0){focusRunning=false;clearInterval(focusTick);focusTick=null;flushFocus();stopAmbient();$('focusStatus').textContent='Session complete. Nice work.';playChime('perfect');navigator.vibrate?.([80,60,120]);confettiBurst(50);focusLeft=focusTotal;renderFocus();}},1000);renderFocus();}
+function startAmbient(){try{ambientCtx=ambientCtx||new (window.AudioContext||window.webkitAudioContext)();if(ambientCtx.state==='suspended')ambientCtx.resume();const len=ambientCtx.sampleRate*2,buffer=ambientCtx.createBuffer(1,len,ambientCtx.sampleRate),data=buffer.getChannelData(0);let last=0;for(let i=0;i<len;i++){const white=Math.random()*2-1;last=(last+.02*white)/1.02;data[i]=last*3.5;}ambientSource=ambientCtx.createBufferSource();ambientGain=ambientCtx.createGain();ambientGain.gain.value=.045;ambientSource.buffer=buffer;ambientSource.loop=true;ambientSource.connect(ambientGain);ambientGain.connect(ambientCtx.destination);ambientSource.start();$('focusAmbient').textContent='◉ Deep Noise: On';}catch{showToast('Ambient audio unavailable');}}
+function stopAmbient(){try{ambientSource?.stop();}catch{}ambientSource=null;$('focusAmbient').textContent='◌ Deep Noise: Off';}
+$('focusCapsuleBtn').onclick=openFocusCapsule;$('focusClose').onclick=closeFocusCapsule;$('focusStart').onclick=focusToggle;$('focusAmbient').onclick=()=>ambientSource?stopAmbient():startAmbient();document.querySelectorAll('.focus-preset').forEach(b=>b.onclick=()=>setFocusMinutes(b.dataset.min));document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('focusOverlay').classList.contains('hidden'))closeFocusCapsule();});window.addEventListener('beforeunload',flushFocus);
 
 /* ---------- ULTIMATE LAB: BOSS / DUEL / VIVA ---------- */
 let bossState=null,duelState=null,vivaRecognition=null;

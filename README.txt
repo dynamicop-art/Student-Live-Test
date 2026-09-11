@@ -440,3 +440,13 @@ COMPATIBILITY
 - Old attempts without confidence or answerTimeline continue to render normally.
 - Old results without replay data simply do not show the Replay button.
 - Existing grading, leaderboard, notes, assignments, doubts, bookmarks, streaks and teacher/admin pages remain compatible.
+
+
+============================================================
+NOVA v7 UPDATE — COMPETITION BUILD
+============================================================
+- Student-side NOVA Adaptive Engine adds explainable readiness, Next Best Action, Rescue Plan, Focus Capsule, 21-day local learning heatmap and interactive Learning Constellation.
+- No new Firebase collection or paid API is required.
+- Firestore rules are unchanged from Ultimate v6/v6.1.
+- Deploy by replacing files in the existing GitHub repository root and hard refreshing once.
+- Focus Capsule study time is stored locally in the current browser/device only.
