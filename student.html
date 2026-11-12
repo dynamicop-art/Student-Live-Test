@@ -25,12 +25,12 @@
   section.hero.topbar .learn-symbol{display:none!important} section.hero.topbar .star,section.hero.topbar .sparkle-sweep{display:block!important}
 }
 @media(max-width:370px){section.hero.topbar{grid-template-columns:minmax(0,1fr) 62px!important;padding:56px 11px 13px!important;gap:6px!important}section.hero.topbar .profile-orbit{width:52px!important;height:52px!important;flex-basis:52px!important}section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:44px!important;height:44px!important}section.hero.topbar h1{font-size:17px!important}section.hero.topbar p#who{font-size:9.5px!important}section.hero.topbar>button#logout{min-width:62px!important;padding:8px 6px!important;font-size:10px!important}}
-</style></head>
+</style><link rel="stylesheet" href="refresh.css?v=10"></head>
 <body>
 <div class="fab-row"><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
 <div class="wrap">
 <section class="hero topbar">
-  <div class="avatar-row"><span class="profile-orbit" id="profileEffect"><span id="avatarBox"></span><i class="online-dot" title="Online"></i></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
+  <div class="avatar-row"><span class="profile-orbit" id="profileEffect" role="button" tabindex="0" aria-label="Change profile picture" title="Change profile picture"><span id="avatarBox"></span><i class="online-dot" title="Online"></i></span><div><div class="brand-line"><span class="brand-dot"></span> Arpan Learning Suite</div><h1 id="welcome">My Learning Hub</h1><p id="who"></p></div></div>
   <button id="logout" class="secondary">Logout</button>
 </section>
 <nav class="nav student-nav">
@@ -49,7 +49,7 @@
   <button id="quickFindBtn" type="button" class="secondary utility-btn">⌘ Quick Find</button>
   <button id="installAppBtn" type="button" class="secondary utility-btn hidden">⬇ Install App</button>
   <span id="networkBadge" class="network-badge" aria-live="polite">● Online</span>
-  <span class="version-badge">RESTORED v9</span>
+  <span class="version-badge">STUDY EDITION · 10</span>
 </div>
 
 <!-- ================= HOME ================= -->
@@ -67,6 +67,13 @@
       <button class="smart-tile" id="continueBtn" type="button"><span>↗ Continue</span><b id="continueTitle">Open Notes</b><small id="continueMeta">Resume your last section</small></button>
     </div>
   </div>
+
+  <section class="card study-desk" aria-labelledby="deskTitle">
+    <div class="desk-heading"><div><span class="section-kicker">A LITTLE PROGRESS, EVERY DAY</span><h2 id="deskTitle">Your study desk</h2><p class="muted">ছোট লক্ষ্য ঠিক করো। এক এক করে এগিয়ে যাও।</p></div><img src="study-art.svg" width="144" height="104" alt="" aria-hidden="true"></div>
+    <div class="desk-grid"><div><form id="taskForm"><label for="taskInput">My checklist</label><div class="desk-input"><input id="taskInput" maxlength="160" placeholder="e.g. Revise one chapter" required><button type="submit">Add</button></div></form><div id="deskTasks"></div><p id="deskProgress" class="muted"></p><progress id="deskMeter" max="1" value="0" aria-label="Checklist completion"></progress></div>
+    <div><label for="deskNote">Quick notes</label><textarea id="deskNote" rows="4" maxlength="5000" placeholder="Ideas, formulas, things to revise…"></textarea><p id="deskSave" role="status" class="muted">Saved on this device, for your account.</p></div></div>
+    <div class="desk-footer"><span id="deadlineSummary" role="status">Loading assignment deadlines…</span><button id="exportDeadlines" type="button" class="secondary" disabled>↓ Add deadlines to calendar</button></div>
+  </section>
 
   <div class="home-primary-grid">
     <div class="card mission-card compact-home-card">
@@ -221,6 +228,7 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
 </div>
 
 <script type="module">
+import {initStudyDesk, updateDeadlines} from "./study-desk.js";
 let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};
 try{const fx=await import("./effects.js?v=9.0-stable");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -280,6 +288,7 @@ onAuthStateChanged(auth,async u=>{
  const p=await getDoc(doc(db,"users",u.uid));if(!p.exists()){await signOut(auth);location.href="index.html";return;}
  profile=p.data();$("welcome").textContent=`Hi, ${profile.name} 👋`;$("who").textContent=`${profile.className} · ${profile.email}`;
  renderAvatar();
+ initStudyDesk(u.uid);
  const streakTask=updateStreak().then(()=>{renderBadges();renderXP(progressMine.length);}).catch(e=>console.warn("streak update deferred",e));
  await loadData();
  await streakTask;
@@ -308,7 +317,8 @@ function renderAvatar(){
  const initial=(profile.name||"?").trim().charAt(0).toUpperCase();
  $("avatarBox").innerHTML=profile.avatarData?`<img class="avatar" src="${escapeHTML(profile.avatarData)}" alt="avatar">`:`<span class="avatar-placeholder">${escapeHTML(initial)}</span>`;
 }
-$("profileEffect").onclick=()=>{confettiBurst(24);playChime("click");toast("Profile sparkle!","✨");};
+$("profileEffect").onclick=()=>{openTab("home");$("homeMorePanel").open=true;$("avatarFile").scrollIntoView({behavior:"smooth",block:"center"});$("avatarFile").focus();};
+$("profileEffect").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("profileEffect").click();}};
 $("openProgress").onclick=()=>openTab("progress");
 $("historyToProgress").onclick=()=>openTab("progress");
 function weeklyGoalValue(){const value=Number(localStorage.getItem(`weeklyGoal:${auth.currentUser?.uid||"guest"}`));return value>=1&&value<=7?value:3;}
@@ -681,7 +691,7 @@ function printQuestionPaper(test){
  if(!test?.questions?.length)return showToast("Question paper পাওয়া যায়নি");
  const body=test.questions.map((q,i)=>`<section><b>${i+1}. ${escapeHTML(q.q)}</b>${q.o.map((o,j)=>`<div>${String.fromCharCode(65+j)}. ${escapeHTML(o)}</div>`).join("")}</section>`).join("");
  const w=window.open("","_blank");if(!w)return showToast("Popup blocked");
- w.document.write(`<html><head><title>${escapeHTML(test.title)}</title><style>body{font-family:sans-serif;padding:28px;color:#222}header{border-bottom:2px solid #6d28d9;margin-bottom:20px}section{break-inside:avoid;margin:18px 0;line-height:1.6}section div{margin-left:20px}</style></head><body><header><h1>${escapeHTML(test.title)}</h1><p>${escapeHTML(profile.className)} · ${escapeHTML(test.chapter||"")}</p></header>${body}<p>Answer key intentionally excluded.</p></body></html>`);w.document.close();w.print();
+ w.document.write(`<html><head><title>${escapeHTML(test.title)}</title><style>body{font-family:sans-serif;padding:28px;color:#222}header{border-bottom:2px solid #6d28d9;margin-bottom:20px}section{break-inside:avoid;margin:18px 0;line-height:1.6}section div{margin-left:20px}</style><link rel="stylesheet" href="refresh.css?v=10"></head><body><header><h1>${escapeHTML(test.title)}</h1><p>${escapeHTML(profile.className)} · ${escapeHTML(test.chapter||"")}</p></header>${body}<p>Answer key intentionally excluded.</p></body></html>`);w.document.close();w.print();
 }
 
 /* ---------- ASSIGNMENTS ---------- */
@@ -694,6 +704,7 @@ function dueTag(dueDate){
  return`<span class="due-tag due-ok">Due ${dueDate}</span>`;
 }
 function renderAssignments(){
+ updateDeadlines(assignments.filter(a=>!doneAssignmentIds.has(a.id)));
  const sorted=[...assignments].sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
  $("asgList").innerHTML=sorted.map(a=>{
   const done=doneAssignmentIds.has(a.id);
@@ -801,7 +812,7 @@ async function loadProgressAndLeaderboard(useCache=false,loadLeaderboard=true){
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);
   const w=window.open("","_blank");
-  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
+  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style><link rel="stylesheet" href="refresh.css?v=10"></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
   w.document.close();w.print();
  });
 
@@ -833,7 +844,7 @@ $("printReport").onclick=()=>{
  const avg=Math.round(reportAttempts.filter(a=>a.percentage!=null).reduce((s,a)=>s+a.percentage,0)/Math.max(1,reportAttempts.filter(a=>a.percentage!=null).length));
  const rows=x=>x.map(r=>`<tr><td>${escapeHTML(r.label)}</td><td>${r.pct}%</td></tr>`).join("");
  const history=reportAttempts.map(a=>`<tr><td>${escapeHTML(a.testTitle)}</td><td>${a.score??"—"}/${a.total??"—"} (${a.percentage??"—"}%)</td></tr>`).join("");
- const w=window.open("","_blank");if(!w)return showToast("Popup blocked");w.document.write(`<html><head><title>Progress Report</title><style>body{font-family:sans-serif;padding:35px;color:#222}h1,h2{color:#6d28d9}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #ddd}</style></head><body><h1>Arpan Learning Suite</h1><p>${escapeHTML(profile.name)} · ${escapeHTML(profile.className)}</p><h2>Overall Average: ${avg}%</h2><h2>Subjects</h2><table>${rows(reportSubjects)}</table><h2>Topics</h2><table>${rows(reportTopics)}</table><h2>Test History</h2><table>${history}</table></body></html>`);w.document.close();w.print();
+ const w=window.open("","_blank");if(!w)return showToast("Popup blocked");w.document.write(`<html><head><title>Progress Report</title><style>body{font-family:sans-serif;padding:35px;color:#222}h1,h2{color:#6d28d9}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #ddd}</style><link rel="stylesheet" href="refresh.css?v=10"></head><body><h1>Arpan Learning Suite</h1><p>${escapeHTML(profile.name)} · ${escapeHTML(profile.className)}</p><h2>Overall Average: ${avg}%</h2><h2>Subjects</h2><table>${rows(reportSubjects)}</table><h2>Topics</h2><table>${rows(reportTopics)}</table><h2>Test History</h2><table>${history}</table></body></html>`);w.document.close();w.print();
 };
 
 let currentPracticeQuestions=[];
