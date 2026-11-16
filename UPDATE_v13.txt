@@ -1,0 +1,27 @@
+VIVID COLOUR & MOTION EDITION — v13
+
+New look
+- Saturated purple/pink/blue gradient headers and focus banner.
+- Pink, blue, lavender and mint shortcut cards instead of plain white surfaces.
+- Colourful login and class-chat pages, plus matching dark-mode colours.
+
+Motion
+- Decorative learning symbols rise behind the page (fewer on mobile).
+- Section navigation uses a short upward reveal and a colour sweep.
+- Button taps show a small ripple. Navigation never waits for animations.
+- Rapid navigation cancels the previous section animation.
+- Background effects pause when the page is hidden.
+- Calm mode and system Reduced Motion disable decorative animations.
+
+INSTALL
+Upload ALL files in Student-Live-Test-main, including vivid.css and vivid-motion.js.
+The service-worker version has been updated. Reload or close/reopen the site after upload.
+No new Firebase rule changes in v13. If upgrading from before v12, follow
+START_HERE_v12.txt and publish the included firestore.rules for chat/photo sharing.
+
+VALIDATION
+All 18 JavaScript/inline scripts parse; all service-worker assets exist.
+Local fixture tests passed for navigation and motion cancellation, reduced-motion
+and Calm opt-outs, timer, arcade, chat payload handling and study-desk persistence.
+Actual browser rendering, live Firebase permissions and device animation performance
+have not been verified. Previous live acceptance checks remain in START_HERE_v12.txt.

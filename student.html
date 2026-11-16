@@ -25,7 +25,7 @@
   section.hero.topbar .learn-symbol{display:none!important} section.hero.topbar .star,section.hero.topbar .sparkle-sweep{display:block!important}
 }
 @media(max-width:370px){section.hero.topbar{grid-template-columns:minmax(0,1fr) 62px!important;padding:56px 11px 13px!important;gap:6px!important}section.hero.topbar .profile-orbit{width:52px!important;height:52px!important;flex-basis:52px!important}section.hero.topbar .profile-orbit .avatar,section.hero.topbar .profile-orbit .avatar-placeholder{width:44px!important;height:44px!important}section.hero.topbar h1{font-size:17px!important}section.hero.topbar p#who{font-size:9.5px!important}section.hero.topbar>button#logout{min-width:62px!important;padding:8px 6px!important;font-size:10px!important}}
-</style><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="premium.css?v=11"></head>
+</style><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="premium.css?v=11"><link rel="stylesheet" href="learning-plus.css?v=12"><link rel="stylesheet" href="finish.css?v=12.1"><link rel="stylesheet" href="vivid.css?v=13"></head>
 <body>
 <div class="fab-row"><button id="soundBtn" class="sound-fab" type="button" title="Toggle sound">🔇</button><button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button></div>
 <div class="wrap">
@@ -106,7 +106,7 @@
       <div class="card"><h2>⏱️ Pomodoro Study Timer</h2><div class="pomo-box"><div class="pomo-ring" id="pomoRing" data-time="25:00" style="--pct:0"></div><div><div class="row" style="max-width:280px"><select id="pomoMode"><option value="25">Focus 25 min</option><option value="5">Short break 5 min</option><option value="15">Long break 15 min</option></select></div><div class="pomo-actions"><button id="pomoStart" class="secondary">▶️ Start</button><button id="pomoPause" class="secondary">⏸️ Pause</button><button id="pomoReset" class="secondary">🔄 Reset</button></div></div></div></div>
 
       <div class="home-mini-tools">
-        <div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">150 KB-এর কম ছবি ব্যবহার করো।</p><div class="row"><input id="avatarFile" type="file" accept="image/*"><button id="saveAvatar" class="secondary">Save Picture</button></div><p id="avatarMsg" class="muted"></p></div>
+        <div class="card"><h2>🖼️ Profile Picture</h2><p class="muted">JPG, PNG বা WebP (সর্বোচ্চ 10 MB) — ছবি নিজে থেকেই ছোট হবে।</p><div class="row"><input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp"><button id="saveAvatar" class="secondary">Save Picture</button></div><p id="avatarMsg" class="muted"></p></div>
         <div class="card"><h2>📚 My Subjects</h2><div id="subjects" class="grid"></div></div>
       </div>
     </div>
@@ -230,6 +230,7 @@ TOPIC: Topic"></textarea><div class="practice-import-actions"><button id="pracPr
 <script src="premium-shell.js?v=11"></script>
 <script type="module">
 import {initStudyDesk, updateDeadlines} from "./study-desk.js";
+import {initLearningPlus,compressAvatar} from "./learning-plus.js";
 let confettiBurst=()=>{},playChime=()=>{},toast=()=>{},isSoundOn=()=>false,setSoundOn=()=>{},mountBlobs=()=>{},mountCardTilt=()=>{},mountButtonRipples=()=>{},mountHeroSparkle=()=>{};
 try{const fx=await import("./effects.js?v=9.0-stable");({confettiBurst,playChime,toast,isSoundOn,setSoundOn,mountBlobs,mountCardTilt,mountButtonRipples,mountHeroSparkle}=fx);mountBlobs();mountHeroSparkle();mountCardTilt();mountButtonRipples();}catch(e){console.warn("Optional effects unavailable",e);}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -290,6 +291,7 @@ onAuthStateChanged(auth,async u=>{
  profile=p.data();$("welcome").textContent=`Hi, ${profile.name} 👋`;$("who").textContent=`${profile.className} · ${profile.email}`;
  renderAvatar();
  initStudyDesk(u.uid);renderFocusWeek();
+ try{initLearningPlus({db,user:u,profile,getReviews:()=>reportAttempts.flatMap(a=>a.review||[])});}catch(e){console.error("Learning extras unavailable",e);showToast("Some extras could not load. Your core study tools are still available.");}
  const streakTask=updateStreak().then(()=>{renderBadges();renderXP(progressMine.length);}).catch(e=>console.warn("streak update deferred",e));
  await loadData();
  await streakTask;
@@ -300,14 +302,14 @@ onAuthStateChanged(auth,async u=>{
 const MORE_TABS=new Set(["assignments","revision","progress","history","games","doubts","desk","updates","account"]);
 function closeMoreNav(){$("moreNavSheet").classList.add("hidden");$("moreNavSheet").setAttribute("aria-hidden","true");}
 function openTab(tabId,{remember=true,scroll=true}={}){
- const target=$(tabId);if(!target)return;
+ const target=$(tabId);if(!target||!target.classList.contains("tab"))return;
  document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));target.classList.remove("hidden");
- document.querySelectorAll(".nav button[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===tabId));
+ document.querySelectorAll(".nav button[data-tab]").forEach(x=>{const active=x.dataset.tab===tabId;x.classList.toggle("active",active);x.setAttribute("aria-current",active?"page":"false");});
  $("moreNavBtn").classList.toggle("active",MORE_TABS.has(tabId));
  if(remember&&auth.currentUser)localStorage.setItem(`lastTab:${auth.currentUser.uid}`,tabId);
- closeMoreNav();if(scroll)window.scrollTo({top:0,behavior:"smooth"});renderSmartDashboard();
+ closeMoreNav();if(scroll){window.scrollTo({top:0,behavior:"smooth"});target.setAttribute("tabindex","-1");target.focus({preventScroll:true});}document.dispatchEvent(new CustomEvent("learning:section",{detail:{id:tabId}}));renderSmartDashboard();
 }
-document.querySelectorAll(".nav button[data-tab]").forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
+document.querySelectorAll(".nav button[data-tab]").forEach(b=>{b.setAttribute("aria-current",b.dataset.tab==="home"?"page":"false");const section=$(b.dataset.tab);if(section)section.setAttribute("aria-label",b.textContent.trim());b.onclick=()=>openTab(b.dataset.tab);});
 $("moreNavBtn").onclick=()=>{$("moreNavSheet").classList.remove("hidden");$("moreNavSheet").setAttribute("aria-hidden","false");};
 $("closeMoreNav").onclick=closeMoreNav;$("closeMoreNavTop").onclick=closeMoreNav;
 document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>openTab(b.dataset.openTab));
@@ -327,19 +329,19 @@ function renderWeeklyGoal(attempts=reportAttempts){const goal=weeklyGoalValue(),
 $("weeklyGoal").onchange=()=>{localStorage.setItem(`weeklyGoal:${auth.currentUser.uid}`,String($("weeklyGoal").value));renderWeeklyGoal();toast("Weekly goal updated","🎯");};
 function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 $("saveAvatar").onclick=async()=>{
+ const button=$("saveAvatar");if(button.disabled)return;button.disabled=true;
  try{
    const f=$("avatarFile").files[0];
    if(!f)throw new Error("প্রথমে একটা ছবি বেছে নাও।");
-   if(f.size>150*1024)throw new Error("ছবি 150 KB এর মধ্যে হতে হবে।");
-   const dataUrl=await fileToDataUrl(f);
+   const dataUrl=await compressAvatar(f);
    await updateDoc(doc(db,"users",auth.currentUser.uid),{avatarData:dataUrl});
-   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";
- }catch(e){$("avatarMsg").textContent=e.message;}
+   profile.avatarData=dataUrl;renderAvatar();$("avatarMsg").textContent="✅ Profile picture updated.";document.dispatchEvent(new Event("avatar-saved"));
+ }catch(e){$("avatarMsg").textContent=e.message;}finally{button.disabled=false;}
 };
 
 /* ---------- STREAK ---------- */
-function todayStr(){return new Date().toISOString().slice(0,10);}
-function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
+function todayStr(){return focusDay();}
+function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return focusDay(d);}
 async function updateStreak(){
  const streak=profile.streak||{count:0,lastDate:""};
  const today=todayStr();
@@ -711,7 +713,7 @@ function dueTag(dueDate){
  const today=todayStr();
  if(dueDate<today)return`<span class="due-tag due-late">Overdue</span>`;
  const soon=new Date();soon.setDate(soon.getDate()+2);
- if(dueDate<=soon.toISOString().slice(0,10))return`<span class="due-tag due-soon">Due soon</span>`;
+ if(dueDate<=focusDay(soon))return`<span class="due-tag due-soon">Due soon</span>`;
  return`<span class="due-tag due-ok">Due ${dueDate}</span>`;
 }
 function renderAssignments(){
@@ -719,14 +721,16 @@ function renderAssignments(){
  const sorted=[...assignments].sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
  $("asgList").innerHTML=sorted.map(a=>{
   const done=doneAssignmentIds.has(a.id);
-  return `<div class="item assign-item ${done?"done":""}" data-assignment-id="${escapeHTML(a.id)}"><input type="checkbox" class="asgCheck" data-id="${a.id}" ${done?"checked":""}>
-  <div style="flex:1"><span class="pill">${subjectName(a.subjectId)}</span> ${dueTag(a.dueDate)}<h3>${a.title}</h3><p class="muted">${a.description||""}</p></div></div>`;
+  return `<div class="item assign-item ${done?"done":""}" data-assignment-id="${escapeHTML(a.id)}"><input type="checkbox" class="asgCheck" data-id="${escapeHTML(a.id)}" ${done?"checked":""}>
+  <div style="flex:1"><span class="pill">${escapeHTML(subjectName(a.subjectId))}</span> ${dueTag(a.dueDate)}<h3>${escapeHTML(a.title)}</h3><p class="muted">${escapeHTML(a.description||"")}</p></div></div>`;
  }).join("")||"<p class='muted'>এখনো কোনো assignment নেই।</p>";
  document.querySelectorAll(".asgCheck").forEach(cb=>cb.onchange=async()=>{
   const id=cb.dataset.id,done=cb.checked;
-  await setDoc(doc(db,"assignmentStatus",`${id}_${auth.currentUser.uid}`),{uid:auth.currentUser.uid,assignmentId:id,classId:profile.classId,done,doneAt:serverTimestamp()});
+  cb.disabled=true;
+  try{await setDoc(doc(db,"assignmentStatus",`${id}_${auth.currentUser.uid}`),{uid:auth.currentUser.uid,assignmentId:id,classId:profile.classId,done,doneAt:serverTimestamp()});
   if(done)doneAssignmentIds.add(id);else doneAssignmentIds.delete(id);
-  renderAssignments();renderSmartDashboard();renderRevisionCentre();
+  renderAssignments();renderSmartDashboard();renderRevisionCentre();}
+  catch(e){cb.checked=!done;showToast("Assignment update failed. Please retry.");}finally{cb.disabled=false;}
  });
 }
 
@@ -822,8 +826,8 @@ async function loadProgressAndLeaderboard(useCache=false,loadLeaderboard=true){
  document.querySelectorAll(".replayBtn").forEach(b=>b.onclick=()=>{const a=mine.find(x=>x.id===b.dataset.id);showExamReplay(a);});
  document.querySelectorAll(".printBtn").forEach(b=>b.onclick=()=>{
   const a=mine.find(x=>x.id===b.dataset.id);
-  const w=window.open("","_blank");
-  w.document.write(`<html><head><title>${a.testTitle} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="premium.css?v=11"></head><body><h2>Arpan Learning Suite</h2><h1>${a.testTitle}</h1><p>Student: ${profile.name} (${profile.className})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
+  const w=window.open("","_blank");if(!w)return showToast("Allow popups to print this result.");
+  w.document.write(`<html><head><title>${escapeHTML(a.testTitle)} - Result</title><style>body{font-family:sans-serif;padding:40px;text-align:center}h1{color:#4c1d95}</style><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="premium.css?v=11"></head><body><h2>Arpan Learning Suite</h2><h1>${escapeHTML(a.testTitle)}</h1><p>Student: ${escapeHTML(profile.name)} (${escapeHTML(profile.className)})</p><h1>${a.score} / ${a.total}</h1><p style="font-size:22px"><b>${a.percentage}%</b></p></body></html>`);
   w.document.close();w.print();
  });
 
@@ -832,18 +836,18 @@ async function loadProgressAndLeaderboard(useCache=false,loadLeaderboard=true){
  if(loadLeaderboard&&(!leaderboardLoaded||!useCache)){const safeEntries=await getDocs(query(collection(db,"leaderboardEntries"),where("classId","==",profile.classId)));cachedLeaderboardEntries=safeEntries.docs.map(d=>d.data());leaderboardLoaded=true;}
  const entries=cachedLeaderboardEntries;
  const cards=latestTests.map(test=>{
-  const rows=entries.filter(x=>x.testId===test.id&&Number.isFinite(Number(x.percentage))).sort((a,b)=>Number(b.percentage)-Number(a.percentage)||(a.submittedAt?.seconds||Infinity)-(b.submittedAt?.seconds||Infinity)||String(a.studentName||"").localeCompare(String(b.studentName||"")));
+  const rows=entries.filter(x=>x.testId===test.id&&x.percentage!=null&&Number.isFinite(Number(x.percentage))).sort((a,b)=>Number(b.percentage)-Number(a.percentage)||(a.submittedAt?.seconds||Infinity)-(b.submittedAt?.seconds||Infinity)||String(a.studentName||"").localeCompare(String(b.studentName||"")));
   let lastPct=null,lastRank=0;
   rows.forEach((r,i)=>{if(Number(r.percentage)!==lastPct)lastRank=i+1;r.rank=lastRank;lastPct=Number(r.percentage);});
   const visible=rows.slice(0,10),me=rows.find(r=>r.uid===auth.currentUser.uid);
   if(me&&!visible.includes(me))visible.push(me);
-  const rowHtml=visible.map((r,i)=>`<div class="lb-row ${r.uid===auth.currentUser.uid?"me":""} ${i===10?"lb-separated":""}"><span class="lb-rank ${r.rank===1?"top1":r.rank===2?"top2":r.rank===3?"top3":""}">${r.rank}</span><span class="lb-name">${escapeHTML(r.studentName||"Student")}</span><span class="lb-score">${Number(r.score)}/${Number(r.total)} · ${Number(r.percentage)}%</span></div>`).join("");
+  const rowHtml=visible.map((r,i)=>`<div data-lb-uid="${escapeHTML(r.uid||'')}" data-lb-name="${escapeHTML(r.studentName||'Student')}" class="lb-row ${r.uid===auth.currentUser.uid?"me":""} ${i===10?"lb-separated":""}"><span class="lb-rank ${r.rank===1?"top1":r.rank===2?"top2":r.rank===3?"top3":""}">${r.rank}</span><span class="lb-name">${escapeHTML(r.studentName||"Student")}<small>${r.rank===1?"🏆 First place":r.rank===2?"🥈 Second place":r.rank===3?"🥉 Third place":"Personal progress counts"}</small></span><span class="lb-score">${Number(r.score)}/${Number(r.total)} · ${Number(r.percentage)}%</span></div>`).join("");
   return `<section class="exam-board"><div class="exam-board-head"><div><span class="pill">${escapeHTML(subjectName(test.subjectId))}</span><h3>${escapeHTML(test.title)}</h3></div><span class="muted">${test.createdAt?.toDate?test.createdAt.toDate().toLocaleDateString("en-IN"):"Recent exam"}</span></div>${rowHtml||"<p class='muted'>এই পরীক্ষার graded result এখনো নেই।</p>"}</section>`;
  });
  const leaderboardHTML=loadLeaderboard?(cards.join("")||"<p class='muted'>Leaderboard দেখানোর মতো published test নেই।</p>"):"<p class='muted'>Leaderboard background-এ load হচ্ছে…</p>";
  $("homeLeaderboard").innerHTML=leaderboardHTML;
 
- const graded=mine.filter(a=>Number.isFinite(Number(a.percentage))),avg=graded.length?Math.round(graded.reduce((s,a)=>s+Number(a.percentage),0)/graded.length):null,best=graded.length?Math.max(...graded.map(a=>Number(a.percentage))):null;
+ const graded=mine.filter(a=>a.percentage!=null&&Number.isFinite(Number(a.percentage))),avg=graded.length?Math.round(graded.reduce((s,a)=>s+Number(a.percentage),0)/graded.length):null,best=graded.length?Math.max(...graded.map(a=>Number(a.percentage))):null;
  $("homeTests").textContent=mine.length;$("homeAvg").textContent=avg==null?"—":avg+"%";$("homeBest").textContent=best==null?"—":best+"%";
  const newest=latestTests[0],latestRows=newest?entries.filter(x=>x.testId===newest.id).sort((a,b)=>Number(b.percentage)-Number(a.percentage)):[];let rank="—",last=null,currentRank=0;latestRows.forEach((r,i)=>{if(Number(r.percentage)!==last)currentRank=i+1;if(r.uid===auth.currentUser.uid)rank="#"+currentRank;last=Number(r.percentage);});$("homeRank").textContent=rank;
  const weakest=topicRows[0];$("homeFocus").innerHTML=weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD?`<div><b>🎯 Revision focus: ${escapeHTML(weakest.label)} (${weakest.pct}%)</b><button id="homeWeakHelp" class="secondary">✨ Solve with ChatGPT</button></div>`:"<span>✅ কোনো topic 60%-এর নিচে নেই—নিয়মিত revision চালিয়ে যাও।</span>";if(weakest&&weakest.pct<WEAK_TOPIC_THRESHOLD)$("homeWeakHelp").onclick=()=>openChatGPTPrompt(weakTopicPrompt(weakest));
@@ -966,4 +970,4 @@ function listenMyDoubts(){
   $("myDoubts").innerHTML=items.map(x=>`<div class="doubt-item"><div class="topbar"><span class="pill">${escapeHTML(subjectName(x.subjectId))}</span><span class="${x.status==='open'?'status-open':'status-answered'}">${x.status==='open'?'⏳ Waiting':'✅ Answered'}</span></div><p class="doubt-q">${escapeHTML(x.question)}</p>${x.answer?`<div class="doubt-a">${escapeHTML(x.answer)}</div>`:""}</div>`).join("")||"<p class='muted'>এখনো কোনো doubt পাঠাওনি।</p>";
  });
 }
-</script></body></html>
+</script><script src="vivid-motion.js?v=13"></script></body></html>

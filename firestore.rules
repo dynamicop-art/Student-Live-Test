@@ -16,7 +16,14 @@ service cloud.firestore {
       allow create: if signedIn() && uid == request.auth.uid
         && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
         && request.resource.data.email == request.auth.token.email
-        && request.resource.data.role == "student";
+        && request.resource.data.role == "student"
+        && get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data.active == true
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.classId == get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data.classId
+        && request.resource.data.className == get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data.className
+        && request.resource.data.name == get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data.name
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly(['uid','email','name','classId','className','role','createdAt']);
       // Students may only ever touch their OWN doc, and only these three
       // self-service fields. Every other field (name/class/role/etc) stays teacher-only.
       function validAvatar(){
@@ -180,7 +187,11 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.classId == myClass()
-        && id == (request.resource.data.assignmentId + '_' + request.auth.uid);
+        && id == (request.resource.data.assignmentId + '_' + request.auth.uid)
+        && request.resource.data.keys().hasOnly(['uid','assignmentId','classId','done','doneAt'])
+        && request.resource.data.done is bool && request.resource.data.doneAt == request.time
+        && exists(/databases/$(database)/documents/assignments/$(request.resource.data.assignmentId))
+        && get(/databases/$(database)/documents/assignments/$(request.resource.data.assignmentId)).data.classId == myClass();
       allow delete: if isTeacher();
     }
 
@@ -196,6 +207,61 @@ service cloud.firestore {
       // Only the teacher may answer / change status.
       allow update: if isTeacher();
       allow delete: if isTeacher();
+    }
+
+    // v12: opt-in public identity contains no email or private test data.
+    match /classProfiles/{uid} {
+      allow read: if isTeacher() || (signedIn() && resource.data.classId == myClass());
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid','classId','name','avatarData','updatedAt'])
+        && request.resource.data.uid == uid && request.resource.data.classId == myClass()
+        && request.resource.data.name == myProfile().data.name
+        && request.resource.data.avatarData is string && request.resource.data.avatarData.size() < 30000
+        && (request.resource.data.avatarData == '' || request.resource.data.avatarData.matches('^data:image/(jpeg|png|webp);base64,.*'))
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isTeacher() || (signedIn() && request.auth.uid == uid);
+    }
+    // Atomic message + cooldown write: one message per account per 3 seconds.
+    match /chatLimits/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['sentAt','messageId'])
+        && request.resource.data.sentAt == request.time && request.resource.data.messageId is string;
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['sentAt','messageId'])
+        && request.resource.data.sentAt == request.time && request.resource.data.messageId is string
+        && request.time >= resource.data.sentAt + duration.value(3, 's');
+    }
+    match /classChat/{classId} {
+      function member(){return isTeacher() || (signedIn() && myClass() == classId);}
+      function canPost(){return isTeacher() || !exists(/databases/$(database)/documents/classChat/$(classId)/members/$(request.auth.uid))
+        || get(/databases/$(database)/documents/classChat/$(classId)/members/$(request.auth.uid)).data.muted != true;}
+      match /messages/{messageId} {
+        allow read: if member();
+        allow create: if member() && canPost()
+          && request.resource.data.keys().hasOnly(['uid','name','text','createdAt'])
+          && request.resource.data.uid == request.auth.uid
+          && ((isTeacher() && request.resource.data.name == 'Teacher') || (!isTeacher() && request.resource.data.name == myProfile().data.name))
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+          && request.resource.data.createdAt == request.time
+          && getAfter(/databases/$(database)/documents/chatLimits/$(request.auth.uid)).data.sentAt == request.time
+          && getAfter(/databases/$(database)/documents/chatLimits/$(request.auth.uid)).data.messageId == messageId;
+        allow delete: if isTeacher() || (member() && resource.data.uid == request.auth.uid);
+      }
+      match /members/{uid} {
+        allow read: if isTeacher() || (member() && request.auth.uid == uid);
+        allow write: if isTeacher();
+      }
+      match /reports/{reportId} {
+        allow read, delete: if isTeacher();
+        allow create: if member() && !isTeacher()
+          && request.resource.data.keys().hasOnly(['messageId','reporterUid','reason','createdAt'])
+          && request.resource.data.reporterUid == request.auth.uid
+          && request.resource.data.messageId is string
+          && reportId == request.resource.data.messageId + '_' + request.auth.uid
+          && exists(/databases/$(database)/documents/classChat/$(classId)/messages/$(request.resource.data.messageId))
+          && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 200
+          && request.resource.data.createdAt == request.time;
+      }
     }
 
     match /{document=**} {
