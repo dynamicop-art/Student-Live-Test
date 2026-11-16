@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=9.0-stable"><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="finish.css?v=12.1"><link rel="stylesheet" href="vivid.css?v=13"></head>
+<link rel="stylesheet" href="style.css?v=9.0-stable"><link rel="stylesheet" href="refresh.css?v=10"><link rel="stylesheet" href="finish.css?v=12.1"><link rel="stylesheet" href="vivid.css?v=13"><link rel="stylesheet" href="playful.css?v=14"></head>
 <body class="login-finish">
 <button id="themeBtn" class="theme-fab" type="button" title="Switch theme">🌙</button>
 <div class="wrap">
@@ -77,4 +77,4 @@ $("signup").onclick=async()=>{
  }catch(e){$("smsg").textContent=e.message;}finally{$("signup").disabled=false;$("signup").textContent="Create Account";}
 };
 for(const [field,button] of [["lemail","login"],["lpass","login"],["semail","signup"],["spass","signup"]])$(field).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$(button).click();}});
-</script><script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script><script src="vivid-motion.js?v=13"></script></body></html>
+</script><script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script><script src="vivid-motion.js?v=13"></script><script src="playful.js?v=14"></script></body></html>

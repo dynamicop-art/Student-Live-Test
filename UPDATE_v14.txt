@@ -1,0 +1,31 @@
+PLAYFUL SCIENCE EDITION — v14
+
+ANIMATION MAP
+Website entry: cartoon mouse runs across the screen (once per browser-tab session).
+Home: mouse run. Notes: Newton and a falling apple. Tests/Assignments: arrow hits target.
+Games: cartoon thermometer fills up and pops into colourful shapes.
+My Desk: rocket launch. Revision: spinning atom. Progress/History/Profile: trophy bounce.
+Updates/Doubts: paper-plane flight.
+
+CONTROLS
+Fun effects On/Off remembers your choice on this browser.
+Surprise cycles through all eight scenes without changing sections.
+Existing Calm mode and the device's Reduced Motion setting suppress these effects.
+
+BEHAVIOUR
+Scenes are decorative, silent, ignore pointer input and never delay navigation.
+Only one science scene can exist at a time. Rapid navigation is throttled.
+Scenes disappear in about 1.8 seconds; the mouse takes 2.1 seconds.
+Effects stop when the tab is hidden or closed. Smaller scenes are used on mobile.
+No effects were added to the dedicated student_test.html examination page.
+
+INSTALL
+Upload all files, including playful.css and playful.js. Reload the website after upload.
+The service-worker cache version is updated. Firebase rules are unchanged from v12.
+
+TESTING
+Local mock tests passed for scene mapping, session intro, single-scene bounds,
+rapid clicks, Surprise, saved preferences, accessibility opt-outs and cleanup.
+All SVG scene markup parses and all 19 JavaScript/inline scripts pass syntax checks.
+Actual browser animation rendering and performance on a real phone remain unverified.
+Live Firebase acceptance checks remain in START_HERE_v12.txt.
