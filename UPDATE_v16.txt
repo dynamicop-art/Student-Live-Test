@@ -1,0 +1,32 @@
+PLAY, OBSERVE, UNDERSTAND — v16
+
+Student dashboard > "খেলতে খেলতে বিজ্ঞান" opens a child-friendly Science Playground.
+Three experiments are available in one dialog, without adding more Home cards:
+
+1. Newton's apple: release the apple, see a playful reaction and idea bulb,
+   then answer why it falls. The scene is explicitly labelled a fictionalised story.
+2. Arrow angle: change the angle from 15 to 75 degrees and launch with the same speed.
+   The trajectory uses v=20 m/s and g=9.8 m/s² with no air resistance and equal
+   start/end heights. Compare 30, 45 and 60 degrees, then answer a short question.
+3. Hot water: adjust a temperature slider from 20 to 100°C. Water bubbles at 100°C
+   in this simplified normal-pressure model. The explanation notes that pressure
+   changes the boiling point. A brief adult-help reminder covers real hot water.
+
+Each experiment has friendly Bengali dialogue, observe-before-quiz, retry hints,
+positive feedback and one learning sticker. The three stickers last for this page
+session only and do not change any exam score, profile XP or leaderboard.
+The existing decorative thermometer pop remains a cartoon effect, not a claim that
+thermometers normally burst when water boils.
+
+Existing Space Mission and eight decorative science scenes remain available.
+No external AI or network request is needed for the playground itself.
+
+INSTALL
+Upload all files, including little-lab.js and little-lab.css. Cache version is updated.
+Firebase rules are unchanged from v12. Existing v12 setup instructions still apply.
+
+VALIDATION
+Local mock checks passed: observe-before-quiz, Newton completion, wrong-answer hints,
+projectile distances at 30/45/60 degrees, water bubble threshold, learning stickers,
+and modal/animation cleanup. JavaScript syntax and precache references were checked.
+Actual browser rendering, touch controls and animation timing remain unverified.

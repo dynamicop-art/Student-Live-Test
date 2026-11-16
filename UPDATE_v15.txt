@@ -1,0 +1,33 @@
+COSMIC DASH — INTERACTIVE SPACE MISSION v15
+
+Open the student dashboard and select Launch Mission from Home or the utility bar.
+This opens a full-screen game on mobile, or a large space-game dialog on desktop.
+
+- Three difficulty modes: Moon (add/subtract), Orbit (multiply), Warp (mixed).
+- Eight questions per mission, three asteroid answer choices each.
+- Tap/click an answer or use keys 1, 2, 3. Correct answers fire a visual laser,
+  with a particle burst, points and consecutive-answer combo bonuses.
+- Move the pointer or drag over the open space background to steer the rocket.
+  Steering is decorative: answer selection determines scoring.
+- Wrong answers show the correct answer, then you choose when to continue.
+- End screen shows score, correct count and best combo; launch another mission.
+- No timer pressure, no lives or penalties, and no effect on exam marks/ranks.
+- Scores last for this mission only and are not uploaded or saved.
+- Close with X, Back to learning or Escape. Keyboard focus returns to the launcher.
+
+Motion pauses while the page is hidden. Device Reduced Motion keeps the playable
+questions but stops moving stars, laser/particle effects and animated rocket motion.
+Existing background decorative effects pause while the mission is open.
+The launcher refuses to open when the inline test runner is active.
+
+INSTALL
+Upload all files, including space-mission.js and space-mission.css. Service-worker
+cache version is updated. Firebase rules are unchanged from v12; follow
+START_HERE_v12.txt if you have not published the chat/photo rules yet.
+
+VALIDATION
+Local DOM/canvas mocks tested all difficulty modes, eight-round completion, unique
+choices, division answers, points/combo maths, duplicate-answer guard, wrong-answer
+feedback, keyboard selection, hidden-tab/reduced-motion stopping, cleanup and exam guard.
+All JavaScript parses and service-worker assets are present.
+Actual browser graphics, touch steering and real-device frame rate remain unverified.
